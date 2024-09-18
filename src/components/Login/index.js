@@ -1,20 +1,27 @@
 import React, { useState } from "react";
-import {Text, View, TextInput} from "react-native";
-import Title from "../Title";
+import {Text,
+  View,
+  TextInput,
+  Pressable,
+  Keyboard,
+  TouchableOpacity
+} from "react-native";
 import styles from "./style";
 import validator from "validator";
-import LoginButton from "./LoginButton"
+import { validatePassword } from "../Utilities/validations";
+
 
 const Login = ({navigation }) => {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState(null);
-    const [error, setError] = useState(null)
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('')
 
     const handleLogin = () => {
-      navigation.navigate('Timeline');
+      // verify if account exists
+      navigation.navigate('Register');
     }
 
-    const validateEmail = (input) => {
+    const emailValidate = (input) => {
       setEmail(input)
       if (!input) {
         setError('insira o email')
@@ -29,14 +36,14 @@ const Login = ({navigation }) => {
       }
     };
 
-    const validatePassWord = (input) => {
+    const passwordValidate = (input) => {
       setPassword(input)
       if (!input) {
         setError('Insira a senha')
         return;
       }
-      if (input.length < 8) {
-        setError('A senha precisa de 8 caractéres')
+      if (!validatePassword(input)) {
+        setError('A senha contém 8 caracteres')
       }
       else {
         setError('')
@@ -44,42 +51,48 @@ const Login = ({navigation }) => {
     };
 
     return (
-      <View style={styles.container}>
-        <Title/>
+      <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
+        <Text style={styles.titleText}>LOGIN</Text>
         <View style={styles.form}>
           <Text style={styles.formLabel}>E-mail</Text>
 
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={validateEmail}
+            onChangeText={emailValidate}
             placeholder="Seu email*"
             placeholderTextColor="black"
-            keyboardType="default"
+            keyboardType="email-address"
           />
-
-          {error !== null && (
-            error ? (
-              <Text style={styles.invalidMark}>✗</Text>
-            ) : (
-              <Text style={styles.validMark}>✓</Text>
-            )
-          )}
 
           <Text style={styles.formLabel}>Senha</Text>
 
           <TextInput
             style={styles.input}
             value={password}
-            onChangeText={validatePassWord}
+            onChangeText={passwordValidate}
             placeholder="Digite uma senha"
             placeholderTextColor="black"
             keyboardType="default"
+            secureTextEntry
           />
           </View>
+
           {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
-          <LoginButton onPress={handleLogin}/>
-        </View>
+
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>LOGIN</Text>
+          </TouchableOpacity>
+
+          <View style={styles.forgotPasswordContext}>
+            <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+          </View>
+
+          <View style={styles.registerContext}>
+            <Text style={styles.registerText}>Cadastre-se</Text>
+          </View>
+
+        </Pressable>
     );
 }
 
