@@ -80,10 +80,6 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontWeight: "bold"
   },
-  footer: {
-    margin: 30,
-    padding: 30
-  }
 });
 
 export default styles

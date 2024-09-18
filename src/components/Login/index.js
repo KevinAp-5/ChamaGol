@@ -50,6 +50,10 @@ const Login = ({navigation }) => {
       }
     };
 
+    const forgotPasswordClick = () => {
+      navigation.navigate('forgotPassword')
+    };
+
     return (
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
         <Text style={styles.titleText}>LOGIN</Text>
@@ -63,6 +67,7 @@ const Login = ({navigation }) => {
             placeholder="Seu email*"
             placeholderTextColor="black"
             keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <Text style={styles.formLabel}>Senha</Text>
@@ -74,6 +79,7 @@ const Login = ({navigation }) => {
             placeholder="Digite uma senha"
             placeholderTextColor="black"
             keyboardType="default"
+            autoCapitalize="none"
             secureTextEntry
           />
           </View>
@@ -84,13 +90,18 @@ const Login = ({navigation }) => {
             <Text style={styles.buttonText}>LOGIN</Text>
           </TouchableOpacity>
 
-          <View style={styles.forgotPasswordContext}>
-            <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-          </View>
+          <TouchableOpacity
+            onPress={null}>
+            <View style={styles.forgotPasswordContext}>
+              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+            </View>
+          </TouchableOpacity>
 
-          <View style={styles.registerContext}>
-            <Text style={styles.registerText}>Cadastre-se</Text>
-          </View>
+          <TouchableOpacity>
+            <View style={styles.registerContext}>
+              <Text style={styles.registerText}>Cadastre-se</Text>
+            </View>
+          </TouchableOpacity>
 
         </Pressable>
     );
