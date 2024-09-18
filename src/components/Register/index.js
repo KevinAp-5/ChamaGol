@@ -1,79 +1,134 @@
 import React, { useState } from "react";
-import {Text, View, TextInput} from "react-native";
-import Title from "../Title/index";
+import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity } from "react-native";
 import styles from "./style";
-import validator from "validator";
-import LoginButton from "./LoginButton"
+import { validateEmail, validateName, validatePassword, validatePasswordsMatch } from "../Utilities/validations";
 
-export default function Register(navigation) {
-    const [nome, setNome] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState(null);
-    const [error, setError] = useState(null)
+const Register = ({ navigation }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
-    const handleLogin = () => {
-      navigation.navigate('Timeline');
+  const handleRegister = () => {
+    if (!validateEmail(email)) {
+      setError('Email inválido');
+      return;
+    }
+ 
+    if (!validatePassword(password)) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+      return;
     }
 
-    const validateEmail = (input) => {
-      setEmail(input)
-      if (!input) {
-        setError('insira o email')
-        return;
-      }
+    if (!validatePasswordsMatch(password, confirmPassword)) {
+      setError('As senhas não coincidem');
+      return;
+    }
 
-      if (validator.isEmail(input)) {
-        setError('')
-      }
-      else {
-        setError('email inválido')
-      }
-      
-    };
+    // Se as validações passarem, navega para a Timeline
+    setError('');
+    navigation.navigate('Timeline');
+  };
 
-    return (
-      <View style={styles.container}>
-        <View style={styles.form}>
-          <Text style={styles.formLabel}>Nome</Text>
-            <TextInput style={styles.input}
-              value={nome}
-              onChangeText={setNome}
-              placeholder="Nome Sobrenome"
-              placeholderTextColor="white"
-              keyboardType="default"
-          />
-          <Text style={styles.formLabel}>E-mail</Text>
+  const nameValidate = (input) => {
+    setName(input);
+    if (!validateName(input)) {
+      setError('Formato inválido')
+    } else {
+      setError('')
+    }
+  };
 
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={validateEmail}
-            placeholder="Email*"
-            placeholderTextColor="white"
-            keyboardType="default"
-          />
+  const emailValidate = (input) => {
+    setEmail(input);
+    if (!validateEmail(input)) {
+      setError('Email inválido');
+    } else {
+      setError('');
+    }
+  };
 
-          {error !== null && (
-            error ? (
-              <Text style={styles.invalidMark}>✗</Text>
-            ) : (
-              <Text style={styles.validMark}>✓</Text>
-            )
-          )}
+  const passwordValidate = (input) => {
+    setPassword(input);
+    if (!validatePassword(input)) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+    } else {
+      setError('');
+    }
+  };
 
-          <Text style={styles.formLabel}>Senha</Text>
+  const passwordsMatch = (input) => {
+    setConfirmPassword(input);
+    if (!validatePasswordsMatch(password, input)) {
+      setError("As senhas não são iguais")
+    } else {
+      setError('');
+    }
+  };
 
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Digite uma senha"
-            placeholderTextColor="white"
-            keyboardType="default"
-          />
-          </View>
-          {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
-          <LoginButton onPress={handleLogin}/>
-        </View>
-    );
+  return (
+    <Pressable
+      onPress={Keyboard.dismiss}
+      style={styles.formContext}
+      behavior={Platform.OS === "ios" ? 'padding': 'height'}
+    >
+      <Text style={styles.titleText}>REGISTRO</Text>
+      <View style={styles.form}>
+
+        <Text style={styles.formLabel}>Nome</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={nameValidate}
+          placeholder="Nome completo"
+          placeholderTextColor="black"
+          keyboardType="default"
+        />
+
+        <Text style={styles.formLabel}>E-mail</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={emailValidate}
+          placeholder="Seu email*"
+          placeholderTextColor="black"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <Text style={styles.formLabel}>Senha</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={passwordValidate}
+          placeholder="Digite uma senha"
+          secureTextEntry
+          placeholderTextColor="black"
+          keyboardType="default"
+          autoCapitalize="none"
+        />
+
+        <Text style={styles.formLabel}>Confirme a senha</Text>
+        <TextInput
+          style={styles.input}
+          value={confirmPassword}
+          onChangeText={passwordsMatch}
+          placeholder="Confirme sua senha"
+          secureTextEntry
+          placeholderTextColor="black"
+          keyboardType="default"
+          autoCapitalize="none"
+        />
+ 
+        {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>CONFIRMAR</Text>
+        </TouchableOpacity>
+      </View>
+    </Pressable>
+  );
 }
+
+export default Register;
