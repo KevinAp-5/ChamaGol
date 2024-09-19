@@ -7,104 +7,103 @@ import {Text,
   TouchableOpacity
 } from "react-native";
 import styles from "./style";
-import validator from "validator";
-import { validatePassword } from "../Utilities/validations";
-
+import { validateEmail, validatePassword } from "../Utilities/validations";
 
 const Login = ({navigation }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('')
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('')
 
-    const handleLogin = () => {
-      // verify if account exists
-      navigation.navigate('Register');
+  const handleLogin = () => {
+    // verify if account exists
+    navigation.navigate('Register');
+  }
+
+  const emailValidate = (input) => {
+    setEmail(input)
+    if (!input) {
+      setError('insira o email')
+      return;
     }
 
-    const emailValidate = (input) => {
-      setEmail(input)
-      if (!input) {
-        setError('insira o email')
-        return;
-      }
+    if (!validateEmail(input)) {
+      setError('')
+    }
+    else {
+      setError('email inválido')
+    }
+  };
 
-      if (validator.isEmail(input)) {
-        setError('')
-      }
-      else {
-        setError('email inválido')
-      }
-    };
+  const passwordValidate = (input) => {
+    setPassword(input)
+    if (!input) {
+      setError('Insira a senha')
+      return;
+    }
+    if (!validatePassword(input)) {
+      setError('senha deve ter pelo menos 8 caracteres')
+    }
+    else {
+      setError('')
+    }
+  };
 
-    const passwordValidate = (input) => {
-      setPassword(input)
-      if (!input) {
-        setError('Insira a senha')
-        return;
-      }
-      if (!validatePassword(input)) {
-        setError('A senha contém 8 caracteres')
-      }
-      else {
-        setError('')
-      }
-    };
+  const passwordReset = () => {
+    navigation.navigate('passwordReset')
+  };
 
-    const forgotPasswordClick = () => {
-      navigation.navigate('forgotPassword')
-    };
+  return (
+    <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
+      <Text style={styles.titleText}>LOGIN</Text>
+      <View style={styles.form}>
+        <Text style={styles.formLabel}>E-mail</Text>
 
-    return (
-      <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
-        <Text style={styles.titleText}>LOGIN</Text>
-        <View style={styles.form}>
-          <Text style={styles.formLabel}>E-mail</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={emailValidate}
+          placeholder="Seu email*"
+          placeholderTextColor="black"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={emailValidate}
-            placeholder="Seu email*"
-            placeholderTextColor="black"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+        <Text style={styles.formLabel}>Senha</Text>
 
-          <Text style={styles.formLabel}>Senha</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={passwordValidate}
+          placeholder="Digite uma senha"
+          placeholderTextColor="black"
+          keyboardType="default"
+          autoCapitalize="none"
+          secureTextEntry
+        />
+        </View>
 
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={passwordValidate}
-            placeholder="Digite uma senha"
-            placeholderTextColor="black"
-            keyboardType="default"
-            autoCapitalize="none"
-            secureTextEntry
-          />
+        {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>ENTRAR</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={passwordReset}>
+          <View style={styles.resetPasswordContext}>
+            <Text style={styles.resetPasswordText}>Esqueceu a senha?</Text>
           </View>
+        </TouchableOpacity>
 
-          {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+        <TouchableOpacity
+          onPress={null}>
+          <View style={styles.registerContext}>
+            <Text style={styles.registerText}>Cadastre-se</Text>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>LOGIN</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={null}>
-            <View style={styles.forgotPasswordContext}>
-              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity>
-            <View style={styles.registerContext}>
-              <Text style={styles.registerText}>Cadastre-se</Text>
-            </View>
-          </TouchableOpacity>
-
-        </Pressable>
-    );
+      </Pressable>
+  );
 }
 
 export default Login;
