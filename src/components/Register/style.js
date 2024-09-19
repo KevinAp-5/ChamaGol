@@ -13,12 +13,12 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: "#6D9773"
+    color: "#6D9773",
+    marginBottom: 50
   },
 
   form: {
     width: "100%",
-    marginTop: 30,
     padding: 10,
   },
 
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f6f6f6",
     height: 40,
     margin: 12,
-    paddingLeft: 10
+    paddingLeft: 20
   },
 
   errorMessage: {
