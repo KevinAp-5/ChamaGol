@@ -13,10 +13,12 @@ const Login = ({navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('')
+
   const handleLogin = () => {
     // verify if account exists
     navigation.navigate('Register');
   }
+
   const emailValidate = (input) => {
     setEmail(input)
     if (!input) {
@@ -45,14 +47,17 @@ const Login = ({navigation }) => {
       setError('')
     }
   };
+
   const passwordReset = () => {
     navigation.navigate('passwordReset')
   };
+
   return (
     <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
       <Text style={styles.titleText}>LOGIN</Text>
       <View style={styles.form}>
         <Text style={styles.formLabel}>E-mail</Text>
+
         <TextInput
           style={styles.input}
           value={email}
@@ -62,7 +67,9 @@ const Login = ({navigation }) => {
           keyboardType="email-address"
           autoCapitalize="none"
         />
+
         <Text style={styles.formLabel}>Senha</Text>
+
         <TextInput
           style={styles.input}
           value={password}
@@ -74,10 +81,13 @@ const Login = ({navigation }) => {
           secureTextEntry
         />
         </View>
+
         {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>ENTRAR</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           onPress={passwordReset}>
           <View style={styles.resetPasswordContext}>
@@ -92,8 +102,8 @@ const Login = ({navigation }) => {
           </View>
         </TouchableOpacity>
 
-        </Pressable>
-    );
+      </Pressable>
+  );
 }
 
 export default Login;
