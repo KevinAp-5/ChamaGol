@@ -5,7 +5,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 40,
-    marginTop: 300
+    marginTop: 30
   },
 
   title: {

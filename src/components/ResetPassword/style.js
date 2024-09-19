@@ -1,47 +1,56 @@
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-formContext: {
+  container: {
+    flex: 1,
+    //backgroundColor: '#e0e5e5',
+    backgroundColor: "#0C3B2E",
+    paddingTop: 0,
+  },
+
+  formContext: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     paddingTop: 30,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    },
+  },
 
-    titleText: {
+  titleText: {
     fontSize: 30,
     fontWeight: 'bold',
     color: "#6D9773",
     marginBottom: 50
-    },
+  },
 
-    form: {
+  form: {
     width: "100%",
     padding: 10,
-    },
+  },
 
-    formLabel: {
+  formLabel: {
     color: "#000000",
+    fontWeight: 'bold',
     fontSize: 18,
     paddingLeft: 20,
-    paddingVertical: 10
-    },
+    paddingVertical: 20
+  },
 
-    input: {
+  input: {
     width: "90%",
     borderRadius: 50,
     backgroundColor: "#f6f6f6",
     height: 40,
     margin: 12,
-    paddingLeft: 20,
-    },
+    paddingLeft: 20
+  },
 
-    errorMessage: {
+  errorMessage: {
     color: "red"
-    },
-    button: {
+  },
+
+  button: {
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
@@ -51,35 +60,14 @@ formContext: {
     paddingBottom: 14,
     marginLeft: 12,
     marginTop: 30
-    },
-    buttonText: {
+  },
+
+  buttonText: {
     fontSize: 20,
     color: "#FFBA00",
     justifyContent: "center",
     alignContent: "center"
-    },
-    forgotPasswordContext: {
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: 30,
-    paddingTop: 30
-    },
-    forgotPasswordText: {
-    fontSize: 14,
-    color: "#000000",
-    },
-    registerContext: {
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: 0,
-    },
-    registerText: {
-    fontSize: 15,
-    color: "#000000",
-    fontWeight: "bold"
-    },
+  },
 })
 
 export default styles;
