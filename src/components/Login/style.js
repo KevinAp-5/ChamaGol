@@ -13,12 +13,12 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: "#6D9773"
+    color: "#6D9773",
+    marginBottom: 50,
   },
 
   form: {
     width: "100%",
-    marginTop: 30,
     padding: 10,
   },
 
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f6f6f6",
     height: 40,
     margin: 12,
-    paddingLeft: 10
+    paddingLeft: 20
   },
 
   errorMessage: {
@@ -58,25 +58,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignContent: "center"
   },
-  forgotPasswordContext: {
+
+  resetPasswordContext: {
     padding: 15,
     alignItems: "center",
     justifyContent: "flex-end",
     marginTop: 30,
     paddingTop: 30
   },
-  forgotPasswordText: {
-    fontSize: 14,
+
+  resetPasswordText: {
+    fontSize: 16,
     color: "#000000",
   },
+
   registerContext: {
     padding: 15,
     alignItems: "center",
     justifyContent: "flex-end",
-    marginTop: 0,
   },
+
   registerText: {
-    fontSize: 15,
+    fontSize: 20,
     color: "#000000",
     fontWeight: "bold"
   },
