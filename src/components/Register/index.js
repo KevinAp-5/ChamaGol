@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity } from "react-native";
 import styles from "./style";
 import { validateEmail, validateName, validatePassword, validatePasswordsMatch } from "../Utilities/validations";
+import Title from "./Title/"
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -68,66 +69,69 @@ const Register = ({ navigation }) => {
   };
 
   return (
-    <Pressable
-      onPress={Keyboard.dismiss}
-      style={styles.formContext}
-      behavior={Platform.OS === "ios" ? 'padding': 'height'}
-    >
-      <Text style={styles.titleText}>REGISTRO</Text>
-      <View style={styles.form}>
+    <View style={styles.container}>
+      <Title title="CHAMAGOL"/>
+      <Pressable
+        onPress={Keyboard.dismiss}
+        style={styles.formContext}
+        behavior={Platform.OS === "ios" ? 'padding': 'height'}
+      >
+        <Text style={styles.titleText}>REGISTRO</Text>
+        <View style={styles.form}>
 
-        <Text style={styles.formLabel}>Nome</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={nameValidate}
-          placeholder="Nome completo"
-          placeholderTextColor="black"
-          keyboardType="default"
-        />
+          <Text style={styles.formLabel}>Nome</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={nameValidate}
+            placeholder="Nome completo"
+            placeholderTextColor="black"
+            keyboardType="default"
+          />
 
-        <Text style={styles.formLabel}>E-mail</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={emailValidate}
-          placeholder="Seu email*"
-          placeholderTextColor="black"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <Text style={styles.formLabel}>E-mail</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={emailValidate}
+            placeholder="Seu email*"
+            placeholderTextColor="black"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <Text style={styles.formLabel}>Senha</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={passwordValidate}
-          placeholder="Digite uma senha"
-          secureTextEntry
-          placeholderTextColor="black"
-          keyboardType="default"
-          autoCapitalize="none"
-        />
+          <Text style={styles.formLabel}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={passwordValidate}
+            placeholder="Digite uma senha"
+            secureTextEntry
+            placeholderTextColor="black"
+            keyboardType="default"
+            autoCapitalize="none"
+          />
 
-        <Text style={styles.formLabel}>Confirme a senha</Text>
-        <TextInput
-          style={styles.input}
-          value={confirmPassword}
-          onChangeText={passwordsMatch}
-          placeholder="Confirme sua senha"
-          secureTextEntry
-          placeholderTextColor="black"
-          keyboardType="default"
-          autoCapitalize="none"
-        />
- 
-        {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+          <Text style={styles.formLabel}>Confirme a senha</Text>
+          <TextInput
+            style={styles.input}
+            value={confirmPassword}
+            onChangeText={passwordsMatch}
+            placeholder="Confirme sua senha"
+            secureTextEntry
+            placeholderTextColor="black"
+            keyboardType="default"
+            autoCapitalize="none"
+          />
+  
+          {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>CONFIRMAR</Text>
-        </TouchableOpacity>
-      </View>
-    </Pressable>
+          <TouchableOpacity style={styles.button} onPress={handleRegister}>
+            <Text style={styles.buttonText}>CONFIRMAR</Text>
+          </TouchableOpacity>
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
