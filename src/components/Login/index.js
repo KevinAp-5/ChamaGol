@@ -8,6 +8,7 @@ import {Text,
 } from "react-native";
 import styles from "./style";
 import { validateEmail, validatePassword } from "../Utilities/validations";
+import Title from "./Title";
 
 const Login = ({navigation }) => {
   const [email, setEmail] = useState('');
@@ -53,56 +54,59 @@ const Login = ({navigation }) => {
   };
 
   return (
-    <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
-      <Text style={styles.titleText}>LOGIN</Text>
-      <View style={styles.form}>
-        <Text style={styles.formLabel}>E-mail</Text>
+    <View style={styles.container}>
+      <Title title="CHAMAGOL"/>
+      <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
+        <Text style={styles.titleText}>LOGIN</Text>
+        <View style={styles.form}>
+          <Text style={styles.formLabel}>E-mail</Text>
 
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={emailValidate}
-          placeholder="Seu email*"
-          placeholderTextColor="black"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={emailValidate}
+            placeholder="Seu email*"
+            placeholderTextColor="black"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <Text style={styles.formLabel}>Senha</Text>
+          <Text style={styles.formLabel}>Senha</Text>
 
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={passwordValidate}
-          placeholder="Digite uma senha"
-          placeholderTextColor="black"
-          keyboardType="default"
-          autoCapitalize="none"
-          secureTextEntry
-        />
-        </View>
-
-        {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
-
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>ENTRAR</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={passwordReset}>
-          <View style={styles.resetPasswordContext}>
-            <Text style={styles.resetPasswordText}>Esqueceu a senha?</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={passwordValidate}
+            placeholder="Digite uma senha"
+            placeholderTextColor="black"
+            keyboardType="default"
+            autoCapitalize="none"
+            secureTextEntry
+          />
           </View>
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={null}>
-          <View style={styles.registerContext}>
-            <Text style={styles.registerText}>Cadastre-se</Text>
-          </View>
-        </TouchableOpacity>
+          {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
-      </Pressable>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>ENTRAR</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={passwordReset}>
+            <View style={styles.resetPasswordContext}>
+              <Text style={styles.resetPasswordText}>Esqueceu a senha?</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={null}>
+            <View style={styles.registerContext}>
+              <Text style={styles.registerText}>Cadastre-se</Text>
+            </View>
+          </TouchableOpacity>
+
+        </Pressable>
+      </View>
   );
 }
 

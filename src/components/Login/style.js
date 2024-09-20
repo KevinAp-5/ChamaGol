@@ -1,6 +1,13 @@
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    //backgroundColor: '#e0e5e5',
+    backgroundColor: "#0C3B2E",
+    paddingTop: 0,
+  },
+
   formContext: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -24,8 +31,10 @@ const styles = StyleSheet.create({
 
   formLabel: {
     color: "#000000",
+    fontWeight: "bold",
     fontSize: 18,
     paddingLeft: 20,
+    paddingVertical: 10
   },
 
   input: {
