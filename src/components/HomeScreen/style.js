@@ -6,7 +6,8 @@ const styles = StyleSheet.create({
     //backgroundColor: '#e0e5e5',
     backgroundColor: "#0C3B2E",
     paddingTop: 0,
-    },
+  },
+
   formContext: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -23,7 +24,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     color: "#6D9773",
-    marginBottom: 50
+    marginBottom: 50,
+    marginTop: 10,
   },
 
   button: {
