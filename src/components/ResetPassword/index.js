@@ -8,7 +8,7 @@ import {Text,
 } from "react-native";
 import { validatePassword, validatePasswordsMatch } from "../Utilities/validations";
 import styles from "./style";
-import Title from "../Title";
+import Title from "./Title/"
 
 const ResetPassword = ({navigation }) => {
   const [password, setPassword] = useState('');
