@@ -6,25 +6,20 @@ import Login from './src/components/Login/';
 import Timeline from './src/components/TimeLine/';
 import Register from './src/components/Register/';
 import Title from './src/components/Title';
+import ResetPassword from './src/components/ResetPassword';
+import HomeScreen from './src/components/HomeScreen'
 
 const Stack = createStackNavigator();
 
-function App() {
+const App = () => {
   return (
-    <View style={styles.container}>
-      <Title title="CHAMAGOL"/>
-      <Register/>
-    </View>
-  );
-}
-
-const Appi = () => {
-  return (
-    <NavigationContainer style={styles.container}>
-      <Stack.Navigator initialRouteName="Login">
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name= "Home" component={HomeScreen} options={{headerShown: false}} />
         <Stack.Screen name= "Login" component={Login} options={{headerShown: false}} />
         <Stack.Screen name= "Register" component={Register} options={{headerShown: false}} />
-        <Stack.Screen name="Timeline" component={Timeline} />
+        <Stack.Screen name= "ResetPassword" component={ResetPassword} options={{headerShown: false}} />
+        <Stack.Screen name= "Timeline" component={Timeline} />
       </Stack.Navigator>
     </NavigationContainer>
   );

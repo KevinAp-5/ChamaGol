@@ -35,7 +35,7 @@ const HomeScreen = ({navigation}) => {
           <Text style={styles.buttonRegisterText}>CADASTRE-SE</Text>
         </TouchableOpacity>
 
-        <Text style={styles.footer}>Receba as melhores chamadas!</Text>
+        <Text style={styles.footer}>Receba os melhores sinais!</Text>
       </Pressable>
     </View>
   );

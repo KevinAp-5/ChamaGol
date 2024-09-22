@@ -68,6 +68,7 @@ const ResetPassword = ({navigation }) => {
             placeholderTextColor="black"
             keyboardType="default"
             autoCapitalize="none"
+            secureTextEntry
           />
 
           <Text style={styles.formLabel}>Confirmar senha</Text>

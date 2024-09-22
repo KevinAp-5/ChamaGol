@@ -29,7 +29,7 @@ const Register = ({ navigation }) => {
 
     // Se as validações passarem, navega para a Timeline
     setError('');
-    navigation.navigate('Timeline');
+    navigation.navigate('HomeScreen');
   };
 
   const nameValidate = (input) => {
