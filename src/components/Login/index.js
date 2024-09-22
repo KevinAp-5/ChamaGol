@@ -4,20 +4,27 @@ import {Text,
   TextInput,
   Pressable,
   Keyboard,
-  TouchableOpacity
+  TouchableOpacity,
+  SafeAreaView
 } from "react-native";
 import styles from "./style";
 import { validateEmail, validatePassword } from "../Utilities/validations";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Title from "./Title";
 
 const Login = ({navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
     // verify if account exists
-    navigation.navigate('Register');
+    navigation.navigate('Timeline');
+  }
+
+  const handleRegister= () => {
+    navigation.navigate('Register')
   }
 
   const emailValidate = (input) => {
@@ -27,7 +34,7 @@ const Login = ({navigation }) => {
       return;
     }
 
-    if (!validateEmail(input)) {
+    if (validateEmail(input)) {
       setError('')
     }
     else {
@@ -50,11 +57,15 @@ const Login = ({navigation }) => {
   };
 
   const passwordReset = () => {
-    navigation.navigate('passwordReset')
+    navigation.navigate('ResetPassword')
   };
 
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  }
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Title title="CHAMAGOL"/>
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
         <Text style={styles.titleText}>LOGIN</Text>
@@ -73,17 +84,26 @@ const Login = ({navigation }) => {
 
           <Text style={styles.formLabel}>Senha</Text>
 
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={passwordValidate}
-            placeholder="Digite uma senha"
-            placeholderTextColor="black"
-            keyboardType="default"
-            autoCapitalize="none"
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={passwordValidate}
+              placeholder="Digite uma senha"
+              placeholderTextColor="black"
+              keyboardType="default"
+              autoCapitalize="none"
+              secureTextEntry={!showPassword}
+            />
+            <MaterialCommunityIcons
+              name={showPassword ? 'eye-off' : 'eye'}
+              size={24}
+              color="#aaa"
+              style={styles.icon}
+              onPress={toggleShowPassword}
+            />
           </View>
+        </View>
 
           {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
@@ -99,14 +119,14 @@ const Login = ({navigation }) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={null}>
+            onPress={handleRegister}>
             <View style={styles.registerContext}>
               <Text style={styles.registerText}>Cadastre-se</Text>
             </View>
           </TouchableOpacity>
 
         </Pressable>
-      </View>
+      </SafeAreaView>
   );
 }
 
