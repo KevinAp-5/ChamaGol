@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: "#6D9773",
-    marginBottom: 50,
+    marginBottom: 20,
   },
 
   form: {
@@ -95,16 +95,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     marginTop: 30,
-    paddingTop: 30,
+    paddingTop: 10,
   },
 
   resetPasswordText: {
-    fontSize: 16,
+    fontStyle: "italic",
+    fontSize: 17,
     color: "#000000",
   },
 
   registerContext: {
-    padding: 15,
+    paddingVertical: 20,
     alignItems: "center",
     justifyContent: "flex-end",
   },
