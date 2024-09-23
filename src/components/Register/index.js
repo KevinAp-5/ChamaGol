@@ -2,17 +2,15 @@ import React, { useState } from "react";
 import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity, SafeAreaView } from "react-native";
 import styles from "./style";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // Ícones de olho
-import { validateEmail, validateName, validatePassword, validatePasswordsMatch } from "../Utilities/validations";
-import Title from "./Title/";
+import { validateEmail, validateName, validatePassword } from "../Utilities/validations";
+import Title from "../Title/";
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false); // Controle de visibilidade da senha
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Controle de visibilidade da confirmação de senha
 
   const handleRegister = () => {
     if (!validateEmail(email)) {
@@ -22,11 +20,6 @@ const Register = ({ navigation }) => {
  
     if (!validatePassword(password)) {
       setError('A senha deve ter pelo menos 8 caracteres');
-      return;
-    }
-
-    if (!validatePasswordsMatch(password, confirmPassword)) {
-      setError('As senhas não coincidem');
       return;
     }
 
@@ -61,15 +54,6 @@ const Register = ({ navigation }) => {
     }
   };
 
-  const passwordsMatch = (input) => {
-    setConfirmPassword(input);
-    if (!validatePasswordsMatch(password, input)) {
-      setError("As senhas não são iguais");
-    } else {
-      setError('');
-    }
-  };
-
   const goToLogin = () => {
     navigation.navigate("Login");
   }
@@ -77,11 +61,6 @@ const Register = ({ navigation }) => {
   // Alterna a visibilidade da senha
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
-  };
-
-  // Alterna a visibilidade da confirmação de senha
-  const toggleShowConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -138,30 +117,7 @@ const Register = ({ navigation }) => {
             />
           </View>
 
-          {/* Campo de Confirmar Senha com Ícone */}
-          <Text style={styles.formLabel}>Confirme a senha</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={passwordsMatch}
-              placeholder="Confirme sua senha"
-              secureTextEntry={!showConfirmPassword}  // Controla a visibilidade da confirmação de senha
-              placeholderTextColor="black"
-              keyboardType="default"
-              autoCapitalize="none"
-            />
-            <MaterialCommunityIcons
-              name={showConfirmPassword ? 'eye-off' : 'eye'}
-              size={24}
-              color="#aaa"
-              style={styles.icon}
-              onPress={toggleShowConfirmPassword}
-            />
-          </View>
-
           {/* Exibição de Erros */}
-
           {error ? 
             <View style={styles.errorMessageContext}>
               <Text style={styles.errorMessage}>{error}</Text>

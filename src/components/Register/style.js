@@ -4,7 +4,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0C3B2E",
-    paddingTop: 0,
+    paddingTop: 20,
   },
 
   formContext: {
@@ -82,9 +82,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "90%",
     backgroundColor: "#0C3B2E",
-    paddingTop: 14,
-    paddingBottom: 14,
-    marginTop: 30,
+    paddingVertical: 14,
+    marginTop: 20,
   },
 
   buttonText: {

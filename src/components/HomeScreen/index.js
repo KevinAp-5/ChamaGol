@@ -18,7 +18,10 @@ const HomeScreen = ({navigation}) => {
       <Title title="CHAMAGOL"/>
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
 
-        <Text style={styles.title}>Bem-vindo!</Text>
+        <View style={styles.welcomeContext}>
+          <Text style={styles.welcomeText}>Bem-vindo!</Text>
+        </View>
+
         <TouchableOpacity onPress={navigateLogin} style={styles.button}>
           <Text style={styles.buttonLoginText}>LOGIN</Text>
         </TouchableOpacity>

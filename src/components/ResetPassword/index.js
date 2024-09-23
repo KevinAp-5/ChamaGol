@@ -9,7 +9,7 @@ import {Text,
 } from "react-native";
 import { validatePassword, validatePasswordsMatch } from "../Utilities/validations";
 import styles from "./style";
-import Title from "./Title/"
+import Title from "../Title/"
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const ResetPassword = ({navigation }) => {

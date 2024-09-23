@@ -78,8 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "90%",
     backgroundColor: "#0C3B2E",
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingVertical: 14,
     marginTop: 30,
   },
 

@@ -16,13 +16,16 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
   },
 
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
+  welcomeContext: {
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 100
+  },
+
+  welcomeText: {
+    fontSize: 30,
+    fontWeight: 'bold',
     color: "#6D9773",
-    marginBottom: 50,
   },
 
   button: {

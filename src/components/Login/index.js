@@ -10,7 +10,7 @@ import {Text,
 import styles from "./style";
 import { validateEmail, validatePassword } from "../Utilities/validations";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Title from "./Title";
+import Title from "../Title";
 
 const Login = ({navigation }) => {
   const [email, setEmail] = useState('');
