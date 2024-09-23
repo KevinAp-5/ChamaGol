@@ -3,9 +3,8 @@ import { StyleSheet } from "react-native";
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //backgroundColor: '#e0e5e5',
     backgroundColor: "#0C3B2E",
-    paddingTop: 0,
+    paddingTop: 20,
   },
 
   formContext: {
@@ -15,7 +14,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    minHeight: 400,
   },
 
   title: {
@@ -25,7 +23,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     color: "#6D9773",
     marginBottom: 50,
-    marginTop: 10,
   },
 
   button: {
@@ -51,9 +48,11 @@ const styles = StyleSheet.create({
   },
 
   footer: {
-    fontSize: 13,
+    fontSize: 18,
+    fontStyle: 'italic',
     alignItems: "center",
     marginVertical: 40,
+    paddingTop: 10,
     color: "#000000"
   }
 });
