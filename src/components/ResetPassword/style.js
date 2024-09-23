@@ -3,7 +3,6 @@ import { StyleSheet } from "react-native";
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //backgroundColor: '#e0e5e5',
     backgroundColor: "#0C3B2E",
     paddingTop: 0,
   },
@@ -21,7 +20,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: "#6D9773",
-    marginBottom: 50
+    marginBottom: 50,
   },
 
   form: {
@@ -31,23 +30,46 @@ const styles = StyleSheet.create({
 
   formLabel: {
     color: "#000000",
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
     paddingLeft: 20,
-    paddingVertical: 20
+    paddingVertical: 10
   },
 
   input: {
     width: "90%",
-    borderRadius: 50,
+    borderRadius: 10,
     backgroundColor: "#f6f6f6",
-    height: 40,
+    height: 50,
     margin: 12,
-    paddingLeft: 20
+    paddingLeft: 20,
+    paddingRight: 20,
+  },
+
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '90%',
+    backgroundColor: '#f6f6f6',
+    borderRadius: 10,
+    height: 50,
+    margin: 12,
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingLeft: 20,
+    paddingRight: 45,
+  },
+
+  icon: {
+    position: 'absolute',
+    right: 10,  // Coloca o ícone no lado direito
+    padding: 10,
   },
 
   errorMessage: {
-    color: "red"
+    color: "red",
   },
 
   button: {
@@ -58,16 +80,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C3B2E",
     paddingTop: 14,
     paddingBottom: 14,
-    marginLeft: 12,
-    marginTop: 30
+    marginTop: 30,
   },
 
   buttonText: {
     fontSize: 20,
     color: "#FFBA00",
     justifyContent: "center",
-    alignContent: "center"
+    alignContent: "center",
   },
-})
+
+});
 
 export default styles;
