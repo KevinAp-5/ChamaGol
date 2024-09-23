@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity } from "react-native";
+import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity, SafeAreaView } from "react-native";
 import styles from "./style";
+import { MaterialCommunityIcons } from "@expo/vector-icons"; // Ícones de olho
 import { validateEmail, validateName, validatePassword, validatePasswordsMatch } from "../Utilities/validations";
-import Title from "./Title/"
+import Title from "./Title/";
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -10,6 +11,8 @@ const Register = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Controle de visibilidade da senha
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Controle de visibilidade da confirmação de senha
 
   const handleRegister = () => {
     if (!validateEmail(email)) {
@@ -27,17 +30,16 @@ const Register = ({ navigation }) => {
       return;
     }
 
-    // Se as validações passarem, navega para a Timeline
     setError('');
-    navigation.navigate('HomeScreen');
+    navigation.navigate('Home');
   };
 
   const nameValidate = (input) => {
     setName(input);
     if (!validateName(input)) {
-      setError('Formato inválido')
+      setError('Formato inválido');
     } else {
-      setError('')
+      setError('');
     }
   };
 
@@ -62,19 +64,33 @@ const Register = ({ navigation }) => {
   const passwordsMatch = (input) => {
     setConfirmPassword(input);
     if (!validatePasswordsMatch(password, input)) {
-      setError("As senhas não são iguais")
+      setError("As senhas não são iguais");
     } else {
       setError('');
     }
   };
 
+  const goToLogin = () => {
+    navigation.navigate("Login");
+  }
+
+  // Alterna a visibilidade da senha
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Alterna a visibilidade da confirmação de senha
+  const toggleShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Title title="CHAMAGOL"/>
       <Pressable
         onPress={Keyboard.dismiss}
         style={styles.formContext}
-        behavior={Platform.OS === "ios" ? 'padding': 'height'}
+        behavior={Platform.OS === "ios" ? 'padding' : 'height'}
       >
         <Text style={styles.titleText}>REGISTRO</Text>
         <View style={styles.form}>
@@ -100,39 +116,75 @@ const Register = ({ navigation }) => {
             autoCapitalize="none"
           />
 
+          {/* Campo de Senha com Ícone */}
           <Text style={styles.formLabel}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={passwordValidate}
-            placeholder="Digite uma senha"
-            secureTextEntry
-            placeholderTextColor="black"
-            keyboardType="default"
-            autoCapitalize="none"
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={passwordValidate}
+              placeholder="Digite uma senha"
+              secureTextEntry={!showPassword}  // Controla a visibilidade da senha
+              placeholderTextColor="black"
+              keyboardType="default"
+              autoCapitalize="none"
+            />
+            <MaterialCommunityIcons
+              name={showPassword ? 'eye-off' : 'eye'}
+              size={24}
+              color="#aaa"
+              style={styles.icon}
+              onPress={toggleShowPassword}
+            />
+          </View>
 
+          {/* Campo de Confirmar Senha com Ícone */}
           <Text style={styles.formLabel}>Confirme a senha</Text>
-          <TextInput
-            style={styles.input}
-            value={confirmPassword}
-            onChangeText={passwordsMatch}
-            placeholder="Confirme sua senha"
-            secureTextEntry
-            placeholderTextColor="black"
-            keyboardType="default"
-            autoCapitalize="none"
-          />
-  
-          {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              value={confirmPassword}
+              onChangeText={passwordsMatch}
+              placeholder="Confirme sua senha"
+              secureTextEntry={!showConfirmPassword}  // Controla a visibilidade da confirmação de senha
+              placeholderTextColor="black"
+              keyboardType="default"
+              autoCapitalize="none"
+            />
+            <MaterialCommunityIcons
+              name={showConfirmPassword ? 'eye-off' : 'eye'}
+              size={24}
+              color="#aaa"
+              style={styles.icon}
+              onPress={toggleShowConfirmPassword}
+            />
+          </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>CONFIRMAR</Text>
+          {/* Exibição de Erros */}
+
+          {error ? 
+            <View style={styles.errorMessageContext}>
+              <Text style={styles.errorMessage}>{error}</Text>
+            </View>
+          : null}
+
+        </View>
+        {/* Botão de Registro */}
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>CONFIRMAR</Text>
+        </TouchableOpacity>
+
+        {/* Botão de login para quem tiver cadastro */}
+        <View style={styles.loginContext}>
+          <Text style={styles.loginText}>Já possui uma conta? </Text>
+          <TouchableOpacity onPress={goToLogin}>
+            <Text style={styles.LoginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
+
       </Pressable>
-    </View>
+    </SafeAreaView>
   );
-}
+};
 
 export default Register;
