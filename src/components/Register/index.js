@@ -13,17 +13,7 @@ const Register = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false); // Controle de visibilidade da senha
 
   const handleRegister = () => {
-    if (!validateEmail(email)) {
-      setError('Email inválido');
-      return;
-    }
- 
-    if (!validatePassword(password)) {
-      setError('A senha deve ter pelo menos 8 caracteres');
-      return;
-    }
-
-    setError('');
+    applyValidations()
     navigation.navigate('Home');
   };
 
@@ -54,6 +44,26 @@ const Register = ({ navigation }) => {
     }
   };
 
+  const applyValidations = () => {
+    /* Will apply the validations one more time before sending data */
+    if (!validateEmail(email)) {
+      setError('Email inválido');
+      return;
+    }
+
+    if (!validateName(name)) {
+      setError('Nome inválido')
+      return;
+    }
+ 
+    if (!validatePassword(password)) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    setError('')
+  }
+
   const goToLogin = () => {
     navigation.navigate("Login");
   }
@@ -65,11 +75,6 @@ const Register = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-     <StatusBar 
-        animated={true}
-        backgroundColor="#000000"
-        barStyle='dark-content'
-      />
       <Title title="CHAMAGOL"/>
       <Pressable
         onPress={Keyboard.dismiss}

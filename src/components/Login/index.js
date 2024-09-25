@@ -21,10 +21,12 @@ const Login = ({navigation }) => {
 
   const handleLogin = () => {
     // verify if account exists
+    applyValidations();
     navigation.navigate('Timeline');
   }
 
   const handleRegister= () => {
+    applyValidations();
     navigation.navigate('Register')
   }
 
@@ -57,6 +59,21 @@ const Login = ({navigation }) => {
     }
   };
 
+  const applyValidations = () => {
+    /* Will apply the validations one more time before sending data */
+    if (!validateEmail(email)) {
+      setError('Email inválido');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    setError('')
+  }
+
   const passwordReset = () => {
     navigation.navigate('ResetPassword')
   };
@@ -67,11 +84,6 @@ const Login = ({navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar 
-        animated={true}
-        backgroundColor="#000000"
-        barStyle='dark-content'
-      />
       <Title title="CHAMAGOL"/>
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
         <Text style={styles.titleText}>LOGIN</Text>

@@ -68,11 +68,6 @@ const ResetPassword = ({navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-     <StatusBar 
-        animated={true}
-        backgroundColor="#000000"
-        barStyle='dark-content'
-      />
       <Title title="CHAMAGOL"/>
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
         <Text style={styles.titleText}>Recuperar senha</Text>
