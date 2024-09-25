@@ -4,7 +4,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0C3B2E",
-    paddingTop: 20,
+    paddingTop: 0,
   },
 
   formContext: {

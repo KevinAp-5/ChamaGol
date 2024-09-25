@@ -65,6 +65,11 @@ const Register = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+     <StatusBar 
+        animated={true}
+        backgroundColor="#000000"
+        barStyle='dark-content'
+      />
       <Title title="CHAMAGOL"/>
       <Pressable
         onPress={Keyboard.dismiss}

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { View, Text, TouchableOpacity, Keyboard, Pressable, SafeAreaView } from "react-native";
+import { View, Text, TouchableOpacity, Keyboard, Pressable, SafeAreaView, StatusBar } from "react-native";
 import styles from "./style";
 import Title from "../Title";
 
@@ -15,6 +15,11 @@ const HomeScreen = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
+     <StatusBar
+        animated={true}
+        backgroundColor="#000000"
+        barStyle='dark-content'
+      />
       <Title title="CHAMAGOL"/>
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
 
