@@ -13,20 +13,26 @@ import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.service.UsuarioService;
 
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/user")
 public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
-    
+
     public UsuarioController(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public void create(@RequestBody UsuarioDTO dadosUsuario) {
-        usuarioRepository.save(new Usuario(dadosUsuario));
+    @Transactional
+    public void create(@RequestBody @Valid UsuarioDTO dadosUsuario) {
+        Usuario usuario = new Usuario(dadosUsuario);
+        System.out.println(usuario);
+        Usuario usuarioRepository_output = usuarioRepository.save(usuario);
+        System.out.println(usuarioRepository_output);
     }
 
 }
