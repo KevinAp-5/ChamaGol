@@ -30,7 +30,7 @@ public class Usuario {
     public Usuario(UsuarioDTO usuario) {
         this.nome = usuario.nome();
         this.email = usuario.email();
-        this.password = usuario.password();
+        this.senha = usuario.senha();
         this.Assinatura = usuario.assinatura();
     }
 
@@ -40,7 +40,7 @@ public class Usuario {
 
     public String nome;
     public String email;
-    public String password;
+    public String senha;
 
     @Enumerated(EnumType.STRING)
     public Assinatura Assinatura;

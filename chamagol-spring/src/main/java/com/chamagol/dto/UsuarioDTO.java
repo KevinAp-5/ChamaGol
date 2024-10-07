@@ -5,7 +5,7 @@ public record UsuarioDTO(
     Long id,
     String nome,
     String email,
-    String password,
+    String senha,
     Assinatura assinatura
 ){
 
