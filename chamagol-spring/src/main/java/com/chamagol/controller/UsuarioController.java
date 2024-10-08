@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.UsuarioDTO;
-import com.chamagol.dto.UsuarioListagem;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.service.UsuarioService;
 

@@ -5,6 +5,7 @@ import com.chamagol.enums.Status;
 import com.chamagol.enums.converters.StatusConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,11 +15,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
-import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.validator.constraints.Length;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioUpdate;
@@ -36,8 +37,6 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = "id")
 public class Usuario {
 
-    //TODO: Adicionar notations para os atributos da classe
-
     public Usuario(UsuarioDTO usuario) {
         this.nome = usuario.nome();
         this.email = usuario.email();
@@ -51,13 +50,26 @@ public class Usuario {
     @JsonProperty("_id")
     private Long id;
 
+    @NotBlank
+    @Length(min = 2, max = 100)
+    @Column(nullable = false)
     private String nome;
+
+    @NotBlank
+    @Length(min = 5, max = 100)
+    @Column(length = 100, nullable = false)
     private String email;
+
+    @Length(min = 8, max = 100)
     private String senha;
 
+    @NotNull
+    @Column(length = 100, nullable = false)
     @Convert(converter = StatusConverter.class)
     private Status status = Status.ACTIVE;
 
+    @NotNull
+    @Column(length = 24, nullable = false)
     @Enumerated(EnumType.STRING)
     private Assinatura assinatura;
 
