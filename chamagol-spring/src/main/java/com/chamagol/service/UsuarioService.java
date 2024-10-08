@@ -1,6 +1,7 @@
 package com.chamagol.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.dto.mapper.UsuarioMapper;
+import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
@@ -47,6 +49,11 @@ public class UsuarioService {
         .toList();
     }
 
+    public UsuarioDTO findById(@NotNull @Positive Long id) {
+        return usuarioRepository.findById(id).map(usuarioMapper::toDTO)
+            .orElseThrow(NoSuchElementException:: new);
+    }
+
     @Transactional
     public UsuarioDTO update(@Valid @NotNull UsuarioUpdate usuarioUpdate) {
         var user = usuarioRepository.getReferenceById(usuarioUpdate.id());
@@ -60,4 +67,9 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    @Transactional
+    public void deleteSoft(@NotNull @Positive Long id) {
+        Usuario usuario = usuarioRepository.getReferenceById(id);
+        usuario.inactiveUsario();
+    }
 }

@@ -39,8 +39,8 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<UsuarioListagem> lista() {
-        return usuarioService.listagem();
+    public List<UsuarioDTO> lista() {
+        return usuarioService.lista();
     }
 
     @PutMapping
@@ -49,6 +49,12 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteSoft(@PathVariable("id") @NotNull @Positive Long id) {
+        usuarioService.deleteSoft(id);
+    }
+
+    @DeleteMapping("deletar/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void delete (@PathVariable("id") @NotNull @Positive Long id) {
         usuarioService.delete(id);
