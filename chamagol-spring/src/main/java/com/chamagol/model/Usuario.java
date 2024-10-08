@@ -11,8 +11,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 
 import com.chamagol.dto.UsuarioDTO;
+import com.chamagol.dto.UsuarioUpdate;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -49,5 +52,15 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     private Assinatura assinatura;
 
+    public void updateUsuario(@Valid UsuarioUpdate usuarioUpdate) {
+        if (usuarioUpdate.nome() != null) {
+            this.nome = usuarioUpdate.nome();
+        }
+
+        if (usuarioUpdate.email() != null) {
+            this.email = usuarioUpdate.email();
+        }
+
+    }
 
 }

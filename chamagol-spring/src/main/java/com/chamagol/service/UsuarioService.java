@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
+import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.dto.mapper.UsuarioMapper;
 import com.chamagol.repository.UsuarioRepository;
 
@@ -43,5 +44,13 @@ public class UsuarioService {
         .stream()
         .map(UsuarioListagem:: new)
         .toList();
+    }
+
+    @Transactional
+    public UsuarioDTO update(@Valid @NotNull UsuarioUpdate usuarioUpdate) {
+        var user = usuarioRepository.getReferenceById(usuarioUpdate.id());
+        user.updateUsuario(usuarioUpdate);
+
+        return usuarioMapper.toDTO(user);
     }
 }
