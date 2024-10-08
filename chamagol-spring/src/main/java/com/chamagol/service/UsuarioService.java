@@ -15,6 +15,7 @@ import com.chamagol.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @Service
 @Validated
@@ -53,4 +54,10 @@ public class UsuarioService {
 
         return usuarioMapper.toDTO(user);
     }
+
+    @Transactional
+    public void delete(@NotNull @Positive Long id) {
+        usuarioRepository.deleteById(id);
+    }
+
 }

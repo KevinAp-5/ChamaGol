@@ -2,7 +2,6 @@ package com.chamagol.model;
 
 import com.chamagol.enums.Assinatura;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.EnumNaming;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
