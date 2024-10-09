@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.UsuarioDTO;
+import com.chamagol.dto.UsuarioListagem;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.service.UsuarioService;
 
@@ -38,8 +39,13 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<UsuarioDTO> lista() {
-        return usuarioService.lista();
+    public List<UsuarioListagem> lista() {
+        return usuarioService.listagemActive();
+    }
+
+    @GetMapping("/inactive")
+    public List<UsuarioListagem> listaInactive() {
+        return usuarioService.listagemInactive();
     }
 
     @PutMapping
@@ -57,5 +63,10 @@ public class UsuarioController {
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void delete (@PathVariable("id") @NotNull @Positive Long id) {
         usuarioService.delete(id);
+    }
+ 
+    @PutMapping("ativar/{id}")
+    public UsuarioDTO activate(@PathVariable("id") @NotNull @Positive Long id) {
+        return usuarioService.activate(id);
     }
 }

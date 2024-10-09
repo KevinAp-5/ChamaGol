@@ -18,7 +18,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.validator.constraints.Length;
 
 import com.chamagol.dto.UsuarioDTO;
@@ -31,7 +30,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "usuario")
 @Entity(name = "usuarios")
 
-@SQLRestriction("status = 'Active'")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
@@ -83,7 +81,12 @@ public class Usuario {
         }
     }
 
-    public void inactiveUsario() {
+    public void inactivateUsario() {
         this.status = Status.INACTIVE;
-    } 
+
+    }
+
+    public void activateUsuario() {
+        this.status = Status.ACTIVE;
+    }
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -12,6 +13,7 @@ import com.chamagol.dto.UsuarioListagem;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.dto.mapper.UsuarioMapper;
 import com.chamagol.model.Usuario;
+import com.chamagol.enums.Status;
 import com.chamagol.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
@@ -42,8 +44,15 @@ public class UsuarioService {
         .collect(Collectors.toList());
     }
 
-    public List<UsuarioListagem> listagem() {
-        return usuarioRepository.findAll()
+    public List<UsuarioListagem> listagemActive() {
+        return usuarioRepository.findByStatus(Status.ACTIVE)
+        .stream()
+        .map(UsuarioListagem:: new)
+        .toList();
+    }
+
+    public List<UsuarioListagem> listagemInactive() {
+        return usuarioRepository.findByStatus(Status.INACTIVE)
         .stream()
         .map(UsuarioListagem:: new)
         .toList();
@@ -70,6 +79,14 @@ public class UsuarioService {
     @Transactional
     public void deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
-        usuario.inactiveUsario();
+        usuario.inactivateUsario();
     }
+
+    @Transactional
+    public UsuarioDTO activate(@NotNull @Positive Long id) {
+        Usuario usuario = usuarioRepository.getReferenceById(id);
+        usuario.activateUsuario();
+        return usuarioMapper.toDTO(usuario);
+    }
+
 }
