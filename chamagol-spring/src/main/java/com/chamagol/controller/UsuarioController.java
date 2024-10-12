@@ -54,6 +54,13 @@ public class UsuarioController {
         return usuarioService.listagemInactive();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponseEntityBody> findById(
+        @PathVariable("id") @NotNull @Positive Long id
+        ) {
+        return usuarioService.findById(id);
+    }
+
     @PutMapping
     public ResponseEntity<UsuarioResponseEntityBody> update(
         @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {

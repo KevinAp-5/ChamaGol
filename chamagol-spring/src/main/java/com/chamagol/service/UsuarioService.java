@@ -76,11 +76,10 @@ public class UsuarioService {
         return ResponseEntity.ok(lista);
     }
 
-    public ResponseEntity<UsuarioDTO> findById(@NotNull @Positive Long id) {
-        var user = usuarioRepository.findById(id).map(usuarioMapper::toDTO)
-            .orElseThrow(NoSuchElementException:: new);
+    public ResponseEntity<UsuarioResponseEntityBody> findById(@NotNull @Positive Long id) {
+        var user = usuarioRepository.getReferenceById(id);
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(new UsuarioResponseEntityBody(user));
     }
 
     @Transactional
