@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
@@ -34,8 +35,18 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioDTO create(@Valid @NotNull UsuarioDTO usuarioDTO) {
-        return usuarioMapper.toDTO(usuarioRepository.save(usuarioMapper.toEntity(usuarioDTO)));
+    public ResponseEntity<UsuarioResponseEntityBody> create(
+        @Valid @NotNull UsuarioDTO usuarioDTO,
+        UriComponentsBuilder uriComponentsBuilder
+        ) {
+        
+        var usuario = usuarioMapper.toEntity(usuarioDTO);
+        usuarioRepository.save(usuario);
+
+        var uri = uriComponentsBuilder.path("/api/{id}")
+            .buildAndExpand(usuario.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
     }
 
     public ResponseEntity<List<UsuarioDTO>> lista() {

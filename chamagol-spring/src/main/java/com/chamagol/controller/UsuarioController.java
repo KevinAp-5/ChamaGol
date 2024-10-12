@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
@@ -36,8 +37,11 @@ public class UsuarioController {
 
     @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public UsuarioDTO create(@RequestBody @Valid @NotNull UsuarioDTO usuarioDTO) {
-        return usuarioService.create(usuarioDTO);
+    public ResponseEntity<UsuarioResponseEntityBody> create(
+        @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
+        UriComponentsBuilder uriComponentsBuilder
+        ) {
+        return usuarioService.create(usuarioDTO, uriComponentsBuilder);
     }
 
     @GetMapping
