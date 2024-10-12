@@ -3,6 +3,7 @@ package com.chamagol.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
+import com.chamagol.dto.UsuarioResponseEntityBody;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.service.UsuarioService;
 
@@ -23,7 +25,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -32,41 +34,42 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @PostMapping
+    @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
     public UsuarioDTO create(@RequestBody @Valid @NotNull UsuarioDTO usuarioDTO) {
         return usuarioService.create(usuarioDTO);
     }
 
     @GetMapping
-    public List<UsuarioListagem> lista() {
+    public ResponseEntity<List<UsuarioListagem>> lista() {
         return usuarioService.listagemActive();
     }
 
     @GetMapping("/inactive")
-    public List<UsuarioListagem> listaInactive() {
+    public ResponseEntity<List<UsuarioListagem>> listaInactive() {
         return usuarioService.listagemInactive();
     }
 
     @PutMapping
-    public UsuarioDTO update(@RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
+    public ResponseEntity<UsuarioResponseEntityBody> update(
+        @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         return usuarioService.update(usuarioUpdate);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public void deleteSoft(@PathVariable("id") @NotNull @Positive Long id) {
-        usuarioService.deleteSoft(id);
+    public ResponseEntity<Void> deleteSoft(@PathVariable("id") @NotNull @Positive Long id) {
+        return usuarioService.deleteSoft(id);
     }
 
     @DeleteMapping("deletar/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public void delete (@PathVariable("id") @NotNull @Positive Long id) {
-        usuarioService.delete(id);
+    public ResponseEntity<Void> delete (@PathVariable("id") @NotNull @Positive Long id) {
+        return usuarioService.delete(id);
     }
  
     @PutMapping("ativar/{id}")
-    public UsuarioDTO activate(@PathVariable("id") @NotNull @Positive Long id) {
+    public ResponseEntity<Void> activate(@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.activate(id);
     }
 }

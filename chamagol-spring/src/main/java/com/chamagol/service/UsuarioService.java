@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioListagem;
+import com.chamagol.dto.UsuarioResponseEntityBody;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.dto.mapper.UsuarioMapper;
 import com.chamagol.model.Usuario;
@@ -37,56 +38,69 @@ public class UsuarioService {
         return usuarioMapper.toDTO(usuarioRepository.save(usuarioMapper.toEntity(usuarioDTO)));
     }
 
-    public List<UsuarioDTO> lista() {
-        return usuarioRepository.findAll()
+    public ResponseEntity<List<UsuarioDTO>> lista() {
+        var lista = usuarioRepository.findAll()
         .stream()
         .map(usuarioMapper::toDTO)
         .collect(Collectors.toList());
+
+        return ResponseEntity.ok(lista);
     }
 
-    public List<UsuarioListagem> listagemActive() {
-        return usuarioRepository.findByStatus(Status.ACTIVE)
+    public ResponseEntity<List<UsuarioListagem>> listagemActive() {
+        var lista = usuarioRepository.findByStatus(Status.ACTIVE)
         .stream()
         .map(UsuarioListagem:: new)
         .toList();
+
+        return ResponseEntity.ok(lista);
     }
 
-    public List<UsuarioListagem> listagemInactive() {
-        return usuarioRepository.findByStatus(Status.INACTIVE)
+    public ResponseEntity<List<UsuarioListagem>> listagemInactive() {
+        var lista = usuarioRepository.findByStatus(Status.INACTIVE)
         .stream()
         .map(UsuarioListagem:: new)
         .toList();
+
+        return ResponseEntity.ok(lista);
     }
 
-    public UsuarioDTO findById(@NotNull @Positive Long id) {
-        return usuarioRepository.findById(id).map(usuarioMapper::toDTO)
+    public ResponseEntity<UsuarioDTO> findById(@NotNull @Positive Long id) {
+        var user = usuarioRepository.findById(id).map(usuarioMapper::toDTO)
             .orElseThrow(NoSuchElementException:: new);
+
+        return ResponseEntity.ok(user);
     }
 
     @Transactional
-    public UsuarioDTO update(@Valid @NotNull UsuarioUpdate usuarioUpdate) {
+    public ResponseEntity<UsuarioResponseEntityBody> update(
+        @Valid @NotNull UsuarioUpdate usuarioUpdate
+        ) {
         var user = usuarioRepository.getReferenceById(usuarioUpdate.id());
         user.updateUsuario(usuarioUpdate);
 
-        return usuarioMapper.toDTO(user);
+        return ResponseEntity.ok(new UsuarioResponseEntityBody(user));
     }
 
     @Transactional
-    public void delete(@NotNull @Positive Long id) {
+    public ResponseEntity<Void> delete(@NotNull @Positive Long id) {
         usuarioRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Transactional
-    public void deleteSoft(@NotNull @Positive Long id) {
+    public ResponseEntity<Void> deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.inactivateUsario();
+
+        return ResponseEntity.noContent().build();
     }
 
     @Transactional
-    public UsuarioDTO activate(@NotNull @Positive Long id) {
+    public ResponseEntity<Void> activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.activateUsuario();
-        return usuarioMapper.toDTO(usuario);
+        return ResponseEntity.noContent().build();
     }
 
 }
