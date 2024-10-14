@@ -1,7 +1,6 @@
 package com.chamagol.service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -36,42 +35,41 @@ public class UsuarioService {
 
     @Transactional
     public ResponseEntity<UsuarioResponseEntityBody> create(
-        @Valid @NotNull UsuarioDTO usuarioDTO,
-        UriComponentsBuilder uriComponentsBuilder
-        ) {
-        
+            @Valid @NotNull UsuarioDTO usuarioDTO,
+            UriComponentsBuilder uriComponentsBuilder) {
+
         var usuario = usuarioMapper.toEntity(usuarioDTO);
         usuarioRepository.save(usuario);
 
         var uri = uriComponentsBuilder.path("/api/{id}")
-            .buildAndExpand(usuario.getId()).toUri();
+                .buildAndExpand(usuario.getId()).toUri();
 
         return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
     }
 
     public ResponseEntity<List<UsuarioDTO>> lista() {
         var lista = usuarioRepository.findAll()
-        .stream()
-        .map(usuarioMapper::toDTO)
-        .collect(Collectors.toList());
+                .stream()
+                .map(usuarioMapper::toDTO)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(lista);
     }
 
     public ResponseEntity<List<UsuarioListagem>> listagemActive() {
         var lista = usuarioRepository.findByStatus(Status.ACTIVE)
-        .stream()
-        .map(UsuarioListagem:: new)
-        .toList();
+                .stream()
+                .map(UsuarioListagem::new)
+                .toList();
 
         return ResponseEntity.ok(lista);
     }
 
     public ResponseEntity<List<UsuarioListagem>> listagemInactive() {
         var lista = usuarioRepository.findByStatus(Status.INACTIVE)
-        .stream()
-        .map(UsuarioListagem:: new)
-        .toList();
+                .stream()
+                .map(UsuarioListagem::new)
+                .toList();
 
         return ResponseEntity.ok(lista);
     }
@@ -84,8 +82,7 @@ public class UsuarioService {
 
     @Transactional
     public ResponseEntity<UsuarioResponseEntityBody> update(
-        @Valid @NotNull UsuarioUpdate usuarioUpdate
-        ) {
+            @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         var user = usuarioRepository.getReferenceById(usuarioUpdate.id());
         user.updateUsuario(usuarioUpdate);
 

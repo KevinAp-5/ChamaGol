@@ -3,6 +3,7 @@ import com.chamagol.enums.Assinatura;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record UsuarioDTO(
@@ -14,6 +15,7 @@ public record UsuarioDTO(
     String nome,
 
     @NotBlank
+    @Email
     String email,
 
     @NotBlank

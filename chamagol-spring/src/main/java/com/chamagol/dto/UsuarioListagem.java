@@ -4,6 +4,7 @@ import com.chamagol.enums.Assinatura;
 import com.chamagol.model.Usuario;
 
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,6 +16,7 @@ public record UsuarioListagem(
     String nome,
 
     @NotBlank
+    @Email
     String email,
 
     @Enumerated

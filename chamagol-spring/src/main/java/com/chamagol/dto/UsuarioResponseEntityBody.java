@@ -5,6 +5,7 @@ import com.chamagol.model.Usuario;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import com.chamagol.enums.Assinatura;
@@ -18,6 +19,7 @@ public record UsuarioResponseEntityBody(
     String nome,
 
     @NotBlank
+    @Email
     String Email,
 
     @NotBlank
