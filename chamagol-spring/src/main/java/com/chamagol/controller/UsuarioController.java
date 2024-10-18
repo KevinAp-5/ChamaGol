@@ -44,7 +44,7 @@ public class UsuarioController {
         return usuarioService.create(usuarioDTO, uriComponentsBuilder);
     }
 
-    @GetMapping
+    @GetMapping("/user")
     public ResponseEntity<List<UsuarioListagem>> lista() {
         return usuarioService.listagemActive();
     }
@@ -61,7 +61,7 @@ public class UsuarioController {
         return usuarioService.findById(id);
     }
 
-    @PutMapping
+    @PutMapping("/user")
     public ResponseEntity<UsuarioResponseEntityBody> update(
         @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         return usuarioService.update(usuarioUpdate);
@@ -73,13 +73,13 @@ public class UsuarioController {
         return usuarioService.deleteSoft(id);
     }
 
-    @DeleteMapping("deletar/{id}")
+    @DeleteMapping("/deletar/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> delete (@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.delete(id);
     }
  
-    @PutMapping("ativar/{id}")
+    @PutMapping("/ativar/{id}")
     public ResponseEntity<Void> activate(@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.activate(id);
     }
