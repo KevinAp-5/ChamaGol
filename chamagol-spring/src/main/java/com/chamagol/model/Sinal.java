@@ -14,24 +14,24 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 
-@Entity
-@Table(name = "sinal")
+@Table(name = "Sinal")
+@Entity(name = "sinais")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class Sinal {
 
     @NotNull
+    @JsonProperty("_id")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonProperty("_id")
     private Long id;
 
     @NotBlank
     private String campeonato;
 
     @NotBlank
-    private String times;
+    private String nomeTimes;
 
     @NotBlank
     private String tempoPartida;
