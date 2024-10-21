@@ -18,7 +18,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.hibernate.validator.constraints.Length;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.chamagol.dto.UsuarioDTO;
 import com.chamagol.dto.UsuarioUpdate;
@@ -33,7 +39,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Usuario {
+public class Usuario implements UserDetails{
 
     public Usuario(UsuarioDTO usuario) {
         this.nome = usuario.nome();
@@ -88,5 +94,21 @@ public class Usuario {
 
     public void activateUsuario() {
         this.status = Status.ACTIVE;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+        
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
     }
 }
