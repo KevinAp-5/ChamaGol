@@ -23,13 +23,12 @@ public class AutenticacaoController {
     }
 
     @PostMapping()
-    public ResponseEntity<?> userLogin(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao) {
+    public ResponseEntity<Object> userLogin(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao) {
         var token = new UsernamePasswordAuthenticationToken(
-                usuarioAutenticacao.nome(),
+                usuarioAutenticacao.email(),
                 usuarioAutenticacao.senha());
 
-        @SuppressWarnings("unused")
-        var autenticacao = authenticationManager.authenticate(token);
+        authenticationManager.authenticate(token);
 
         return ResponseEntity.ok().build();
     }
