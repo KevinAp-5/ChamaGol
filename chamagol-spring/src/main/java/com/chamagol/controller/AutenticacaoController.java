@@ -23,7 +23,7 @@ public class AutenticacaoController {
     }
 
     @PostMapping()
-    public ResponseEntity<Object> userLogin(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao) {
+    public ResponseEntity<?> userLogin(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao) {
         var token = new UsernamePasswordAuthenticationToken(
                 usuarioAutenticacao.nome(),
                 usuarioAutenticacao.senha());
