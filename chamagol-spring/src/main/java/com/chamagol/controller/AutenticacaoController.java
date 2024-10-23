@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.chamagol.dto.TokenDTO;
 import com.chamagol.dto.UsuarioAutenticacao;
+import com.chamagol.infra.TokenService;
+import com.chamagol.model.Usuario;
 
 import jakarta.validation.Valid;
 
@@ -17,9 +20,11 @@ import jakarta.validation.Valid;
 public class AutenticacaoController {
 
     private AuthenticationManager authenticationManager;
+    private TokenService tokenService;
 
-    public AutenticacaoController(AuthenticationManager authenticationManager) {
+    public AutenticacaoController(AuthenticationManager authenticationManager, TokenService tokenService) {
         this.authenticationManager = authenticationManager;
+        this.tokenService = tokenService;
     }
 
     @PostMapping()
@@ -27,9 +32,10 @@ public class AutenticacaoController {
         var token = new UsernamePasswordAuthenticationToken(
                 usuarioAutenticacao.email(),
                 usuarioAutenticacao.senha());
+        var auth = authenticationManager.authenticate(token);
 
-        authenticationManager.authenticate(token);
+        var tokenJWT = tokenService.getToken((Usuario) auth.getPrincipal());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new TokenDTO(tokenJWT));
     }
 }
