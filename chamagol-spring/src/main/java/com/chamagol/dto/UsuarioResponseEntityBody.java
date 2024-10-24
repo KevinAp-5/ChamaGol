@@ -1,46 +1,35 @@
 package com.chamagol.dto;
 
+import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-import com.chamagol.enums.Assinatura;
-
 public record UsuarioResponseEntityBody(
 
-    @JsonProperty("id")
-    Long id,
+    @JsonProperty("id") Long id,
 
-    @NotBlank
-    String nome,
+    @NotBlank String nome,
 
-    @NotBlank
-    @Email
-    String Email,
+    @NotBlank @Email String email,
 
-    @NotBlank
-    String senha,
-
-    @Enumerated
     Assinatura assinatura,
 
-    @Enumerated
     Status status
 
 ) {
 
+    // Construtor para criar a resposta com os dados do usuário
     public UsuarioResponseEntityBody(Usuario usuario) {
         this(
             usuario.getId(),
             usuario.getNome(),
             usuario.getEmail(),
-            usuario.getSenha(),
             usuario.getAssinatura(),
-            usuario.getStatus()
-        );
+            usuario.getStatus());
     }
+
 }

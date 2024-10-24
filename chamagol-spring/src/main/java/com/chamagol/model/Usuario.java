@@ -1,5 +1,7 @@
 package com.chamagol.model;
 
+import com.chamagol.dto.UsuarioDTO;
+import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.enums.converters.StatusConverter;
@@ -25,9 +27,6 @@ import org.hibernate.validator.constraints.Length;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import com.chamagol.dto.UsuarioDTO;
-import com.chamagol.dto.UsuarioUpdate;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

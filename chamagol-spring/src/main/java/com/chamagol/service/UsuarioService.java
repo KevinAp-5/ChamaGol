@@ -42,7 +42,7 @@ public class UsuarioService {
         var usuario = usuarioMapper.toEntity(usuarioDTO);
         usuarioRepository.save(usuario);
 
-        var uri = uriComponentsBuilder.path("/api/{id}")
+        var uri = uriComponentsBuilder.path("/api/user/{id}")
                 .buildAndExpand(usuario.getId()).toUri();
 
         return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
