@@ -1,5 +1,6 @@
 package com.chamagol.dto;
 import com.chamagol.enums.Assinatura;
+import com.chamagol.enums.Status;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Enumerated;
@@ -22,7 +23,10 @@ public record UsuarioDTO(
     String senha,
 
     @Enumerated
-    Assinatura assinatura
-){
+    Assinatura assinatura,
 
+    @Enumerated
+    Status status
+){
+    
 }

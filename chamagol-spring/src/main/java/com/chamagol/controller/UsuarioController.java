@@ -35,7 +35,7 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @PostMapping("/register")
+    @PostMapping("/user/registrar")
     @ResponseStatus(code = HttpStatus.CREATED)
     public ResponseEntity<UsuarioResponseEntityBody> create(
         @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
@@ -44,42 +44,42 @@ public class UsuarioController {
         return usuarioService.create(usuarioDTO, uriComponentsBuilder);
     }
 
-    @GetMapping("/user")
+    @GetMapping("/user/")
     public ResponseEntity<List<UsuarioListagem>> lista() {
         return usuarioService.listagemActive();
     }
 
-    @GetMapping("/inactive")
+    @GetMapping("/user/inativos")
     public ResponseEntity<List<UsuarioListagem>> listaInactive() {
         return usuarioService.listagemInactive();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/user/{id}")
     public ResponseEntity<UsuarioResponseEntityBody> findById(
         @PathVariable("id") @NotNull @Positive Long id
         ) {
         return usuarioService.findById(id);
     }
 
-    @PutMapping("/user")
+    @PutMapping("/user/")
     public ResponseEntity<UsuarioResponseEntityBody> update(
         @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         return usuarioService.update(usuarioUpdate);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/user/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteSoft(@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.deleteSoft(id);
     }
 
-    @DeleteMapping("/deletar/{id}")
+    @DeleteMapping("/user/harddelete/{id}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> delete (@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.delete(id);
     }
  
-    @PutMapping("/ativar/{id}")
+    @PutMapping("/user/ativar/{id}")
     public ResponseEntity<Void> activate(@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.activate(id);
     }

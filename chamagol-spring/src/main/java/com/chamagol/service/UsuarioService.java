@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -13,8 +14,8 @@ import com.chamagol.dto.UsuarioListagem;
 import com.chamagol.dto.UsuarioResponseEntityBody;
 import com.chamagol.dto.UsuarioUpdate;
 import com.chamagol.dto.mapper.UsuarioMapper;
-import com.chamagol.model.Usuario;
 import com.chamagol.enums.Status;
+import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;

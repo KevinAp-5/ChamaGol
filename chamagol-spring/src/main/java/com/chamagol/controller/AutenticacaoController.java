@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.TokenDTO;
 import com.chamagol.dto.UsuarioAutenticacao;
-import com.chamagol.infra.TokenService;
 import com.chamagol.model.Usuario;
+import com.chamagol.service.TokenService;
 
 import jakarta.validation.Valid;
 
