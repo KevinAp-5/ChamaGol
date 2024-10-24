@@ -26,12 +26,15 @@ import jakarta.validation.constraints.Positive;
 @Service
 @Validated
 public class UsuarioService {
-    public final UsuarioRepository usuarioRepository;
-    public final UsuarioMapper usuarioMapper;
+    private UsuarioRepository usuarioRepository;
+    private UsuarioMapper usuarioMapper;
+    private PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
+            PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -40,6 +43,8 @@ public class UsuarioService {
             UriComponentsBuilder uriComponentsBuilder) {
 
         var usuario = usuarioMapper.toEntity(usuarioDTO);
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+
         usuarioRepository.save(usuario);
 
         var uri = uriComponentsBuilder.path("/api/user/{id}")
