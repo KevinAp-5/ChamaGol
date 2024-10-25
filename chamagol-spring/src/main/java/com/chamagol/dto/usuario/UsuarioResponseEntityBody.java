@@ -1,5 +1,6 @@
 package com.chamagol.dto.usuario;
 
+import com.chamagol.dto.ApiResponse;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record UsuarioResponseEntityBody(
+public record UsuarioResponseEntityBody (
 
     @JsonProperty("id") Long id,
 
@@ -20,7 +21,7 @@ public record UsuarioResponseEntityBody(
 
     Status status
 
-) {
+)  implements ApiResponse{
 
     // Construtor para criar a resposta com os dados do usuário
     public UsuarioResponseEntityBody(Usuario usuario) {

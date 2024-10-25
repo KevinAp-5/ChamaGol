@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.chamagol.dto.ApiResponse;
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
@@ -37,7 +38,7 @@ public class UsuarioController {
 
     @PostMapping("/user/registrar")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public ResponseEntity<UsuarioResponseEntityBody> create(
+    public ResponseEntity<ApiResponse> create(
         @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
         UriComponentsBuilder uriComponentsBuilder
         ) {
