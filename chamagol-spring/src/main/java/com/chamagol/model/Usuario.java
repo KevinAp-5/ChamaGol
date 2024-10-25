@@ -1,7 +1,7 @@
 package com.chamagol.model;
 
-import com.chamagol.dto.UsuarioDTO;
-import com.chamagol.dto.UsuarioUpdate;
+import com.chamagol.dto.usuario.UsuarioDTO;
+import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.enums.converters.StatusConverter;

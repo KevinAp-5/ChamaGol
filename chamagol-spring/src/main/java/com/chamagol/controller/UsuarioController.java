@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.chamagol.dto.UsuarioDTO;
-import com.chamagol.dto.UsuarioListagem;
-import com.chamagol.dto.UsuarioResponseEntityBody;
-import com.chamagol.dto.UsuarioUpdate;
+import com.chamagol.dto.usuario.UsuarioDTO;
+import com.chamagol.dto.usuario.UsuarioListagem;
+import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
+import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.service.UsuarioService;
 
 import jakarta.validation.Valid;

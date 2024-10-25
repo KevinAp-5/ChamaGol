@@ -1,4 +1,4 @@
-package com.chamagol.dto;
+package com.chamagol.dto.sinal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

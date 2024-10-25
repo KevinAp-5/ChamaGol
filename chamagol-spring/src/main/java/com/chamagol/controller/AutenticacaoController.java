@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chamagol.dto.TokenDTO;
-import com.chamagol.dto.UsuarioAutenticacao;
+import com.chamagol.dto.token.TokenDTO;
+import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.model.Usuario;
 import com.chamagol.service.TokenService;
 

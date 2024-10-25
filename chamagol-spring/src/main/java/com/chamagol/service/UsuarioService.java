@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.chamagol.dto.UsuarioDTO;
-import com.chamagol.dto.UsuarioListagem;
-import com.chamagol.dto.UsuarioResponseEntityBody;
-import com.chamagol.dto.UsuarioUpdate;
-import com.chamagol.dto.mapper.UsuarioMapper;
+import com.chamagol.dto.usuario.UsuarioDTO;
+import com.chamagol.dto.usuario.UsuarioListagem;
+import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
+import com.chamagol.dto.usuario.UsuarioUpdate;
+import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;

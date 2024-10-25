@@ -1,4 +1,4 @@
-package com.chamagol.dto;
+package com.chamagol.dto.usuario;
 
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;

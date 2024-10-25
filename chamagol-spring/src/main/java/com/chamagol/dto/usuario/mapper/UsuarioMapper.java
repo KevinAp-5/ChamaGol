@@ -1,8 +1,8 @@
-package com.chamagol.dto.mapper;
+package com.chamagol.dto.usuario.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.chamagol.dto.UsuarioDTO;
+import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.model.Usuario;
 
 @Component
