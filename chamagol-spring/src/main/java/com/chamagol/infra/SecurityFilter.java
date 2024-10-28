@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -31,20 +33,29 @@ public class SecurityFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         var token = pegarToken(request);
-        if (token != null) {
-            var subject = tokenService.getSubject(token);
-            var usuario = usuarioRepository.findByEmail(subject);
-
-            var authentication = new UsernamePasswordAuthenticationToken(
-                usuario,
-                null,
-                usuario.getAuthorities()
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (token != null && autenticarUsuario(token)) {
+            SecurityContextHolder.getContext().setAuthentication(criarAutenticacao(token));
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean autenticarUsuario(String token) {
+        var subject = tokenService.getSubject(token);
+        return usuarioRepository.existsByEmail(subject);
+    }
+
+    private UsernamePasswordAuthenticationToken criarAutenticacao(String token) {
+        var subject = tokenService.getSubject(token);
+
+        UserDetails usuario = usuarioRepository.findByEmail(subject)
+        .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+
+        return new UsernamePasswordAuthenticationToken(
+            usuario,
+            null,
+            usuario.getAuthorities()
+        );
     }
 
     private String pegarToken(HttpServletRequest request) {

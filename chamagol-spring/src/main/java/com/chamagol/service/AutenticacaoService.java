@@ -3,6 +3,7 @@ package com.chamagol.service;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.chamagol.repository.UsuarioRepository;
@@ -18,7 +19,9 @@ public class AutenticacaoService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        return usuarioRepository.findByEmail(username);
+        return usuarioRepository.findByEmail(username).orElseThrow(
+            () -> new UsernameNotFoundException("Usuário não encontrado")
+        );
     }
 
 }
