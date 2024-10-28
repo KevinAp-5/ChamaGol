@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.chamagol.exception.TokenCreationException;
+import com.chamagol.exception.TokenInvalid;
 import com.chamagol.model.Usuario;
 
 @Service
@@ -28,6 +30,20 @@ public class TokenService {
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             throw new TokenCreationException("Erro ao gerar token", exception);
+        }
+    }
+
+    public String getSubject(String tokenJWT) {
+        try {
+            var algorithm = Algorithm.HMAC256(secret);
+            return JWT.require(algorithm)
+                    .withIssuer("ChamaGol")
+                    .build()
+                    .verify(tokenJWT)
+                    .getSubject();
+
+        } catch (JWTVerificationException exception) {
+            throw new TokenInvalid("Token inválido ou expirado");
         }
     }
 
