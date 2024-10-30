@@ -2,6 +2,7 @@ package com.chamagol.infra;
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,8 +24,13 @@ public class SecurityFilter extends OncePerRequestFilter {
     private TokenService tokenService;
     private UsuarioRepository usuarioRepository;
 
-    public SecurityFilter(TokenService tokenService, UsuarioRepository usuarioRepository) {
+    @Autowired
+    public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
+    }
+
+    @Autowired
+    public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
