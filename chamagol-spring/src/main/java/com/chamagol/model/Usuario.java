@@ -1,5 +1,13 @@
 package com.chamagol.model;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.hibernate.validator.constraints.Length;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
@@ -19,15 +27,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.Collection;
-import java.util.List;
-
-import org.hibernate.validator.constraints.Length;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -63,8 +62,11 @@ public class Usuario implements UserDetails{
     @Column(length = 100, nullable = false)
     private String email;
 
-    @Length(min = 8, max = 100)
+    @Length(min = 8, max = 200)
     private String senha;
+
+    @Column(name = "resettoken")
+    private String resetToken;
 
     @NotNull
     @Column(length = 100, nullable = false)
