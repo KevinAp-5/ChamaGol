@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.token.TokenDTO;
@@ -17,6 +18,7 @@ import com.chamagol.service.PasswordResetService;
 import com.chamagol.service.TokenService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -52,9 +54,12 @@ public class AutenticacaoController {
     }
 
     @PostMapping("reset-password/confirm")
-    public ResponseEntity<String> confirmarSenhaReset(@RequestBody @Valid ConfirmPasswordBody confirmPasswordBody) {
+    public ResponseEntity<String> confirmarSenhaReset(
+            @RequestParam("token") @NotBlank String token,
+            @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody) {
+
         boolean resetado = passwordResetService.resetPassword(
-            confirmPasswordBody.token(),
+            token,
             confirmPasswordBody.novaSenha()
         );
 
