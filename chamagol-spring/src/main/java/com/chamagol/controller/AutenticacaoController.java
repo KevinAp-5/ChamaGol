@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.token.TokenDTO;
-import com.chamagol.dto.usuario.ConfirmPasswordBody;
-import com.chamagol.dto.usuario.ResetPasswordBody;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
+import com.chamagol.dto.util.ConfirmPasswordBody;
+import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.model.Usuario;
 import com.chamagol.service.PasswordResetService;
 import com.chamagol.service.TokenService;

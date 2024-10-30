@@ -1,4 +1,4 @@
-package com.chamagol.dto.usuario;
+package com.chamagol.dto.util;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,4 +1,4 @@
-package com.chamagol.dto;
+package com.chamagol.dto.util;
 
 public interface ApiResponse {
 

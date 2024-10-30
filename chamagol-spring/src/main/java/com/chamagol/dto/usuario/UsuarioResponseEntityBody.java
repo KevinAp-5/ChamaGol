@@ -1,6 +1,6 @@
 package com.chamagol.dto.usuario;
 
-import com.chamagol.dto.ApiResponse;
+import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
