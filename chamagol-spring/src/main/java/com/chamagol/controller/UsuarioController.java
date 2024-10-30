@@ -84,4 +84,5 @@ public class UsuarioController {
     public ResponseEntity<Void> activate(@PathVariable("id") @NotNull @Positive Long id) {
         return usuarioService.activate(id);
     }
+
 }
