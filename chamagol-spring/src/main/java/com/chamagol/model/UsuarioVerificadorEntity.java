@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity(name = "UsuarioVerificador")
-@Table(name = "usuarioVerificador")
+@Table(name = "usuarioVerificador", schema = "usuarios")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
