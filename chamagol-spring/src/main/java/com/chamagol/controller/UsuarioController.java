@@ -1,18 +1,11 @@
+// UsuarioController.java
 package com.chamagol.controller;
 
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.usuario.UsuarioDTO;
@@ -27,7 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -36,7 +29,7 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @PostMapping("/user/registrar")
+    @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
     public ResponseEntity<ApiResponse> create(
         @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
@@ -45,44 +38,51 @@ public class UsuarioController {
         return usuarioService.create(usuarioDTO, uriComponentsBuilder);
     }
 
-    @GetMapping("/user/")
-    public ResponseEntity<List<UsuarioListagem>> lista() {
-        return usuarioService.listagemActive();
+    @GetMapping
+    public ResponseEntity<List<UsuarioListagem>> listActiveUsers() {
+        return usuarioService.listActive();
     }
 
-    @GetMapping("/user/inativos")
-    public ResponseEntity<List<UsuarioListagem>> listaInactive() {
-        return usuarioService.listagemInactive();
+    @GetMapping("/inactive")
+    public ResponseEntity<List<UsuarioListagem>> listInactiveUsers() {
+        return usuarioService.listInactive();
     }
 
-    @GetMapping("/user/{id}")
-    public ResponseEntity<UsuarioResponseEntityBody> findById(
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponseEntityBody> getUserById(
         @PathVariable("id") @NotNull @Positive Long id
-        ) {
+    ) {
         return usuarioService.findById(id);
     }
 
-    @PutMapping("/user/")
-    public ResponseEntity<UsuarioResponseEntityBody> update(
-        @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
-        return usuarioService.update(usuarioUpdate);
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseEntityBody> updateUser(
+        @PathVariable("id") @NotNull @Positive Long id,
+        @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate
+    ) {
+        return usuarioService.update(id, usuarioUpdate);
     }
 
-    @DeleteMapping("/user/{id}")
-    @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteSoft(@PathVariable("id") @NotNull @Positive Long id) {
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> softDeleteUser(
+        @PathVariable("id") @NotNull @Positive Long id
+    ) {
         return usuarioService.deleteSoft(id);
     }
 
-    @DeleteMapping("/user/harddelete/{id}")
-    @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> delete (@PathVariable("id") @NotNull @Positive Long id) {
+    @DeleteMapping("/{id}/hard")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> hardDeleteUser(
+        @PathVariable("id") @NotNull @Positive Long id
+    ) {
         return usuarioService.delete(id);
     }
- 
-    @PutMapping("/user/ativar/{id}")
-    public ResponseEntity<Void> activate(@PathVariable("id") @NotNull @Positive Long id) {
+
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<Void> activateUser(
+        @PathVariable("id") @NotNull @Positive Long id
+    ) {
         return usuarioService.activate(id);
     }
-
 }
