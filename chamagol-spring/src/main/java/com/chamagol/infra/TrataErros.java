@@ -92,16 +92,16 @@ public class TrataErros {
         return new ResponseEntity<>("Problema de autenticação: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(TokenInvalid.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<String> handleTokenInvalidException(TokenInvalid ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("erro: " + ex.getMessage()); // Retorna a mensagem "Token inválido ou expirado"
+    }
+
     // Tratamento para erros internos do servidor (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralExceptions(Exception ex) {
         return new ResponseEntity<>("Erro interno do servidor: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    // Tratamento para os erros de token ( 401 Internal server Error)
-    @ExceptionHandler(TokenInvalid.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-        return new ResponseEntity<>("Erro de token" + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

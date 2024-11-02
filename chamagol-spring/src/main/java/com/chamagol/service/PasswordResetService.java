@@ -36,7 +36,7 @@ public class PasswordResetService {
 
 
     @Transactional
-    public void resetarSenhaEmail(String email) {
+    public boolean resetarSenhaEmail(String email) {
         Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
             () -> new UsernameNotFoundException("Usuário não encontrado" + email)
         );
@@ -52,6 +52,8 @@ public class PasswordResetService {
             "Cadastre uma nova senha",
             "Acesse o link abaixo para cadastrar uma nova senha: \n" + link
         );
+
+        return true;
     }
 
     private String resetPasswordLink(String token) {
