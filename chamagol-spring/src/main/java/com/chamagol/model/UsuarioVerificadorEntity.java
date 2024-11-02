@@ -1,9 +1,7 @@
-package com.chamagol.entity;
+package com.chamagol.model;
 
 import java.time.Instant;
 import java.util.UUID;
-
-import com.chamagol.model.Usuario;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class UsuarioVerificadorTokenEntity {
+public class UsuarioVerificadorEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
