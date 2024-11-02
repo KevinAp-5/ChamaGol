@@ -31,7 +31,8 @@ public class SecurityConfigurations {
 				.authorizeHttpRequests(requests -> requests
 						.requestMatchers(HttpMethod.POST, "/api/auth/login",
 						"/api/auth/reset-password",
-						"/api/auth/reset-password/confirm*")
+						"/api/auth/reset-password/confirm*",
+						"/api/users")
 						.permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
