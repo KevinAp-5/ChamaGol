@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -114,4 +116,14 @@ public class UsuarioService {
         return ResponseEntity.noContent().build();
     }
 
+    public ResponseEntity<UsuarioListagem> getMe() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
+            () -> new UsernameNotFoundException("Usuário não encontrado: " + email)
+        );
+
+        return ResponseEntity.ok(new UsuarioListagem(user));
+    }
 }

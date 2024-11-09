@@ -80,4 +80,9 @@ public class UsuarioController {
     ) {
         return usuarioService.activate(id);
     }
+
+    @GetMapping("me")
+    public ResponseEntity<UsuarioListagem> getAuthenticatedUser() {
+        return usuarioService.getMe();
+    }
 }
