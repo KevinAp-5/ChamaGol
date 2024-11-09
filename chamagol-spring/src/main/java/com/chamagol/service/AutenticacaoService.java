@@ -1,6 +1,8 @@
 package com.chamagol.service;
 
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +26,12 @@ public class AutenticacaoService implements UserDetailsService {
     private UsuarioRepository usuarioRepository;
     private TokenService tokenService;
     private PasswordResetService passwordResetService;
+    private RegistroService registroService;
+
+    @Autowired
+    public void setRegistroService(RegistroService registroService) {
+        this.registroService = registroService;
+    }
 
     @Autowired
     public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
@@ -67,4 +75,9 @@ public class AutenticacaoService implements UserDetailsService {
         }
         return ResponseEntity.ok("Senha alterada com sucesso");
     }
+
+    public ResponseEntity<String> confirmUser(UUID uuid) {
+        return registroService.confirmUser(uuid);
+    }
+
 }

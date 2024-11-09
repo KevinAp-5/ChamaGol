@@ -1,17 +1,12 @@
 package com.chamagol.service;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -21,14 +16,10 @@ import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
 import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
-import com.chamagol.dto.util.MensagemResponse;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
-import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioRepository;
-import com.chamagol.repository.UsuarioVerificadorRepository;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -38,58 +29,19 @@ import jakarta.validation.constraints.Positive;
 public class UsuarioService {
     private UsuarioRepository usuarioRepository;
     private UsuarioMapper usuarioMapper;
-    private PasswordEncoder passwordEncoder;
-    private UsuarioVerificadorRepository usuarioVerificadorRepository;
-    private EmailService emailService;
-
-    @Autowired
-    public void setEmailService(EmailService emailService) {
-        this.emailService = emailService;
-    }
+    private RegistroService registroService;
 
     public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
-            PasswordEncoder passwordEncoder) {
+            RegistroService registroService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @Autowired
-    public void setUsuarioVerificadorRepository(UsuarioVerificadorRepository usuarioVerificadorRepository) {
-        this.usuarioVerificadorRepository = usuarioVerificadorRepository;
+        this.registroService = registroService;
     }
 
     @Transactional
     public ResponseEntity<ApiResponse> create(
-            @Valid @NotNull UsuarioDTO usuarioDTO,
-            UriComponentsBuilder uriComponentsBuilder) {
-
-        var usuario = usuarioMapper.toEntity(usuarioDTO);
-        if (Boolean.TRUE.equals(usuarioRepository.existsByEmail(usuario.getEmail()))) {
-            return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(new MensagemResponse("E-mail já existente"));
-        }
-
-        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
-        usuarioRepository.save(usuario);
-
-        UsuarioVerificadorEntity usuarioVerificador = new UsuarioVerificadorEntity();
-        usuarioVerificador.setUsuario(usuario);
-        usuarioVerificador.setUuid(UUID.randomUUID());
-        usuarioVerificador.setDataExpira(Instant.now().plus(15, ChronoUnit.MINUTES));
-        usuarioVerificadorRepository.save(usuarioVerificador);
-
-        var uri = uriComponentsBuilder.path("/api/user/{id}")
-                .buildAndExpand(usuario.getId()).toUri();
-
-        emailService.sendEmail(
-            usuario.getEmail(),
-            "ChamaGol - Verificar e-mail",
-            "Você está recebendo um email de cadastro, o número de validação é: " + usuarioVerificador.getUuid()
-        );
-
-        return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
+            @Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
+        return registroService.createUser(usuarioDTO, uriComponentsBuilder);
     }
 
     public Boolean userExists(Usuario usuario) {
