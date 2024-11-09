@@ -71,7 +71,7 @@ public class Usuario implements UserDetails{
     @NotNull
     @Column(length = 100, nullable = false)
     @Convert(converter = StatusConverter.class)
-    private Status status = Status.ACTIVE;
+    private Status status = Status.INACTIVE;
 
     @NotNull
     @Column(length = 24, nullable = false)
