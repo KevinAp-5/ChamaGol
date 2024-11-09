@@ -1,5 +1,6 @@
 package com.chamagol.service;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.usuario.UsuarioDTO;
@@ -72,45 +74,100 @@ public class RegistroService {
     }
 
     @Transactional
-    public ResponseEntity<ApiResponse> createUser(@Valid @NotNull UsuarioDTO usuarioDTO,
-        UriComponentsBuilder uriComponentsBuilder) {
-        boolean emailvalido = emailValidator.test(usuarioDTO.email());
-        if (Boolean.FALSE.equals(emailvalido)) {
-            return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(new MensagemResponse("E-mail com formato inválido."));
+    public ResponseEntity<ApiResponse> createUser(
+            @Valid @NotNull UsuarioDTO usuarioDTO,
+            UriComponentsBuilder uriComponentsBuilder) {
+
+        // Validação do formato do e-mail
+        if (!isEmailValid(usuarioDTO.email())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new MensagemResponse("E-mail com formato inválido."));
         }
 
-        var usuario = usuarioMapper.toEntity(usuarioDTO);
-        boolean userExists = usuarioRepository.existsByEmail(usuario.getEmail());
-        if (Boolean.TRUE.equals(userExists)) {
-            return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(new MensagemResponse("E-mail já existente"));
+        // Verificação de e-mail existente
+        if (isEmailAlreadyRegistered(usuarioDTO.email())) {
+            // Envia um novo email para validar o email, se ele estiver inativo
+            return resendLink(usuarioDTO.email());
         }
 
+        // Criação do usuário
+        Usuario usuario = saveUsuario(usuarioDTO);
+
+        // Criação do verificador de usuário
+        UsuarioVerificadorEntity usuarioVerificador = createUsuarioVerificador(usuario);
+
+        // Envio de e-mail de confirmação
+        sendConfirmationEmail(usuario, usuarioVerificador);
+
+        // Construção do URI e retorno da resposta
+        URI uri = buildUserUri(uriComponentsBuilder, usuario.getId());
+        return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
+    }
+
+    private boolean isEmailValid(String email) {
+        return emailValidator.test(email);
+    }
+
+    private boolean isEmailAlreadyRegistered(String email) {
+        return usuarioRepository.existsByEmail(email);
+    }
+
+    private ResponseEntity<ApiResponse> resendLink(String email) {
+        Usuario usuario = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
+            () -> new UsernameNotFoundException("email não encontrado: " + email)
+        );
+
+        if (usuario.getStatus() == Status.ACTIVE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new MensagemResponse("Esse usuario já está ativo!"));
+        }
+
+        UsuarioVerificadorEntity verificador = usuarioVerificadorRepository.findByUsuarioId(usuario.getId()).orElseThrow();
+        updateVerificador(verificador);
+
+        sendConfirmationEmail(usuario, verificador);
+        return ResponseEntity.status(HttpStatus.OK).body(new MensagemResponse("Email de confirmação enviado."));
+
+    }
+
+    private void updateVerificador(UsuarioVerificadorEntity verificador) {
+        verificador.setUuid(UUID.randomUUID());
+        verificador.setDataExpira(Instant.now().plus(15, ChronoUnit.MINUTES));
+        usuarioVerificadorRepository.save(verificador);
+    }
+
+    private Usuario saveUsuario(UsuarioDTO usuarioDTO) {
+        Usuario usuario = usuarioMapper.toEntity(usuarioDTO);
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
-        usuarioRepository.save(usuario);
+        return usuarioRepository.save(usuario);
+    }
 
+    private UsuarioVerificadorEntity createUsuarioVerificador(Usuario usuario) {
         UsuarioVerificadorEntity usuarioVerificador = new UsuarioVerificadorEntity();
         usuarioVerificador.setUsuario(usuario);
         usuarioVerificador.setUuid(UUID.randomUUID());
         usuarioVerificador.setDataExpira(Instant.now().plus(15, ChronoUnit.MINUTES));
-        usuarioVerificadorRepository.save(usuarioVerificador);
+        return usuarioVerificadorRepository.save(usuarioVerificador);
+    }
 
-        var uri = uriComponentsBuilder.path("/api/user/{id}")
-            .buildAndExpand(usuario.getId()).toUri();
+    private String formatName(String nome) {
+        String[] nomes = nome.split(" ");
+        return StringUtils.capitalize(nomes[0]);
+    }
 
-        emailService.sendEmail(
-            usuario.getEmail(),
-            "Verificar e-mail",
-            emailService.buildEmail(usuario.getNome(), confirmEmailLink(usuarioVerificador.getUuid()))
+    private void sendConfirmationEmail(Usuario usuario, UsuarioVerificadorEntity usuarioVerificador) {
+        String emailBody = emailService.buildEmail(
+                formatName(usuario.getNome()),
+                confirmEmailLink(usuarioVerificador.getUuid())
         );
+        emailService.sendEmail(usuario.getEmail(), "Verificar e-mail", emailBody);
+    }
 
-        return ResponseEntity.created(uri).body(new UsuarioResponseEntityBody(usuario));
+    private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
+        return uriComponentsBuilder.path("/api/user/{id}")
+                .buildAndExpand(userId).toUri();
     }
 
     private String confirmEmailLink(UUID uuid) {
-        return "http://localhost:8080/api/auth/register/confirm?token=" + uuid; 
+        return "http://localhost:8080/api/auth/register/confirm?token=" + uuid;
     }
 }

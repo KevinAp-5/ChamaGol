@@ -9,6 +9,8 @@ import com.chamagol.model.UsuarioVerificadorEntity;
 
 public interface UsuarioVerificadorRepository extends JpaRepository<UsuarioVerificadorEntity, Long>{
     Optional<UsuarioVerificadorEntity> findByUuid(UUID uuid);
+
+    Optional<UsuarioVerificadorEntity> findByUsuarioId(Long idUsuario);
 }
 
     
