@@ -34,8 +34,6 @@ public class SecurityConfigurations {
                 .anyRequest().authenticated()) // Requer autenticação para outros endpoints
         .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
-
-
 	}
 
 	@Bean

@@ -11,7 +11,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
+import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
+import com.chamagol.enums.converters.RolesConverter;
 import com.chamagol.enums.converters.StatusConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -74,6 +76,11 @@ public class Usuario implements UserDetails{
     private Status status = Status.INACTIVE;
 
     @NotNull
+    @Convert(converter = RolesConverter.class)
+    @Column(length = 20, nullable = false)
+    private Roles role = Roles.USER;
+
+    @NotNull
     @Column(length = 24, nullable = false)
     @Enumerated(EnumType.STRING)
     private Assinatura assinatura;
@@ -90,7 +97,6 @@ public class Usuario implements UserDetails{
 
     public void inactivateUsario() {
         this.status = Status.INACTIVE;
-
     }
 
     public void activateUsuario() {
@@ -99,6 +105,12 @@ public class Usuario implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.role == Roles.MESTRE)
+            return List.of(
+                new SimpleGrantedAuthority("ROLE_MESTRE"),
+                new SimpleGrantedAuthority("ROLE_USER")
+            );
+
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
