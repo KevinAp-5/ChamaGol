@@ -131,7 +131,7 @@ public class RegistroService {
 
     private void updateVerificador(UsuarioVerificadorEntity verificador) {
         verificador.setUuid(UUID.randomUUID());
-        verificador.setDataExpira(Instant.now().plus(15, ChronoUnit.MINUTES));
+        verificador.setDataExpira(Instant.now().plus(60, ChronoUnit.MINUTES));
         usuarioVerificadorRepository.save(verificador);
     }
 

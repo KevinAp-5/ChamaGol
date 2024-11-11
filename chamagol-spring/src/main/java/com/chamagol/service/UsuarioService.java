@@ -120,10 +120,19 @@ public class UsuarioService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
-        Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException("Usuário não encontrado: " + email)
-        );
+        Usuario user = this.getUsuario(email);
 
         return ResponseEntity.ok(new UsuarioListagem(user));
+    }
+
+    public UsuarioResponseEntityBody getUsuarioByEmail(String email) {
+        Usuario user = this.getUsuario(email);
+
+        return new UsuarioResponseEntityBody(user);
+    }
+
+    private Usuario getUsuario(String email) {
+        return (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
+            () -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 }

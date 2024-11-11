@@ -3,7 +3,7 @@ package com.chamagol.service;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +33,10 @@ public class AutenticacaoService {
     }
 
     public ResponseEntity<Object> userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
+        if (usuarioService.getUsuarioByEmail(usuarioAutenticacao.email()).status() != Status.ACTIVE) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não foi ativado: Confirme o email para ativá-lo");
+        }
+
         var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
         return ResponseEntity.ok(new TokenDTO(tokenJWT));
     }
