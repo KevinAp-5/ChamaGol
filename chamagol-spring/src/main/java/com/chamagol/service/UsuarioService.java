@@ -23,6 +23,7 @@ import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -134,5 +135,9 @@ public class UsuarioService {
     private Usuario getUsuario(String email) {
         return (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
             () -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+    }
+
+    public Boolean userExistsByEmail(@NotBlank String email) {
+        return usuarioRepository.findByEmail(email).isPresent();
     }
 }

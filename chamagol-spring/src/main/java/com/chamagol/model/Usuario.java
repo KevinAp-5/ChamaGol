@@ -61,7 +61,7 @@ public class Usuario implements UserDetails{
 
     @NotBlank
     @Length(min = 5, max = 100)
-    @Column(length = 100, nullable = false)
+    @Column(length = 100, nullable = false, unique = true)
     private String email;
 
     @Length(min = 8, max = 200)

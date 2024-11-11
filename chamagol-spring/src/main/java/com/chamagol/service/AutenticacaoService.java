@@ -33,6 +33,10 @@ public class AutenticacaoService {
     }
 
     public ResponseEntity<Object> userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
+        if (Boolean.FALSE.equals(usuarioService.userExistsByEmail(usuarioAutenticacao.email()))) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+        }
+
         if (usuarioService.getUsuarioByEmail(usuarioAutenticacao.email()).status() != Status.ACTIVE) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não foi ativado: Confirme o email para ativá-lo");
         }
