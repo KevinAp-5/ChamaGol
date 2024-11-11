@@ -5,54 +5,31 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
-import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.enums.Status;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Service
-public class AutenticacaoService implements UserDetailsService {
+public class AutenticacaoService {
 
-    private UsuarioRepository usuarioRepository;
-    private TokenService tokenService;
-    private PasswordResetService passwordResetService;
-    private RegistroService registroService;
+    private final TokenService tokenService;
+    private final PasswordResetService passwordResetService;
+    private final RegistroService registroService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    public void setRegistroService(RegistroService registroService) {
-        this.registroService = registroService;
-    }
-
-    @Autowired
-    public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
-
-    @Autowired
-    public void setTokenService(TokenService tokenService) {
+    public AutenticacaoService(TokenService tokenService, PasswordResetService passwordResetService, RegistroService registroService, UsuarioService usuarioService) {
         this.tokenService = tokenService;
-    }
-
-    @Autowired
-    public void setPasswordResetService(PasswordResetService passwordResetService) {
         this.passwordResetService = passwordResetService;
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) {
-        return usuarioRepository.findByEmail(username).orElseThrow(
-            () -> new UsernameNotFoundException("Usuário não encontrado")
-        );
+        this.registroService = registroService;
+        this.usuarioService = usuarioService;
     }
 
     public ResponseEntity<Object> userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
