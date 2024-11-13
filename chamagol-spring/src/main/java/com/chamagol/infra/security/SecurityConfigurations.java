@@ -29,7 +29,7 @@ public class SecurityConfigurations {
         .sessionManagement(management -> management
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(requests -> requests
-                .requestMatchers(HttpMethod.POST, "/api/auth/*").permitAll() // Permite POST em /api/auth/*
+                .requestMatchers(HttpMethod.POST, "/api/auth/*", "/api/sinal").permitAll() // Permite POST em /api/auth/*
                 .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll() // Permite GET no endpoint de confirmação
                 .anyRequest().authenticated()) // Requer autenticação para outros endpoints
         .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
