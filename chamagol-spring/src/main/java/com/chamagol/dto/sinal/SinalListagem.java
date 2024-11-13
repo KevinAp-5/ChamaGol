@@ -3,15 +3,10 @@ package com.chamagol.dto.sinal;
 import java.time.LocalDateTime;
 
 import com.chamagol.model.Sinal;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record SinalDTO(
-
-    @JsonProperty("id")
-    Long id,
-
+public record SinalListagem(
     @NotBlank
     String campeonato,
 
@@ -28,11 +23,9 @@ public record SinalDTO(
     String acaoSinal,
 
     LocalDateTime created_at
-
 ) {
-    public SinalDTO(Sinal sinal) {
+    public SinalListagem(Sinal sinal) {
         this(
-            sinal.getId(),
             sinal.getCampeonato(),
             sinal.getNomeTimes(),
             sinal.getTempoPartida(),
