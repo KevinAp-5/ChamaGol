@@ -11,6 +11,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.chamagol.dto.sinal.SinalDTO;
 import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.dto.sinal.mapper.SinalMapper;
+import com.chamagol.enums.Status;
 import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.model.Sinal;
 import com.chamagol.repository.SinalRepository;
@@ -28,6 +29,7 @@ public class SinalService {
         this.sinalMapper = sinalMapper;
     }
 
+    // Retorna uma lista com todos os sinais
     public ResponseEntity<List<SinalListagem>> getSinal() {
         var lista = sinalRepository.findAll()
         .stream()
@@ -37,6 +39,17 @@ public class SinalService {
         return ResponseEntity.ok(lista);
     }
 
+    // Retorna uma lista de todos os sinais que estão ativos
+    public ResponseEntity<List<SinalListagem>> getSinalActive() {
+        var lista = sinalRepository.findByStatus(Status.ACTIVE)
+        .stream()
+        .map(SinalListagem:: new)
+        .toList();
+
+        return ResponseEntity.ok(lista);
+    }
+
+    // Metodo create
     @Transactional
     public ResponseEntity<SinalListagem> create(SinalDTO sinalDTO, UriComponentsBuilder uriComponentsBuilder) {
         Sinal sinal = sinalMapper.toEntity(sinalDTO);

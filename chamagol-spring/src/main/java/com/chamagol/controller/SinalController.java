@@ -31,7 +31,7 @@ public class SinalController {
 
     @GetMapping
     public ResponseEntity<List<SinalListagem>> getSinal() {
-        return sinalService.getSinal();
+        return sinalService.getSinalActive();
     }
 
     @PostMapping
