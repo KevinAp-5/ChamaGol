@@ -30,8 +30,13 @@ public class SinalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SinalListagem>> getSinal() {
+    public ResponseEntity<List<SinalListagem>> getSinalActive() {
         return sinalService.getSinalActive();
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<SinalListagem>> getSinal() {
+        return sinalService.getSinal();
     }
 
     @PostMapping
