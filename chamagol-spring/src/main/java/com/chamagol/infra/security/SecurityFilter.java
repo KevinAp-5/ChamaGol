@@ -55,7 +55,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         var subject = tokenService.getSubject(token);
 
         UserDetails usuario = usuarioRepository.findByEmail(subject)
-        .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+        .orElseThrow(() -> new UsernameNotFoundException(""+subject));
 
         return new UsernamePasswordAuthenticationToken(
             usuario,
