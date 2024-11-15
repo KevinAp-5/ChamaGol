@@ -5,10 +5,13 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.validator.constraints.Length;
 
+import com.chamagol.enums.Status;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -52,10 +55,22 @@ public class Sinal {
 
     @NotBlank
     @Length(min = 2, max = 255)
-    @Column(nullable = false)
+    @Column(name = "acao_sinal", nullable = false)
     private String acaoSinal;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.ACTIVE;
+
+    public void activate() {
+        this.status = Status.ACTIVE;
+    }
+
+    public void inactivate() {
+        this.status = Status.INACTIVE;
+    }
 }

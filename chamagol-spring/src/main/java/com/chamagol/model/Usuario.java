@@ -14,7 +14,6 @@ import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
 import com.chamagol.enums.converters.RolesConverter;
-import com.chamagol.enums.converters.StatusConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
@@ -72,7 +71,7 @@ public class Usuario implements UserDetails{
 
     @NotNull
     @Column(length = 100, nullable = false)
-    @Convert(converter = StatusConverter.class)
+    @Enumerated(EnumType.STRING)
     private Status status = Status.INACTIVE;
 
     @NotNull
