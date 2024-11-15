@@ -3,6 +3,7 @@ package com.chamagol.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,8 @@ import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.service.SinalService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @RequestMapping("/api/sinal")
@@ -37,7 +40,12 @@ public class SinalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SinalListagem> getSinalById(@PathVariable("id") Long id) {
+    public ResponseEntity<SinalListagem> getSinalById(@PathVariable("id") @Positive @NotNull Long id) {
         return sinalService.getSinalById(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable("id") @Positive @NotNull Long id) {
+        return sinalService.delete(id);
     }
 }

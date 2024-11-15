@@ -15,6 +15,9 @@ import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.model.Sinal;
 import com.chamagol.repository.SinalRepository;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 @Service
 public class SinalService {
     private SinalRepository sinalRepository;
@@ -46,11 +49,22 @@ public class SinalService {
         return uriComponentsBuilder.path("/api/sinal/{id}").buildAndExpand(sinalID).toUri();
     }
 
-    public ResponseEntity<SinalListagem> getSinalById(Long id) {
+    public ResponseEntity<SinalListagem> getSinalById(@Positive @NotNull Long id) {
         Sinal sinal = sinalRepository.findById(id).orElseThrow(
             () -> new IDNotFoundException(""+id)
         );
 
         return ResponseEntity.ok(new SinalListagem(sinal));
+    }
+
+    @Transactional
+    public ResponseEntity<String> delete(@NotNull @Positive Long id) {
+        Sinal sinal = sinalRepository.findById(id).orElseThrow(
+            () -> new IDNotFoundException(""+id)
+        );
+
+        sinal.inactivate();
+        sinalRepository.save(sinal);
+        return ResponseEntity.ok().build();
     }
 }
