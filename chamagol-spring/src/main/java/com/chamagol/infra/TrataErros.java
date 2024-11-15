@@ -9,6 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,6 +19,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.exception.TokenInvalid;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -96,12 +98,23 @@ public class TrataErros {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<String> handleTokenInvalidException(TokenInvalid ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("erro: " + ex.getMessage()); // Retorna a mensagem "Token inválido ou expirado"
+                .body("Erro de validação: " + ex.getMessage()); // Retorna a mensagem "Token inválido ou expirado"
     }
 
+    @ExceptionHandler(UsernameNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado:" + ex.getMessage());
+    }
+
+    @ExceptionHandler(IDNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleIDNotFoundException(IDNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("ID não encontrado: " + ex.getMessage());
+    }
     // Tratamento para erros internos do servidor (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralExceptions(Exception ex) {
-        return new ResponseEntity<>("Erro interno do servidor: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Dados inválidos: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
