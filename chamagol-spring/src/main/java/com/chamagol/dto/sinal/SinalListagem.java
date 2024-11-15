@@ -30,7 +30,7 @@ public record SinalListagem(
             sinal.getNomeTimes(),
             sinal.getTempoPartida(),
             sinal.getPlacar(),
-            sinal.getPlacar(),
+            sinal.getAcaoSinal(),
             sinal.getCreatedAt()
         );
     }
