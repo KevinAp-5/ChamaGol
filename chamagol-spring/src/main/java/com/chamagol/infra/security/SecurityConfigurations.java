@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfigurations {
 	private SecurityFilter securityFilter;
+	private static final String MESTRE = "MESTRE";
 
 	public SecurityConfigurations(SecurityFilter securityFilter) {
 		this.securityFilter = securityFilter;
@@ -26,17 +27,27 @@ public class SecurityConfigurations {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 		return httpSecurity.csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(management -> management
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(requests -> requests
-                .requestMatchers(HttpMethod.POST, "/api/auth/*").permitAll() // Permite POST em /api/auth/*
-                .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll() // Permite GET no endpoint de confirmação
-				.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole("MESTRE")
-				.requestMatchers(HttpMethod.DELETE, "/api/*").hasRole("MESTRE")
-                .anyRequest().authenticated()) // Requer autenticação para outros endpoints
-        .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-        .build();
+				.sessionManagement(management -> management
+						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(requests -> requests
+						// Autenticação e Registro
+						.requestMatchers(HttpMethod.POST, "/api/auth/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll()
+	
+						// Rotas para MESTRE
+						.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
+						.requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
+						.requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
+	
+						// Rotas Administrativas
+						.requestMatchers(HttpMethod.DELETE, "/api/users/*/hard").hasRole("ADMIN")
+	
+						// Padrão para outros endpoints
+						.anyRequest().authenticated())
+				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+				.build();
 	}
+	
 
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
