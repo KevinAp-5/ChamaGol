@@ -2,7 +2,8 @@ package com.chamagol.enums;
 
 public enum Roles {
     USER("user"),
-    MESTRE("mestre");
+    MESTRE("mestre"),
+    ADMIN("admin");
 
     private String role;
 
