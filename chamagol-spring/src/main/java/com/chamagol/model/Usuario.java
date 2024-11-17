@@ -13,11 +13,9 @@ import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
-import com.chamagol.enums.converters.RolesConverter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -75,8 +73,8 @@ public class Usuario implements UserDetails{
     private Status status = Status.INACTIVE;
 
     @NotNull
-    @Convert(converter = RolesConverter.class)
     @Column(length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
     private Roles role = Roles.USER;
 
     @NotNull
