@@ -3,6 +3,7 @@ package com.chamagol.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,28 +30,20 @@ public class SinalController {
         this.sinalService = sinalService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<SinalListagem>> getSinalActive() {
-        return sinalService.getSinalActive();
-    }
-
-    @GetMapping("/active")
-    public ResponseEntity<List<SinalListagem>> getSinal() {
-        return sinalService.getSinal();
-    }
-
+    @PreAuthorize("hasRole('MESTRE')")
     @PostMapping
     public ResponseEntity<SinalListagem> create(@RequestBody @Valid SinalDTO sinalDTO, UriComponentsBuilder uriComponentsBuilder) {
         return sinalService.create(sinalDTO, uriComponentsBuilder);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SinalListagem> getSinalById(@PathVariable("id") @Positive @NotNull Long id) {
-        return sinalService.getSinalById(id);
-    }
-
+    @PreAuthorize("hasRole('MESTRE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable("id") @Positive @NotNull Long id) {
         return sinalService.delete(id);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SinalListagem>> getSinalActive() {
+        return sinalService.getSinalActive();
     }
 }
