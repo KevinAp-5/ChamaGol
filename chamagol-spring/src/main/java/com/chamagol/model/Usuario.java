@@ -104,12 +104,22 @@ public class Usuario implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.role == Roles.MESTRE)
+        if (this.role == Roles.ADMIN) {
+            return List.of(
+                new SimpleGrantedAuthority("ROLE_ADMIN"),
+                new SimpleGrantedAuthority("ROLE_MESTRE"), // Herdando permissões de MESTRE
+                new SimpleGrantedAuthority("ROLE_USER")   // Herdando permissões de USER
+            );
+        }
+
+        if (this.role == Roles.MESTRE) {
             return List.of(
                 new SimpleGrantedAuthority("ROLE_MESTRE"),
-                new SimpleGrantedAuthority("ROLE_USER")
+                new SimpleGrantedAuthority("ROLE_USER")   // Herdando permissões de USER
             );
+        }
 
+        // Padrão para usuários regulares
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
