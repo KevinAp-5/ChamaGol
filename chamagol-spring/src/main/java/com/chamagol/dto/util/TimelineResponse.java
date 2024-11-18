@@ -2,6 +2,7 @@ package com.chamagol.dto.util;
 
 import java.time.LocalDateTime;
 
+import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
 
 import lombok.Data;
@@ -16,7 +17,7 @@ public class TimelineResponse {
     private String placar;
     private String tempoPartida;
     private String acaoSinal;
-    // private String tipoEvento;
+    private TipoEvento tipoEvento;
     private LocalDateTime createdAt;
 
     public TimelineResponse(Sinal sinal) {
@@ -26,7 +27,7 @@ public class TimelineResponse {
         this.placar = sinal.getPlacar();
         this.tempoPartida = sinal.getTempoPartida();
         this.acaoSinal = sinal.getAcaoSinal();
-        // this.tipoEvento = tipoEvento;
+        this.tipoEvento = sinal.getTipoEvento();
         this.createdAt = sinal.getCreatedAt();
     }
 }
