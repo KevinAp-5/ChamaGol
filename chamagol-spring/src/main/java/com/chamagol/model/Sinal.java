@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.validator.constraints.Length;
 
 import com.chamagol.enums.Status;
+import com.chamagol.enums.TipoEvento;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
@@ -65,6 +66,10 @@ public class Sinal {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+
+    @Column(name = "tipo_evento", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TipoEvento tipoEvento = TipoEvento.DICA;
 
     public void activate() {
         this.status = Status.ACTIVE;
