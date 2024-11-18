@@ -64,9 +64,6 @@ public class Usuario implements UserDetails{
     @Length(min = 8, max = 200)
     private String senha;
 
-    @Column(name = "resettoken")
-    private String resetToken;
-
     @NotNull
     @Column(length = 100, nullable = false)
     @Enumerated(EnumType.STRING)
