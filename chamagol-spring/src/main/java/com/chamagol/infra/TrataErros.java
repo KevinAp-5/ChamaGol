@@ -104,7 +104,7 @@ public class TrataErros {
     @ExceptionHandler(UsernameNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado:" + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado: " + ex.getMessage());
     }
 
     @ExceptionHandler(IDNotFoundException.class)

@@ -31,8 +31,8 @@ public class SecurityConfigurations {
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(requests -> requests
 						// Autenticação e Registro
-						.requestMatchers(HttpMethod.POST, "/api/auth/*").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+						// .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll()
 	
 						// Rotas para MESTRE
 						.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
