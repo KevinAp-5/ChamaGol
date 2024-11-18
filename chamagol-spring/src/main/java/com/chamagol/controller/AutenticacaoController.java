@@ -67,7 +67,7 @@ public class AutenticacaoController {
         return autenticacaoService.confirmarRecuperacaoSenha(token, confirmPasswordBody);
     }
 
-    @GetMapping("/register/confirm")
+    @PostMapping("/register/confirm")
     public ResponseEntity<String> confirmUser (@RequestParam("token") String uuid) {
         return autenticacaoService.confirmUser(UUID.fromString(uuid));
     }

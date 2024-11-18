@@ -1,5 +1,8 @@
 package com.chamagol.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +13,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chamagol.exception.TokenInvalid;
 import com.chamagol.model.Usuario;
+import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.repository.UsuarioResetTokenRepository;
 
 
 @Service
 public class PasswordResetService {
     private UsuarioRepository usuarioRepository;
+    private UsuarioResetTokenRepository usuarioResetTokenRepository;    
     private PasswordEncoder passwordEncoder;
     private EmailService emailService;
 
+    @Autowired
+    public void setUsuarioResetTokenRepository(UsuarioResetTokenRepository usuarioResetTokenRepository) {
+        this.usuarioResetTokenRepository = usuarioResetTokenRepository;
+    }
+    
     @Autowired
     public void setEmailService(EmailService emailService) {
         this.emailService = emailService;
@@ -38,14 +49,15 @@ public class PasswordResetService {
     @Transactional
     public boolean resetarSenhaEmail(String email) {
         Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException("Usuário não encontrado" + email)
+            () -> new UsernameNotFoundException("" + email)
         );
 
-        String token = UUID.randomUUID().toString();
+        UsuarioResetPassword usuarioResetPassword = createUsuarioResetPassword(user);
+
+        String token = usuarioResetPassword.getUuid().toString();
         String link = resetPasswordLink(token);
 
-        user.setResetToken(token);
-        usuarioRepository.save(user);
+        usuarioResetTokenRepository.save(usuarioResetPassword);
 
         emailService.sendEmail(
             email,
@@ -56,24 +68,61 @@ public class PasswordResetService {
         return true;
     }
 
-    private String resetPasswordLink(String token) {
-        return "http://localhost:8080/api/auth/reset-password/confirm?token=" + token;
-    }
-
     @Transactional
     public boolean resetPassword(String token, String novaSenha) {
-        Usuario user = (Usuario) usuarioRepository.findByResetToken(token).orElseThrow(
-            () -> new TokenInvalid("Token de resetar senha inválido")
+        UsuarioResetPassword usuarioResetPassword = usuarioResetTokenRepository.findByUuid(UUID.fromString(token)).orElseThrow(
+            () -> new TokenInvalid("Token inválido ou expirado.")
         );
 
-        if (user == null) {
+        if (usuarioResetPassword == null)
             return false;
-        }
 
-        user.setSenha(passwordEncoder.encode(novaSenha));
-        user.setResetToken(null);
-        usuarioRepository.save(user);
+        if (!tokenIsValid(usuarioResetPassword))
+            return false;
+
+        Usuario user = usuarioResetPassword.getUsuario();
+        updateUserPassword(user, novaSenha);
+        usuarioResetTokenInvalidator(usuarioResetPassword);
+
         return true;
     }
 
+    private UsuarioResetPassword createUsuarioResetPassword(Usuario usuario) {
+        UsuarioResetPassword usuarioResetPassword = returnUsuarioResetPassword(usuario);
+
+        usuarioResetPassword.setUsuario(usuario);
+        usuarioResetPassword.setDataExpira(LocalDateTime.now().plusMinutes(20).toInstant(ZoneOffset.of("-03:00")));
+        usuarioResetPassword.setUuid(UUID.randomUUID());
+        return usuarioResetPassword;
+    }
+
+    private UsuarioResetPassword returnUsuarioResetPassword(Usuario usuario) {
+        Boolean user = usuarioResetTokenRepository.findByUsuarioId(usuario.getId()).isPresent();
+
+        if (Boolean.TRUE.equals(user)) {
+            return usuarioResetTokenRepository.findByUsuarioId(usuario.getId()).orElseThrow(
+                () -> new UsernameNotFoundException("" + usuario)
+            );
+        }
+
+        return new UsuarioResetPassword();
+    }
+
+    private String resetPasswordLink(String token) {
+        return "http://localhost:8080/api/auth/password/reset/confirm?token=" + token;
+    }
+
+    private boolean tokenIsValid(UsuarioResetPassword user) {
+        return !user.getDataExpira().isBefore(Instant.now());
+    }
+
+    private void updateUserPassword(Usuario user, String novaSenha) {
+        user.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(user);
+    }
+
+    private void usuarioResetTokenInvalidator(UsuarioResetPassword user) {
+        user.setDataExpira(Instant.now());
+        usuarioResetTokenRepository.save(user);
+    }
 }
