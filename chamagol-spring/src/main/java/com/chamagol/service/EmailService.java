@@ -39,10 +39,7 @@ public class EmailService{
                 javaMailSender.send(messagePreparator);
             }
             catch (Exception exception) {
-                throw new EmailSendingError(
-                    "Erro ao enviar e-mail: " + exception.getLocalizedMessage(),
-                    exception.getCause()
-                );
+                throw new EmailSendingError(exception.getMessage(), exception.getCause());
             }
         });
     }

@@ -20,6 +20,7 @@ import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.dto.util.MensagemResponse;
 import com.chamagol.enums.Status;
+import com.chamagol.exception.UserAlreadyActive;
 import com.chamagol.infra.EmailValidator;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioVerificadorEntity;
@@ -118,7 +119,7 @@ public class RegistroService {
         );
 
         if (usuario.getStatus() == Status.ACTIVE) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new MensagemResponse("Esse usuario já está ativo!"));
+            throw new UserAlreadyActive(email);
         }
 
         UsuarioVerificadorEntity verificador = usuarioVerificadorRepository.findByUsuarioId(usuario.getId()).orElseThrow();

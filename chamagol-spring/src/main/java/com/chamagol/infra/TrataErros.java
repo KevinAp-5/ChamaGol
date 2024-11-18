@@ -19,8 +19,10 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.chamagol.exception.EmailSendingError;
 import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.exception.TokenInvalid;
+import com.chamagol.exception.UserAlreadyActive;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -98,7 +100,7 @@ public class TrataErros {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<String> handleTokenInvalidException(TokenInvalid ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Erro de validação: " + ex.getMessage()); // Retorna a mensagem "Token inválido ou expirado"
+                .body("Erro de validação de token: " + ex.getMessage()); // Retorna a mensagem "Token inválido ou expirado"
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -112,9 +114,21 @@ public class TrataErros {
     public ResponseEntity<String> handleIDNotFoundException(IDNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("ID não encontrado: " + ex.getMessage());
     }
+
     // Tratamento para erros internos do servidor (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralExceptions(Exception ex) {
         return new ResponseEntity<>("Dados inválidos: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(UserAlreadyActive.class)
+    public ResponseEntity<String> handleUserAlreadyActive(Exception ex) {
+        return new ResponseEntity<>("Usuário já ativo: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(EmailSendingError.class)
+    public ResponseEntity<String> handleEmailSendingError(Exception ex) {
+        return new ResponseEntity<>("Erro ao enviar e-mail: " + ex.getMessage(), HttpStatus.BAD_GATEWAY);
+    }
+
 }

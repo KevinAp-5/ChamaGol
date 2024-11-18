@@ -3,8 +3,8 @@ package com.chamagol.service;
 
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.chamagol.dto.token.TokenDTO;
@@ -12,6 +12,8 @@ import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.enums.Status;
+import com.chamagol.exception.TokenInvalid;
+import com.chamagol.exception.UserAlreadyActive;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -34,11 +36,11 @@ public class AutenticacaoService {
 
     public ResponseEntity<Object> userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
         if (Boolean.FALSE.equals(usuarioService.userExistsByEmail(usuarioAutenticacao.email()))) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+            throw new UsernameNotFoundException(usuarioAutenticacao.email());
         }
 
         if (usuarioService.getUsuarioByEmail(usuarioAutenticacao.email()).status() != Status.ACTIVE) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não foi ativado: Confirme o email para ativá-lo");
+            throw new UserAlreadyActive("Confirme o email para ativá-lo");
         }
 
         var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
@@ -48,7 +50,7 @@ public class AutenticacaoService {
     public ResponseEntity<String> resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
         boolean valid = passwordResetService.resetarSenhaEmail(resetPasswordBody.email());
         if (Boolean.FALSE.equals(valid)) {
-            return ResponseEntity.status(400).body("Erro ao recuperar senha");
+            throw new TokenInvalid("Erro ao recuperar senha");
         }
         return ResponseEntity.ok("Link para redefinir senha foi enviada para o e-mail.");
     }
@@ -56,7 +58,7 @@ public class AutenticacaoService {
     public ResponseEntity<String> confirmarRecuperacaoSenha(@NotBlank String token, @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
         boolean resetado = passwordResetService.resetPassword(token, confirmPasswordBody.novaSenha());
         if (!resetado) {
-            return ResponseEntity.status(400).body("Token inválido ou expirado");
+            throw new TokenInvalid("Token inválido ou expirado");
         }
         return ResponseEntity.ok("Senha alterada com sucesso");
     }
