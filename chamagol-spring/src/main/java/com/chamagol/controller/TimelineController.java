@@ -3,7 +3,6 @@ package com.chamagol.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,7 +28,6 @@ public class TimelineController {
         return ResponseEntity.ok(timeline);
     }
 
-    @PreAuthorize("hasRole('USER') or hasRole('MESTRE') or hasRole('ADMIN')")
     @GetMapping("filter")
     public ResponseEntity<List<TimelineResponse>> getFilteredTimeline(
         @RequestParam(value = "tipoEvento") TipoEvento tipoEvento

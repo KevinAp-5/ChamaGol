@@ -113,6 +113,7 @@ public class Usuario implements UserDetails{
         if (this.role == Roles.MESTRE) {
             return List.of(
                 new SimpleGrantedAuthority("ROLE_MESTRE"),
+                new SimpleGrantedAuthority("ROLE_ADMIN"),
                 new SimpleGrantedAuthority("ROLE_USER")   // Herdando permissões de USER
             );
         }
