@@ -2,7 +2,7 @@
 
 # dependencies
 node_modules/
-
+*.log*
 # Expo
 .expo/
 dist/
