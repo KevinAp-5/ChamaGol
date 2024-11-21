@@ -1,6 +1,5 @@
 package com.chamagol.dto.usuario;
 
-import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
@@ -18,7 +17,7 @@ public record UsuarioResponseEntityBody (
 
     Status status
 
-)  implements ApiResponse{
+) {
 
     // Construtor para criar a resposta com os dados do usuário
     public UsuarioResponseEntityBody(Usuario usuario) {

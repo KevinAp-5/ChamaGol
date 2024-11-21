@@ -1,5 +1,6 @@
 package com.chamagol.service;
 
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,50 +43,43 @@ public class UsuarioService {
     }
 
     @Transactional
-    public ResponseEntity<ApiResponse> create(
-            @Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
-        return registroService.createUser(usuarioDTO, uriComponentsBuilder);
+    public ResponseEntity<ApiResponse<UsuarioDTO>> create(@Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
+        URI uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
+        return ResponseEntity.created(uri).body(registroService.createUser(usuarioDTO));
     }
 
     public Boolean userExists(Usuario usuario) {
         return usuarioRepository.existsByEmail(usuario.getEmail());
     }
 
-    public ResponseEntity<List<UsuarioDTO>> lista() {
-        var lista = usuarioRepository.findAll()
+    public List<UsuarioDTO> lista() {
+        return usuarioRepository.findAll()
                 .stream()
                 .map(usuarioMapper::toDTO)
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok(lista);
     }
 
-    public ResponseEntity<List<UsuarioListagem>> listActive() {
-        var lista = usuarioRepository.findByStatus(Status.ACTIVE)
+    public List<UsuarioListagem> listActive() {
+        return usuarioRepository.findByStatus(Status.ACTIVE)
                 .stream()
                 .map(UsuarioListagem::new)
                 .toList();
-
-        return ResponseEntity.ok(lista);
     }
 
-    public ResponseEntity<List<UsuarioListagem>> listInactive() {
-        var lista = usuarioRepository.findByStatus(Status.INACTIVE)
+    public List<UsuarioListagem> listInactive() {
+        return usuarioRepository.findByStatus(Status.INACTIVE)
                 .stream()
                 .map(UsuarioListagem::new)
                 .toList();
-
-        return ResponseEntity.ok(lista);
     }
 
-    public ResponseEntity<UsuarioResponseEntityBody> findById(@NotNull @Positive Long id) {
+    public UsuarioResponseEntityBody findById(@NotNull @Positive Long id) {
         var user = usuarioRepository.getReferenceById(id);
-
-        return ResponseEntity.ok(new UsuarioResponseEntityBody(user));
+        return new UsuarioResponseEntityBody(user);
     }
 
     @Transactional
-    public ResponseEntity<UsuarioResponseEntityBody> update(
+    public UsuarioResponseEntityBody update(
             @Valid @NotNull @Positive Long id,
             @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         Usuario user = usuarioRepository.findById(id).orElseThrow(
@@ -93,37 +87,33 @@ public class UsuarioService {
         );
 
         user.updateUsuario(usuarioUpdate);
-        return ResponseEntity.ok(new UsuarioResponseEntityBody(user));
+        return new UsuarioResponseEntityBody(user);
     }
 
     @Transactional
-    public ResponseEntity<Void> delete(@NotNull @Positive Long id) {
+    public void delete(@NotNull @Positive Long id) {
         usuarioRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
     }
 
     @Transactional
-    public ResponseEntity<Void> deleteSoft(@NotNull @Positive Long id) {
+    public void deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.inactivateUsario();
-
-        return ResponseEntity.noContent().build();
     }
 
     @Transactional
-    public ResponseEntity<Void> activate(@NotNull @Positive Long id) {
+    public void activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.activateUsuario();
-        return ResponseEntity.noContent().build();
     }
 
-    public ResponseEntity<UsuarioListagem> getMe() {
+    public UsuarioListagem getMe() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
         Usuario user = this.getUsuario(email);
 
-        return ResponseEntity.ok(new UsuarioListagem(user));
+        return new UsuarioListagem(user);
     }
 
     public UsuarioResponseEntityBody getUsuarioByEmail(String email) {
@@ -131,13 +121,18 @@ public class UsuarioService {
 
         return new UsuarioResponseEntityBody(user);
     }
+    
+    public Boolean userExistsByEmail(@NotBlank String email) {
+        return usuarioRepository.findByEmail(email).isPresent();
+    }
 
     private Usuario getUsuario(String email) {
         return (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
             () -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 
-    public Boolean userExistsByEmail(@NotBlank String email) {
-        return usuarioRepository.findByEmail(email).isPresent();
+    private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
+        return uriComponentsBuilder.path("/api/user/{id}")
+                .buildAndExpand(userId).toUri();
     }
 }

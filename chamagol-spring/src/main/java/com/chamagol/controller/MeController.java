@@ -22,6 +22,6 @@ public class MeController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping()
     public ResponseEntity<UsuarioListagem> getAuthenticatedUser() {
-        return usuarioService.getMe();
+        return ResponseEntity.ok(usuarioService.getMe());
     }
 }

@@ -1,5 +1,6 @@
 package com.chamagol.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -32,28 +33,35 @@ public class SinalController {
 
     @GetMapping
     public ResponseEntity<List<SinalListagem>> getSinalActive() {
-        return sinalService.getSinalActive();
+        return ResponseEntity.ok(sinalService.getSinalActive());
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<SinalListagem>> getSinal() {
-        return sinalService.getSinal();
+        return ResponseEntity.ok(sinalService.getSinal());
     }
 
     @PreAuthorize("hasRole('MESTRE')")
     @PostMapping
     public ResponseEntity<SinalListagem> create(@RequestBody @Valid SinalDTO sinalDTO, UriComponentsBuilder uriComponentsBuilder) {
-        return sinalService.create(sinalDTO, uriComponentsBuilder);
+        var sinalListagem = sinalService.create(sinalDTO);
+        return ResponseEntity.created(buildSinalUri(uriComponentsBuilder, sinalDTO.id())).body(sinalListagem);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SinalListagem> getSinalById(@PathVariable("id") @Positive @NotNull Long id) {
-        return sinalService.getSinalById(id);
+        return ResponseEntity.ok(sinalService.getSinalById(id));
     }
 
     @PreAuthorize("hasRole('MESTRE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable("id") @Positive @NotNull Long id) {
-        return sinalService.delete(id);
+        sinalService.delete(id);
+        return ResponseEntity.noContent().build();
     }
+
+    private URI buildSinalUri (UriComponentsBuilder uriComponentsBuilder, Long sinalID) {
+        return uriComponentsBuilder.path("/api/sinal/{id}").buildAndExpand(sinalID).toUri();
+    }
+
 }

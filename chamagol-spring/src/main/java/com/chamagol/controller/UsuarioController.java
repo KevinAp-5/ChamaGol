@@ -36,19 +36,19 @@ public class UsuarioController {
 
     @GetMapping
     public ResponseEntity<List<UsuarioListagem>> listActiveUsers() {
-        return usuarioService.listActive();
+        return  ResponseEntity.ok(usuarioService.listActive());
     }
 
     @GetMapping("/inactive")
     public ResponseEntity<List<UsuarioListagem>> listInactiveUsers() {
-        return usuarioService.listInactive();
+        return ResponseEntity.ok(usuarioService.listInactive());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseEntityBody> getUserById(
         @PathVariable("id") @NotNull @Positive Long id
     ) {
-        return usuarioService.findById(id);
+        return ResponseEntity.ok(usuarioService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -56,7 +56,7 @@ public class UsuarioController {
         @PathVariable("id") @NotNull @Positive Long id,
         @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate
     ) {
-        return usuarioService.update(id, usuarioUpdate);
+        return ResponseEntity.ok(usuarioService.update(id, usuarioUpdate));
     }
 
     @DeleteMapping("/{id}")
@@ -64,7 +64,8 @@ public class UsuarioController {
     public ResponseEntity<Void> softDeleteUser(
         @PathVariable("id") @NotNull @Positive Long id
     ) {
-        return usuarioService.deleteSoft(id);
+        usuarioService.deleteSoft(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -73,14 +74,16 @@ public class UsuarioController {
     public ResponseEntity<Void> hardDeleteUser(
         @PathVariable("id") @NotNull @Positive Long id
     ) {
-        return usuarioService.delete(id);
+        usuarioService.delete(id);
+        return ResponseEntity.noContent().build();
     }
     
     @PutMapping("/{id}/activate")
     public ResponseEntity<Void> activateUser(
         @PathVariable("id") @NotNull @Positive Long id
     ) {
-        return usuarioService.activate(id);
+        usuarioService.activate(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

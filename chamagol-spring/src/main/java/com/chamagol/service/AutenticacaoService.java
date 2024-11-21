@@ -1,9 +1,6 @@
 package com.chamagol.service;
 
 
-import java.util.UUID;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +21,16 @@ public class AutenticacaoService {
 
     private final TokenService tokenService;
     private final PasswordResetService passwordResetService;
-    private final RegistroService registroService;
     private final UsuarioService usuarioService;
 
-    public AutenticacaoService(TokenService tokenService, PasswordResetService passwordResetService, RegistroService registroService, UsuarioService usuarioService) {
+    public AutenticacaoService(TokenService tokenService, PasswordResetService passwordResetService,
+            UsuarioService usuarioService) {
         this.tokenService = tokenService;
         this.passwordResetService = passwordResetService;
-        this.registroService = registroService;
         this.usuarioService = usuarioService;
     }
 
-    public ResponseEntity<Object> userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
+    public TokenDTO userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
         if (Boolean.FALSE.equals(usuarioService.userExistsByEmail(usuarioAutenticacao.email()))) {
             throw new UsernameNotFoundException(usuarioAutenticacao.email());
         }
@@ -44,27 +40,23 @@ public class AutenticacaoService {
         }
 
         var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
-        return ResponseEntity.ok(new TokenDTO(tokenJWT));
+        return new TokenDTO(tokenJWT);
     }
 
-    public ResponseEntity<String> resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
+    public String resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
         boolean valid = passwordResetService.resetarSenhaEmail(resetPasswordBody.email());
         if (Boolean.FALSE.equals(valid)) {
             throw new TokenInvalid("Erro ao recuperar senha");
         }
-        return ResponseEntity.ok("Link para redefinir senha foi enviada para o e-mail.");
+        return "Link para redefinir senha foi enviada para o e-mail.";
     }
 
-    public ResponseEntity<String> confirmarRecuperacaoSenha(@NotBlank String token, @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
+    public String confirmarRecuperacaoSenha(@NotBlank String token, @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
         boolean resetado = passwordResetService.resetPassword(token, confirmPasswordBody.novaSenha());
         if (!resetado) {
             throw new TokenInvalid("Token inválido ou expirado");
         }
-        return ResponseEntity.ok("Senha alterada com sucesso");
-    }
-
-    public ResponseEntity<String> confirmUser(UUID uuid) {
-        return registroService.confirmUser(uuid);
+        return "Senha alterada com sucesso";
     }
 
 }
