@@ -5,4 +5,7 @@ public class EmailSendingError extends RuntimeException{
         super(message, cause);
     }
 
+    public EmailSendingError(String msg) {
+        super(msg);
+    }
 }
