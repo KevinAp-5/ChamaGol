@@ -2,6 +2,7 @@ package com.chamagol.model;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.hibernate.validator.constraints.Length;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +14,7 @@ import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.enums.Assinatura;
 import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
@@ -26,8 +28,10 @@ import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Table(name = "usuario")
@@ -36,7 +40,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Usuario implements UserDetails{
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Usuario implements UserDetails {
 
     public Usuario(UsuarioDTO usuario) {
         this.nome = usuario.nome();
@@ -72,6 +78,7 @@ public class Usuario implements UserDetails{
     @NotNull
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
+    @Getter(AccessLevel.NONE)
     private Roles role = Roles.USER;
 
     @NotNull
@@ -97,6 +104,7 @@ public class Usuario implements UserDetails{
         this.status = Status.ACTIVE;
     }
 
+    // Implementação do contrato de UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == Roles.ADMIN) {
@@ -110,7 +118,6 @@ public class Usuario implements UserDetails{
         if (this.role == Roles.MESTRE) {
             return List.of(
                 new SimpleGrantedAuthority("ROLE_MESTRE"),
-                new SimpleGrantedAuthority("ROLE_ADMIN"),
                 new SimpleGrantedAuthority("ROLE_USER")   // Herdando permissões de USER
             );
         }
@@ -119,14 +126,47 @@ public class Usuario implements UserDetails{
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
+    public void setAuthorities(List<SimpleGrantedAuthority> authoritiesList) {
+        List<String> roles = authoritiesList.stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toList());
+
+        if (roles.contains("ROLE_MESTRE")) {
+            this.setRole(Roles.MESTRE);
+        } else if (roles.contains("ROLE_ADMIN")) {
+            this.setRole(Roles.ADMIN);
+        } else {
+            this.setRole(Roles.USER);
+        }
+    }
+
     @Override
     public String getPassword() {
         return this.senha;
-        
     }
 
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Implementar lógica, se necessário
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Implementar lógica, se necessário
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Implementar lógica, se necessário
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.status == Status.ACTIVE;
     }
 }

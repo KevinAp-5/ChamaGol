@@ -1,13 +1,17 @@
 package com.chamagol.model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.validator.constraints.Length;
 
+import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.enums.Status;
 import com.chamagol.enums.TipoEvento;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,12 +27,21 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = SinalListagem.class, name = "sinalListagem")
+})
+
 @Table(name = "Sinal")
 @Entity(name = "sinais")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Sinal {
+public class Sinal implements Serializable{
 
     @JsonProperty("_id")
     @Id
