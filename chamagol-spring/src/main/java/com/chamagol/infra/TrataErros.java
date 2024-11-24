@@ -118,7 +118,7 @@ public class TrataErros {
     // Tratamento para erros internos do servidor (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralExceptions(Exception ex) {
-        return new ResponseEntity<>("Dados inválidos: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Dados inválidos: " + ex.getLocalizedMessage() + " " + ex.getCause(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(UserAlreadyActive.class)

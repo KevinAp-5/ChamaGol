@@ -38,10 +38,10 @@ public class SecurityConfigurations {
 						.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
 						.requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
 						.requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
-	
-						// Rotas Administrativas
-						.requestMatchers(HttpMethod.DELETE, "/api/users/*/hard").hasRole("ADMIN")
-	
+
+						.requestMatchers("/api/users**").hasRole("ADMIN")
+						.requestMatchers("/api/users/**").hasRole("ADMIN")
+
 						// Padrão para outros endpoints
 						.anyRequest().authenticated())
 				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
