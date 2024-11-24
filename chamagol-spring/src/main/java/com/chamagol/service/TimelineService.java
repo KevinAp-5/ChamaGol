@@ -5,8 +5,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.dto.util.TimelineResponse;
-import com.chamagol.enums.Status;
 import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
 import com.chamagol.repository.SinalRepository;
@@ -14,13 +14,15 @@ import com.chamagol.repository.SinalRepository;
 @Service
 public class TimelineService {
     private final SinalRepository sinalRepository;
+    private final SinalService sinalService;
 
-    public TimelineService(SinalRepository sinalRepository) {
+    public TimelineService(SinalRepository sinalRepository, SinalService sinalService) {
         this.sinalRepository = sinalRepository;
+        this.sinalService = sinalService;
     }
 
     public List<TimelineResponse> getTimeline() {
-        List<Sinal> sinais = sinalRepository.findByStatus(Status.ACTIVE);
+        List<SinalListagem> sinais = sinalService.getSinalActive();
 
         // Converte para TimelineResponse
         return sinais.stream().map(TimelineResponse::new).collect(Collectors.toList());

@@ -1,7 +1,12 @@
 package com.chamagol.service;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +22,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @Service
-public class SinalService {
-    private SinalRepository sinalRepository;
-    private SinalMapper sinalMapper; 
+public class SinalService implements Serializable{
+    private final transient SinalRepository sinalRepository;
+    private final transient SinalMapper sinalMapper; 
 
     public SinalService(SinalRepository sinalRepository, SinalMapper sinalMapper) {
         this.sinalRepository = sinalRepository;
@@ -34,15 +39,22 @@ public class SinalService {
         .toList();
     }
 
+    @Cacheable(value = "sinais", key = "'allSinais'")
     // Retorna uma lista de todos os sinais que estão ativos
     public List<SinalListagem> getSinalActive() {
         return sinalRepository.findByStatus(Status.ACTIVE)
         .stream()
         .map(SinalListagem:: new)
-        .toList();
+        .collect(Collectors.toList());
     }
 
     // Metodo create
+    @Caching(
+        evict = {
+            @CacheEvict(value = "sinaisActive", allEntries = true),
+            @CacheEvict(value = "sinal", allEntries = true)
+        }
+    )
     @Transactional
     public SinalListagem create(SinalDTO sinalDTO) {
         Sinal sinal = sinalMapper.toEntity(sinalDTO);
