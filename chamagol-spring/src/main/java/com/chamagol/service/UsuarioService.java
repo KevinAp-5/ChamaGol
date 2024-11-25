@@ -4,9 +4,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,22 +38,20 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
     private UsuarioMapper usuarioMapper;
     private RegistroService registroService;
+    private CachedAuthenticationProvider cachedAuthenticationProvider;
 
     public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
-            RegistroService registroService) {
+            RegistroService registroService, CachedAuthenticationProvider cachedAuthenticationProvider) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.registroService = registroService;
+        this.cachedAuthenticationProvider = cachedAuthenticationProvider;
     }
 
     @Transactional
     public ResponseEntity<ApiResponse<UsuarioDTO>> create(@Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
         URI uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
         return ResponseEntity.created(uri).body(registroService.createUser(usuarioDTO));
-    }
-
-    public Boolean userExists(Usuario usuario) {
-        return usuarioRepository.existsByEmail(usuario.getEmail());
     }
 
     public List<UsuarioDTO> lista() {
@@ -78,6 +80,7 @@ public class UsuarioService {
         return new UsuarioResponseEntityBody(user);
     }
 
+    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public UsuarioResponseEntityBody update(
             @Valid @NotNull @Positive Long id,
@@ -95,12 +98,14 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public void deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.inactivateUsario();
     }
 
+    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public void activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
@@ -111,24 +116,35 @@ public class UsuarioService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
-        Usuario user = this.getUsuario(email);
+        Usuario user = (Usuario) this.getUsuario(email);
 
         return new UsuarioListagem(user);
     }
 
     public UsuarioResponseEntityBody getUsuarioByEmail(String email) {
-        Usuario user = this.getUsuario(email);
+        Usuario user = (Usuario) this.getUsuario(email);
 
         return new UsuarioResponseEntityBody(user);
     }
-    
+
     public Boolean userExistsByEmail(@NotBlank String email) {
         return usuarioRepository.findByEmail(email).isPresent();
     }
 
-    private Usuario getUsuario(String email) {
-        return (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+    @Cacheable(value = "usuario", key = "#email", unless = "#result == null")
+    public UserDetails getUsuario(String email) {
+        return cachedAuthenticationProvider.loadUserByUsername(email);
+    }
+
+    @CacheEvict(value = "usuario", key = "#email")
+    public void usuarioEvict() {
+        // Método para limpar o cache do usuário
+
+    }
+
+    @CachePut(value = "usuario", key = "#usuario.email")
+    public UserDetails atualizarUsuario(Usuario usuario) {
+        return usuarioRepository.save(usuario);
     }
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {

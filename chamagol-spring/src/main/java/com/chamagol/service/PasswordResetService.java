@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,37 +19,27 @@ import com.chamagol.repository.UsuarioResetTokenRepository;
 
 @Service
 public class PasswordResetService {
-    private UsuarioRepository usuarioRepository;
-    private UsuarioResetTokenRepository usuarioResetTokenRepository;    
-    private PasswordEncoder passwordEncoder;
-    private EmailService emailService;
+    private final UsuarioRepository usuarioRepository;
+    private final UsuarioResetTokenRepository usuarioResetTokenRepository;    
+    private final UsuarioService usuarioService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    @Autowired
-    public void setUsuarioResetTokenRepository(UsuarioResetTokenRepository usuarioResetTokenRepository) {
+
+    public PasswordResetService(UsuarioRepository usuarioRepository,
+            UsuarioResetTokenRepository usuarioResetTokenRepository, UsuarioService usuarioService,
+            PasswordEncoder passwordEncoder, EmailService emailService) {
+        this.usuarioRepository = usuarioRepository;
         this.usuarioResetTokenRepository = usuarioResetTokenRepository;
-    }
-    
-    @Autowired
-    public void setEmailService(EmailService emailService) {
+        this.usuarioService = usuarioService;
+        this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
     }
 
-    @Autowired
-    public void setUsuarioRepository(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
-
-    @Autowired
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-
-
+    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public boolean resetarSenhaEmail(String email) {
-        Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException("" + email)
-        );
+        Usuario user = (Usuario) usuarioService.getUsuario(email);
 
         UsuarioResetPassword usuarioResetPassword = createUsuarioResetPassword(user);
 
@@ -68,6 +57,7 @@ public class PasswordResetService {
         return true;
     }
 
+    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public boolean resetPassword(String token, String novaSenha) {
         UsuarioResetPassword usuarioResetPassword = usuarioResetTokenRepository.findByUuid(UUID.fromString(token)).orElseThrow(
@@ -97,15 +87,7 @@ public class PasswordResetService {
     }
 
     private UsuarioResetPassword returnUsuarioResetPassword(Usuario usuario) {
-        Boolean user = usuarioResetTokenRepository.findByUsuarioId(usuario.getId()).isPresent();
-
-        if (Boolean.TRUE.equals(user)) {
-            return usuarioResetTokenRepository.findByUsuarioId(usuario.getId()).orElseThrow(
-                () -> new UsernameNotFoundException("" + usuario)
-            );
-        }
-
-        return new UsuarioResetPassword();
+        return usuarioResetTokenRepository.findByUsuarioId(usuario.getId()).orElse(new UsuarioResetPassword());
     }
 
     private String resetPasswordLink(String token) {
