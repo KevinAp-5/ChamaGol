@@ -1,20 +1,15 @@
 package com.chamagol.infra.security;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.Map;
 
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.chamagol.dto.usuario.mapper.UsuarioMapper;
-import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.service.CachedAuthenticationProvider;
 import com.chamagol.service.TokenService;
 
 import jakarta.servlet.FilterChain;
@@ -24,19 +19,20 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
-    private TokenService tokenService;
-    private UsuarioRepository usuarioRepository;
-    private RedisTemplate<String, Object> redisTemplate;
 
-    public SecurityFilter(TokenService tokenService, UsuarioRepository usuarioRepository,
-            RedisTemplate<String, Object> redisTemplate) {
+    private final TokenService tokenService;
+    private final CachedAuthenticationProvider cachedAuthenticationProvider;
+
+    public SecurityFilter(TokenService tokenService,
+            com.chamagol.service.CachedAuthenticationProvider cachedAuthenticationProvider) {
         this.tokenService = tokenService;
-        this.usuarioRepository = usuarioRepository;
-        this.redisTemplate = redisTemplate;
+        this.cachedAuthenticationProvider = cachedAuthenticationProvider;
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
     
         var token = pegarToken(request);
@@ -48,18 +44,9 @@ public class SecurityFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    @SuppressWarnings("unchecked")
     private UsernamePasswordAuthenticationToken criarAutenticacao(String token) {
         var subject = tokenService.getSubject(token);
-
-        UserDetails usuario = UsuarioMapper.mapFromHashMap((Map<String, Object>)redisTemplate.opsForValue().get("user:" + subject));
-        if (usuario == null) {
-            // Carrega o usuário diretamente
-            usuario = usuarioRepository.findByEmail(subject)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + subject));
-
-            redisTemplate.opsForValue().set("user:" + subject, usuario, Duration.ofMinutes(30));
-        }
+        UserDetails usuario = cachedAuthenticationProvider.loadUserByUsername(subject);
 
         return new UsernamePasswordAuthenticationToken(
             usuario,
