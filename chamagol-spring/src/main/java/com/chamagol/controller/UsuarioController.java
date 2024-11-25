@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
 import com.chamagol.dto.usuario.UsuarioUpdate;
-import com.chamagol.service.UsuarioService;
+import com.chamagol.service.user.UsuarioService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

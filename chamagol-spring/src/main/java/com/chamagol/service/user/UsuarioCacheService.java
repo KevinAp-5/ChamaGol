@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.user;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;

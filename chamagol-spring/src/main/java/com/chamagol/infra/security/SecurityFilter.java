@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.chamagol.service.CachedAuthenticationProvider;
-import com.chamagol.service.TokenService;
+import com.chamagol.service.auth.CachedAuthenticationProvider;
+import com.chamagol.service.auth.TokenService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,7 +24,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     private final CachedAuthenticationProvider cachedAuthenticationProvider;
 
     public SecurityFilter(TokenService tokenService,
-            com.chamagol.service.CachedAuthenticationProvider cachedAuthenticationProvider) {
+            com.chamagol.service.auth.CachedAuthenticationProvider cachedAuthenticationProvider) {
         this.tokenService = tokenService;
         this.cachedAuthenticationProvider = cachedAuthenticationProvider;
     }

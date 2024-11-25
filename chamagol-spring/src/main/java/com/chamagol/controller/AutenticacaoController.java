@@ -18,9 +18,9 @@ import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
-import com.chamagol.service.AutenticacaoService;
-import com.chamagol.service.RegistroService;
-import com.chamagol.service.UsuarioService;
+import com.chamagol.service.auth.AutenticacaoService;
+import com.chamagol.service.user.RegistroService;
+import com.chamagol.service.user.UsuarioService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

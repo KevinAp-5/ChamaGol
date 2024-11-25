@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.util.TimelineResponse;
 import com.chamagol.enums.TipoEvento;
-import com.chamagol.service.TimelineService;
+import com.chamagol.service.util.TimelineService;
 
 @RestController
 @RequestMapping("/api/timeline")

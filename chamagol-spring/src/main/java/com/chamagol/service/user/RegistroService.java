@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.user;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -21,6 +21,7 @@ import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.repository.UsuarioVerificadorRepository;
+import com.chamagol.service.util.EmailService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

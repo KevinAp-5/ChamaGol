@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.util;
 
 import java.io.Serializable;
 import java.util.List;

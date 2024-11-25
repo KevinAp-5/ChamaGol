@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.user;
 
 import java.net.URI;
 import java.util.List;
@@ -26,6 +26,7 @@ import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.service.auth.CachedAuthenticationProvider;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

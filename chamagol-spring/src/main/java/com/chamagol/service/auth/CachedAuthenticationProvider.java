@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.auth;
 
 import org.springframework.cache.Cache;
 import org.springframework.context.annotation.Primary;

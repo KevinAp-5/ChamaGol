@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.auth;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,6 +15,8 @@ import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.repository.UsuarioResetTokenRepository;
+import com.chamagol.service.user.UsuarioService;
+import com.chamagol.service.util.EmailService;
 
 
 @Service

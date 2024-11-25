@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.auth;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

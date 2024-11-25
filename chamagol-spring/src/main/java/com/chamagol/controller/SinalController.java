@@ -16,7 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.sinal.SinalDTO;
 import com.chamagol.dto.sinal.SinalListagem;
-import com.chamagol.service.SinalService;
+import com.chamagol.service.util.SinalService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

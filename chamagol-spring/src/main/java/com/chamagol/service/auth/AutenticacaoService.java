@@ -1,4 +1,4 @@
-package com.chamagol.service;
+package com.chamagol.service.auth;
 
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,6 +11,7 @@ import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.enums.Status;
 import com.chamagol.exception.TokenInvalid;
 import com.chamagol.exception.UserAlreadyActive;
+import com.chamagol.service.user.UsuarioService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

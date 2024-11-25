@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chamagol.dto.usuario.UsuarioListagem;
-import com.chamagol.service.UsuarioService;
+import com.chamagol.service.user.UsuarioService;
 
 @RestController
 @RequestMapping("/api/me")
