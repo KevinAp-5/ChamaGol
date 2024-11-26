@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
@@ -36,6 +37,7 @@ public record SinalListagem(
 
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDateTime created_at
 ) implements Serializable {
     private static final long serialVersionUID = 1L;
