@@ -5,6 +5,8 @@ RUN apt install openjdk-17-jdk -y && apt clean
 COPY . .
 
 RUN apt install maven -y && apt clean
+
+WORKDIR "/chamagol-spring"
 RUN mvn clean install
 
 FROM openjdk:17-jdk-slim
