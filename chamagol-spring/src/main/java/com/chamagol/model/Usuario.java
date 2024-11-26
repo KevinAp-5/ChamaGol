@@ -40,7 +40,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Usuario implements UserDetails {
 
