@@ -1,4 +1,4 @@
-FROM ubuntu:lastest AS build
+FROM ubuntu:20.04 AS build
 
 RUN apt update && apt clean
 RUN apt install openjdk-17-jdk -y && apt clean
