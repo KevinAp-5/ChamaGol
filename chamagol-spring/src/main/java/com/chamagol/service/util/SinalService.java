@@ -14,6 +14,7 @@ import com.chamagol.dto.sinal.SinalDTO;
 import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.dto.sinal.mapper.SinalMapper;
 import com.chamagol.enums.Status;
+import com.chamagol.enums.TipoEvento;
 import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.model.Sinal;
 import com.chamagol.repository.SinalRepository;
@@ -32,6 +33,7 @@ public class SinalService implements Serializable{
     }
 
     // Retorna uma lista com todos os sinais
+    @Cacheable(value = "sinaisAll", key = "'sinaisTodos'")
     public List<SinalListagem> getSinal() {
         return sinalRepository.findAll()
         .stream()
@@ -39,7 +41,7 @@ public class SinalService implements Serializable{
         .toList();
     }
 
-    @Cacheable(value = "sinais", key = "'allSinais'")
+    @Cacheable(value = "sinais", key = "'sinaisAtivos'")
     // Retorna uma lista de todos os sinais que estão ativos
     public List<SinalListagem> getSinalActive() {
         return sinalRepository.findByStatus(Status.ACTIVE)
@@ -48,11 +50,20 @@ public class SinalService implements Serializable{
         .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "sinaisFiltered", key = "'sinaisFiltrados'")
+    public List<SinalListagem> getFilteredSinais(TipoEvento tipoEvento) {
+        return sinalRepository.findByTipoEvento(tipoEvento.getTipo())
+            .stream()
+            .map(SinalListagem:: new)
+            .toList();
+    }
+
     // Metodo create
     @Caching(
         evict = {
-            @CacheEvict(value = "sinaisActive", allEntries = true),
-            @CacheEvict(value = "sinal", allEntries = true)
+            @CacheEvict(value = "sinais", allEntries = true),
+            @CacheEvict(value = "sinaisAll", allEntries = true),
+            @CacheEvict(value = "sinaisFiltered", allEntries = true)
         }
     )
     @Transactional
@@ -69,6 +80,13 @@ public class SinalService implements Serializable{
         return new SinalListagem(sinal);
     }
 
+    @Caching(
+        evict = {
+            @CacheEvict(value = "sinais", allEntries = true),
+            @CacheEvict(value = "sinaisAll", allEntries = true),
+            @CacheEvict(value = "sinaisFiltered", allEntries = true)
+        }
+    )
     @Transactional
     public void delete(@NotNull @Positive Long id) {
         Sinal sinal = sinalRepository.findById(id).orElseThrow(

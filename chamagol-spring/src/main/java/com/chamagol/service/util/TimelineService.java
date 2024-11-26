@@ -8,16 +8,12 @@ import org.springframework.stereotype.Service;
 import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.dto.util.TimelineResponse;
 import com.chamagol.enums.TipoEvento;
-import com.chamagol.model.Sinal;
-import com.chamagol.repository.SinalRepository;
 
 @Service
 public class TimelineService {
-    private final SinalRepository sinalRepository;
     private final SinalService sinalService;
 
-    public TimelineService(SinalRepository sinalRepository, SinalService sinalService) {
-        this.sinalRepository = sinalRepository;
+    public TimelineService(SinalService sinalService) {
         this.sinalService = sinalService;
     }
 
@@ -29,7 +25,7 @@ public class TimelineService {
     }
 
     public List<TimelineResponse> getFilteredTimeline(TipoEvento tipoEvento) {
-        List<Sinal> sinais = sinalRepository.findByTipoEvento(tipoEvento.getTipo());
+        List<SinalListagem> sinais = sinalService.getFilteredSinais(tipoEvento);
         return sinais.stream().map(TimelineResponse::new).collect(Collectors.toList());
     }
 }

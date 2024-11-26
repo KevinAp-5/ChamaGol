@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,7 +25,6 @@ import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
-import com.chamagol.service.auth.CachedAuthenticationProvider;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -36,23 +34,45 @@ import jakarta.validation.constraints.Positive;
 @Service
 @Validated
 public class UsuarioService {
-    private UsuarioRepository usuarioRepository;
-    private UsuarioMapper usuarioMapper;
-    private RegistroService registroService;
-    private CachedAuthenticationProvider cachedAuthenticationProvider;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
-            RegistroService registroService, CachedAuthenticationProvider cachedAuthenticationProvider) {
+    private final UsuarioRepository usuarioRepository;
+    private final UsuarioMapper usuarioMapper;
+    private final RegistroService registroService;
+    private final UsuarioCacheService usuarioCacheService;
+
+    public UsuarioService(
+        UsuarioRepository usuarioRepository,
+        UsuarioMapper usuarioMapper,
+        RegistroService registroService,
+        UsuarioCacheService usuarioCacheService
+    ) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.registroService = registroService;
-        this.cachedAuthenticationProvider = cachedAuthenticationProvider;
+        this.usuarioCacheService = usuarioCacheService;
+    }
+
+    public UserDetails getUsuario(String email) {
+        return usuarioCacheService.getUsuarioFromCache(email);
+    }
+
+    public void evictUsuario(String email) {
+        usuarioCacheService.evictUsuario(email);
+    }
+
+    public void atualizarUsuario(String email, Usuario usuario) {
+        usuarioCacheService.atualizarUsuario(email, usuario);
     }
 
     @Transactional
     public ResponseEntity<ApiResponse<UsuarioDTO>> create(@Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
-        URI uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
-        return ResponseEntity.created(uri).body(registroService.createUser(usuarioDTO));
+        var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
+        var response = registroService.createUser(usuarioDTO);
+
+        // Atualizar cache após criar o usuário
+        usuarioCacheService.atualizarUsuario(usuarioDTO.email(), usuarioMapper.toEntity(usuarioDTO));
+
+        return ResponseEntity.created(uri).body(response);
     }
 
     public List<UsuarioDTO> lista() {
@@ -130,11 +150,6 @@ public class UsuarioService {
 
     public Boolean userExistsByEmail(@NotBlank String email) {
         return usuarioRepository.findByEmail(email).isPresent();
-    }
-
-    @Cacheable(value = "usuario", key = "#email", unless = "#result == null")
-    public UserDetails getUsuario(String email) {
-        return cachedAuthenticationProvider.loadUserByUsername(email);
     }
 
     @CacheEvict(value = "usuario", key = "#email")

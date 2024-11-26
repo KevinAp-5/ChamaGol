@@ -1,23 +1,44 @@
 package com.chamagol.service.user;
 
-import org.springframework.cache.annotation.Cacheable;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+import org.redisson.api.RMapCache;
+import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.slf4j.Slf4j;
+import com.chamagol.repository.UsuarioRepository;
 
 @Service
-@Slf4j
+@Primary
 public class UsuarioCacheService {
-    private final UsuarioService usuarioService;
 
-    public UsuarioCacheService(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    private final UsuarioRepository usuarioRepository;
+    private final RMapCache<String, UserDetails> usuarioCache;
+
+    public UsuarioCacheService(UsuarioRepository usuarioRepository, RedissonClient redissonClient) {
+        this.usuarioRepository = usuarioRepository;
+        this.usuarioCache = redissonClient.getMapCache("usuario");
     }
 
-    @Cacheable(value = "usuario", key = "#email")
     public UserDetails getUsuarioFromCache(String email) {
-        log.debug("Cache miss para usuário: {}", email);
-        return usuarioService.getUsuario(email);
+        return usuarioCache.computeIfAbsent(email, Duration.ofMinutes(20), k -> getUsuario(email)); // Tempo de vida no cache
+    }
+
+    public void evictUsuario(String email) {
+        usuarioCache.remove(email);
+    }
+
+    public void atualizarUsuario(String email, UserDetails userDetails) {
+        usuarioCache.put(email, userDetails, 20, TimeUnit.MINUTES);
+    }
+
+    private UserDetails getUsuario(String email) {
+        return usuarioRepository.findByEmail(email).orElseThrow(
+            () -> new UsernameNotFoundException(email)
+        );
     }
 }
