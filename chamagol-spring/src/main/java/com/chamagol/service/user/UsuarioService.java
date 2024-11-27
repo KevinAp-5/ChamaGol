@@ -1,12 +1,10 @@
 package com.chamagol.service.user;
 
-import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,14 +12,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
 import com.chamagol.dto.usuario.UsuarioUpdate;
 import com.chamagol.dto.usuario.mapper.UsuarioMapper;
-import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
@@ -37,18 +33,12 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
-    private final RegistroService registroService;
     private final UsuarioCacheService usuarioCacheService;
 
-    public UsuarioService(
-        UsuarioRepository usuarioRepository,
-        UsuarioMapper usuarioMapper,
-        RegistroService registroService,
-        UsuarioCacheService usuarioCacheService
-    ) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
+            UsuarioCacheService usuarioCacheService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
-        this.registroService = registroService;
         this.usuarioCacheService = usuarioCacheService;
     }
 
@@ -62,17 +52,6 @@ public class UsuarioService {
 
     public void atualizarUsuario(String email, Usuario usuario) {
         usuarioCacheService.atualizarUsuario(email, usuario);
-    }
-
-    @Transactional
-    public ResponseEntity<ApiResponse<UsuarioDTO>> create(@Valid @NotNull UsuarioDTO usuarioDTO, UriComponentsBuilder uriComponentsBuilder) {
-        var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
-        var response = registroService.createUser(usuarioDTO);
-
-        // Atualizar cache após criar o usuário
-        usuarioCacheService.atualizarUsuario(usuarioDTO.email(), usuarioMapper.toEntity(usuarioDTO));
-
-        return ResponseEntity.created(uri).body(response);
     }
 
     public List<UsuarioDTO> lista() {
@@ -163,8 +142,5 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
-        return uriComponentsBuilder.path("/api/user/{id}")
-                .buildAndExpand(userId).toUri();
-    }
+
 }

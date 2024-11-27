@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.chamagol.dto.usuario.UsuarioDTO;
+import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
@@ -71,7 +72,7 @@ public class RegistroService {
     }
 
     @Transactional
-    public ApiResponse<UsuarioDTO> createUser(@Valid @NotNull UsuarioDTO usuarioDTO) {
+    public ApiResponse<UsuarioListagem> createUser(@Valid @NotNull UsuarioDTO usuarioDTO) {
 
         // Validação do formato do e-mail
         if (!isEmailValid(usuarioDTO.email())) {
@@ -94,12 +95,12 @@ public class RegistroService {
         // Envio de e-mail de confirmação
         sendConfirmationEmail(usuario, usuarioVerificador);
 
-        return new ApiResponse<>(usuarioDTO, "Usuario criado com sucesso.");
+        return new ApiResponse<>(new UsuarioListagem(usuario), "Usuario criado com sucesso.");
     }
 
     private void resendLink(String email) {
         Usuario usuario = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException("email não encontrado: " + email)
+            () -> new UsernameNotFoundException(email)
         );
 
         if (usuario.getStatus() == Status.ACTIVE) {

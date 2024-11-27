@@ -19,6 +19,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.chamagol.exception.EmailNotConfirmed;
 import com.chamagol.exception.EmailSendingError;
 import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.exception.TokenInvalid;
@@ -124,6 +125,11 @@ public class TrataErros {
     @ExceptionHandler(UserAlreadyActive.class)
     public ResponseEntity<String> handleUserAlreadyActive(Exception ex) {
         return new ResponseEntity<>("Usuário já ativo: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(EmailNotConfirmed.class)
+    public ResponseEntity<String> handleEmailNotConfirmed(Exception ex) {
+        return new ResponseEntity<>("Confirme o email: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(EmailSendingError.class)

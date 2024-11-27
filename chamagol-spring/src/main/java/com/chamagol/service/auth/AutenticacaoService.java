@@ -9,8 +9,8 @@ import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.enums.Status;
+import com.chamagol.exception.EmailNotConfirmed;
 import com.chamagol.exception.TokenInvalid;
-import com.chamagol.exception.UserAlreadyActive;
 import com.chamagol.service.user.UsuarioService;
 
 import jakarta.validation.Valid;
@@ -37,7 +37,7 @@ public class AutenticacaoService {
         }
 
         if (usuarioService.getUsuarioByEmail(usuarioAutenticacao.email()).status() != Status.ACTIVE) {
-            throw new UserAlreadyActive("Confirme o email para ativá-lo");
+            throw new EmailNotConfirmed("Confirme o email para ativá-lo");
         }
 
         var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
