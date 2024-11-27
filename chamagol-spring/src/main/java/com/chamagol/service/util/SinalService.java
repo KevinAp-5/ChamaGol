@@ -1,12 +1,12 @@
 package com.chamagol.service.util;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,29 +33,21 @@ public class SinalService implements Serializable{
     }
 
     // Retorna uma lista com todos os sinais
-    @Cacheable(value = "sinaisAll", key = "'sinaisTodos'")
-    public List<SinalListagem> getSinal() {
-        return sinalRepository.findAll()
-        .stream()
-        .map(SinalListagem:: new)
-        .toList();
+    @Cacheable(value = "sinaisAll", key = "'sinaisTodos_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<SinalListagem> getSinal(Pageable pageable) {
+        return sinalRepository.findAll(pageable).map(SinalListagem:: new);
     }
 
-    @Cacheable(value = "sinais", key = "'sinaisAtivos'")
-    // Retorna uma lista de todos os sinais que estão ativos
-    public List<SinalListagem> getSinalActive() {
-        return sinalRepository.findByStatus(Status.ACTIVE)
-        .stream()
-        .map(SinalListagem:: new)
-        .collect(Collectors.toList());
+    @Cacheable(value = "sinais", key = "'sinaisAtivos_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<SinalListagem> getSinalActive(Pageable pageable) {
+        return sinalRepository.findByStatus(Status.ACTIVE, pageable)
+            .map(SinalListagem::new); // Mapeia diretamente para o DTO
     }
 
-    @Cacheable(value = "sinaisFiltered", key = "'sinaisFiltrados'")
-    public List<SinalListagem> getFilteredSinais(TipoEvento tipoEvento) {
-        return sinalRepository.findByTipoEvento(tipoEvento.getTipo())
-            .stream()
-            .map(SinalListagem:: new)
-            .toList();
+    @Cacheable(value = "sinaisFiltered", key = "'sinaisFiltrados_' + #tipoEvento + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<SinalListagem> getFilteredSinais(TipoEvento tipoEvento, Pageable pageable) {
+        return sinalRepository.findByTipoEvento(tipoEvento.getTipo(), pageable)
+            .map(SinalListagem::new); // Mapeia diretamente para o DTO
     }
 
     // Metodo create

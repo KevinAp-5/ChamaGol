@@ -1,11 +1,9 @@
 package com.chamagol.service.util;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.dto.util.TimelineResponse;
 import com.chamagol.enums.TipoEvento;
 
@@ -17,15 +15,11 @@ public class TimelineService {
         this.sinalService = sinalService;
     }
 
-    public List<TimelineResponse> getTimeline() {
-        List<SinalListagem> sinais = sinalService.getSinalActive();
-
-        // Converte para TimelineResponse
-        return sinais.stream().map(TimelineResponse::new).collect(Collectors.toList());
+    public Page<TimelineResponse> getTimeline(Pageable pageable) {
+        return sinalService.getSinalActive(pageable).map(TimelineResponse:: new);
     }
 
-    public List<TimelineResponse> getFilteredTimeline(TipoEvento tipoEvento) {
-        List<SinalListagem> sinais = sinalService.getFilteredSinais(tipoEvento);
-        return sinais.stream().map(TimelineResponse::new).collect(Collectors.toList());
+    public Page<TimelineResponse> getFilteredTimeline(TipoEvento tipoEvento, Pageable pageable) {
+        return sinalService.getFilteredSinais(tipoEvento, pageable).map(TimelineResponse:: new);
     }
 }
