@@ -1,8 +1,9 @@
 package com.chamagol.controller;
 
 import java.net.URI;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,13 +33,13 @@ public class SinalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SinalListagem>> getSinalActive() {
-        return ResponseEntity.ok(sinalService.getSinalActive());
+    public ResponseEntity<Page<SinalListagem>> getSinalActive(Pageable page) {
+        return ResponseEntity.ok(sinalService.getSinalActive(page));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<SinalListagem>> getSinal() {
-        return ResponseEntity.ok(sinalService.getSinal());
+    public ResponseEntity<Page<SinalListagem>> getSinal(Pageable pageable) {
+        return ResponseEntity.ok(sinalService.getSinal(pageable));
     }
 
     @PreAuthorize("hasRole('MESTRE')")

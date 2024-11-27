@@ -1,7 +1,7 @@
 package com.chamagol.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,15 +23,15 @@ public class TimelineController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TimelineResponse>> getTimeline() {
-        List<TimelineResponse> timeline = timelineService.getTimeline();
+    public ResponseEntity<Page<TimelineResponse>> getTimeline(Pageable pageable) {
+        Page<TimelineResponse> timeline = timelineService.getTimeline(pageable);
         return ResponseEntity.ok(timeline);
     }
 
     @GetMapping("filter")
-    public ResponseEntity<List<TimelineResponse>> getFilteredTimeline(
-        @RequestParam(value = "tipoEvento") TipoEvento tipoEvento
+    public ResponseEntity<Page<TimelineResponse>> getFilteredTimeline(
+        @RequestParam(value = "tipoEvento") TipoEvento tipoEvento, Pageable pageable
     ) {
-        return ResponseEntity.ok(timelineService.getFilteredTimeline(tipoEvento));
+        return ResponseEntity.ok(timelineService.getFilteredTimeline(tipoEvento, pageable));
     }
 }
