@@ -36,8 +36,8 @@ import lombok.NoArgsConstructor;
     @JsonSubTypes.Type(value = SinalListagem.class, name = "sinalListagem")
 })
 
-@Table(name = "Sinal")
-@Entity(name = "sinais")
+@Table(name = "sinal")
+@Entity
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
