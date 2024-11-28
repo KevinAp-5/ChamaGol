@@ -32,8 +32,9 @@ public class SecurityConfigurations {
 				.authorizeHttpRequests(requests -> requests
 						// Autenticação e Registro
 						.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-						// .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll()
-	
+						.requestMatchers(HttpMethod.GET, "/api/auth/register/confirm**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirm**").permitAll()
+
 						// Rotas para MESTRE
 						.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
 						.requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
