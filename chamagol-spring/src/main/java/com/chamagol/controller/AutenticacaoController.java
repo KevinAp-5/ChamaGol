@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,7 +78,7 @@ public class AutenticacaoController {
         return ResponseEntity.ok(autenticacaoService.resetSenhaEmail(resetPasswordBody));
     }
 
-    @PostMapping("/password/reset/confirm")
+    @GetMapping("/password/reset/confirm")
     public ResponseEntity<String> confirmResetPassword(
         @RequestParam("token") @NotBlank String token,
         @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody
@@ -85,7 +86,7 @@ public class AutenticacaoController {
         return ResponseEntity.ok(autenticacaoService.confirmarRecuperacaoSenha(token, confirmPasswordBody));
     }
 
-    @PostMapping("/register/confirm")
+    @GetMapping("/register/confirm")
     public ResponseEntity<String> confirmUser (@RequestParam("token") String uuid) {
         boolean userConfirmed = registroService.confirmUser(UUID.fromString(uuid));
         if (!userConfirmed) {

@@ -1,8 +1,8 @@
 // UsuarioController.java
 package com.chamagol.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,13 +35,13 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioListagem>> listActiveUsers() {
-        return  ResponseEntity.ok(usuarioService.listActive());
+    public ResponseEntity<Page<UsuarioListagem>> listActiveUsers(Pageable pageable) {
+        return  ResponseEntity.ok(usuarioService.listActive(pageable));
     }
 
     @GetMapping("/inactive")
-    public ResponseEntity<List<UsuarioListagem>> listInactiveUsers() {
-        return ResponseEntity.ok(usuarioService.listInactive());
+    public ResponseEntity<Page<UsuarioListagem>> listInactiveUsers(Pageable pageable) {
+        return ResponseEntity.ok(usuarioService.listInactive(pageable));
     }
 
     @GetMapping("/{id}")
