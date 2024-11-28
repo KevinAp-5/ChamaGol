@@ -1,0 +1,1 @@
+ALTER TABLE usuarios.usuario DROP COLUMN "resettoken";  
