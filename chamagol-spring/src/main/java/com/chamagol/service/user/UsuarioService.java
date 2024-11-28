@@ -1,10 +1,9 @@
 package com.chamagol.service.user;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +16,7 @@ import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.UsuarioResponseEntityBody;
 import com.chamagol.dto.usuario.UsuarioUpdate;
-import com.chamagol.dto.usuario.mapper.UsuarioMapper;
+import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
@@ -32,13 +31,10 @@ import jakarta.validation.constraints.Positive;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final UsuarioMapper usuarioMapper;
     private final UsuarioCacheService usuarioCacheService;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
-            UsuarioCacheService usuarioCacheService) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioCacheService usuarioCacheService) {
         this.usuarioRepository = usuarioRepository;
-        this.usuarioMapper = usuarioMapper;
         this.usuarioCacheService = usuarioCacheService;
     }
 
@@ -54,25 +50,16 @@ public class UsuarioService {
         usuarioCacheService.atualizarUsuario(email, usuario);
     }
 
-    public List<UsuarioDTO> lista() {
-        return usuarioRepository.findAll()
-                .stream()
-                .map(usuarioMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<UsuarioListagem> lista(Pageable pageable) {
+        return usuarioRepository.findAll(pageable).map(UsuarioListagem:: new);
     }
 
-    public List<UsuarioListagem> listActive() {
-        return usuarioRepository.findByStatus(Status.ACTIVE)
-                .stream()
-                .map(UsuarioListagem::new)
-                .toList();
+    public Page<UsuarioListagem> listActive(Pageable pageable) {
+        return usuarioRepository.findByStatus(Status.ACTIVE, pageable).map(UsuarioListagem:: new);
     }
 
-    public List<UsuarioListagem> listInactive() {
-        return usuarioRepository.findByStatus(Status.INACTIVE)
-                .stream()
-                .map(UsuarioListagem::new)
-                .toList();
+    public Page<UsuarioListagem> listInactive(Pageable pageable) {
+        return usuarioRepository.findByStatus(Status.INACTIVE, pageable).map(UsuarioListagem:: new);
     }
 
     public UsuarioResponseEntityBody findById(@NotNull @Positive Long id) {
@@ -110,6 +97,7 @@ public class UsuarioService {
     public void activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.activateUsuario();
+        usuarioEvict();
     }
 
     public UsuarioListagem getMe() {
@@ -142,5 +130,17 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    public void turnIntoMestre(UsuarioDTO usuarioDTO) {
+        Usuario user = new Usuario(usuarioDTO);
+        user.setUserRole(Roles.MESTRE);
+        usuarioRepository.save(user);
+        usuarioCacheService.evictUsuario(usuarioDTO.email());
+    }
 
+    public void turnIntoAdmin(UsuarioDTO usuarioDTO) {
+        Usuario user = new Usuario(usuarioDTO);
+        user.setUserRole(Roles.ADMIN);
+        usuarioRepository.save(user);
+        usuarioCacheService.evictUsuario(usuarioDTO.email());
+    }
 }

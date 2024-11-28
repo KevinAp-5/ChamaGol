@@ -1,7 +1,7 @@
 package com.chamagol.service.auth;
 
 
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import com.chamagol.dto.token.TokenDTO;
@@ -11,6 +11,7 @@ import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.enums.Status;
 import com.chamagol.exception.EmailNotConfirmed;
 import com.chamagol.exception.TokenInvalid;
+import com.chamagol.model.Usuario;
 import com.chamagol.service.user.UsuarioService;
 
 import jakarta.validation.Valid;
@@ -32,13 +33,10 @@ public class AutenticacaoService {
     }
 
     public TokenDTO userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
-        if (Boolean.FALSE.equals(usuarioService.userExistsByEmail(usuarioAutenticacao.email()))) {
-            throw new UsernameNotFoundException(usuarioAutenticacao.email());
-        }
+        var user = (Usuario) usuarioService.getUsuario(usuarioAutenticacao.email());
 
-        if (usuarioService.getUsuarioByEmail(usuarioAutenticacao.email()).status() != Status.ACTIVE) {
+        if (user.getStatus() != Status.ACTIVE)
             throw new EmailNotConfirmed("Confirme o email para ativá-lo");
-        }
 
         var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
         return new TokenDTO(tokenJWT);
@@ -52,6 +50,7 @@ public class AutenticacaoService {
         return "Link para redefinir senha foi enviada para o e-mail.";
     }
 
+    @CacheEvict(value = "usuario", allEntries = true)
     public String confirmarRecuperacaoSenha(@NotBlank String token, @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
         boolean resetado = passwordResetService.resetPassword(token, confirmPasswordBody.novaSenha());
         if (!resetado) {

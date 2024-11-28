@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class RegistroService {
     }
 
     @Transactional
+    @CacheEvict(value = "usuario", allEntries = true)
     public boolean confirmUser(UUID uuid) {
         UsuarioVerificadorEntity userVerificador = usuarioVerificadorRepository.findByUuid(uuid)
         .orElseThrow(
@@ -138,7 +140,7 @@ public class RegistroService {
             formatName(usuario.getNome()),
             confirmEmailLink(usuarioVerificador.getUuid())
             );
-            emailService.sendEmail(usuario.getEmail(), "Verificar e-mail", emailBody);
+            emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
         }
 
     private String formatName(String nome) {
