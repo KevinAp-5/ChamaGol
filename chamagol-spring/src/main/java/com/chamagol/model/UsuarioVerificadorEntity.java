@@ -15,8 +15,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Entity(name = "UsuarioVerificador")
-@Table(name = "usuarioVerificador", schema = "usuarios")
+@Entity
+@Table(name = "usuario_verificador")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
@@ -25,6 +25,7 @@ public class UsuarioVerificadorEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // @(name = "UUIDGenerator", strategy = "uuid2")
     @Column(nullable = false)
     private UUID uuid;
 

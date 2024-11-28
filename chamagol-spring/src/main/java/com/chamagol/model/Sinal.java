@@ -20,7 +20,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,7 +35,6 @@ import lombok.NoArgsConstructor;
     @JsonSubTypes.Type(value = SinalListagem.class, name = "sinalListagem")
 })
 
-@Table(name = "sinal")
 @Entity
 @Data
 @NoArgsConstructor

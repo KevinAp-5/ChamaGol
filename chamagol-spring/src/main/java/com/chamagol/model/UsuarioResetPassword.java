@@ -15,8 +15,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Entity(name = "usuarioResetPassword")
-@Table(name = "usuarioResetPassword")
+@Entity
+@Table(name = "usuario_reset_password")
 
 @Data
 @NoArgsConstructor
@@ -27,7 +27,7 @@ public class UsuarioResetPassword {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "UUID", nullable = false)
     private UUID uuid;
 
     @Column(nullable = false)

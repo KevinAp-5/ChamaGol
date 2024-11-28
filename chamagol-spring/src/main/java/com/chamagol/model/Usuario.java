@@ -75,10 +75,10 @@ public class Usuario implements UserDetails {
     private Status status = Status.INACTIVE;
 
     @NotNull
-    @Column(length = 20, nullable = false)
+    @Column(name = "user_role", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     @Getter(AccessLevel.NONE)
-    private Roles role = Roles.USER;
+    private Roles userRole = Roles.USER;
 
     @NotNull
     @Column(length = 24, nullable = false)
@@ -106,7 +106,7 @@ public class Usuario implements UserDetails {
     // Implementação do contrato de UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.role == Roles.ADMIN) {
+        if (this.userRole == Roles.ADMIN) {
             return List.of(
                 new SimpleGrantedAuthority("ROLE_ADMIN"),
                 new SimpleGrantedAuthority("ROLE_MESTRE"), // Herdando permissões de MESTRE
@@ -114,7 +114,7 @@ public class Usuario implements UserDetails {
             );
         }
 
-        if (this.role == Roles.MESTRE) {
+        if (this.userRole == Roles.MESTRE) {
             return List.of(
                 new SimpleGrantedAuthority("ROLE_MESTRE"),
                 new SimpleGrantedAuthority("ROLE_USER")   // Herdando permissões de USER
@@ -131,11 +131,11 @@ public class Usuario implements UserDetails {
         .collect(Collectors.toList());
 
         if (roles.contains("ROLE_MESTRE")) {
-            this.setRole(Roles.MESTRE);
+            this.setUserRole(Roles.MESTRE);
         } else if (roles.contains("ROLE_ADMIN")) {
-            this.setRole(Roles.ADMIN);
+            this.setUserRole(Roles.ADMIN);
         } else {
-            this.setRole(Roles.USER);
+            this.setUserRole(Roles.USER);
         }
     }
 
