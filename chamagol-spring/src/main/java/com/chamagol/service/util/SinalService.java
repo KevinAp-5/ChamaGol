@@ -6,7 +6,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +40,15 @@ public class SinalService implements Serializable{
         return sinalRepository.findAll(pageable).map(SinalListagem:: new);
     }
 
-    @Cacheable(value = "sinais", key = "'sinaisAtivos_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Cacheable(value = "sinaisAtivos", key = "'sinaisAtivos_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<SinalListagem> getSinalActive(Pageable pageable) {
-        return sinalRepository.findByStatus(Status.ACTIVE, pageable)
-            .map(SinalListagem::new); // Mapeia diretamente para o DTO
+        Pageable sortedPageable = PageRequest.of(
+            pageable.getPageNumber(), 
+            pageable.getPageSize(), 
+            Sort.by("createdAt").descending()
+        );
+        return sinalRepository.findByStatus(Status.ACTIVE, sortedPageable)
+            .map(SinalListagem::new);
     }
 
     @Cacheable(value = "sinaisFiltered", key = "'sinaisFiltrados_' + #tipoEvento + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
