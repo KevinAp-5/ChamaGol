@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Pageable;
 
 import com.chamagol.enums.Status;
+import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
 
 @Repository
@@ -17,5 +18,5 @@ public interface SinalRepository extends JpaRepository<Sinal, Long> {
     @Query(
         value = "SELECT s FROM Sinal s WHERE s.status = 'ACTIVE' AND s.tipoEvento = :tipoEvento ORDER BY s.createdAt DESC"
     )
-    Page<Sinal> findByTipoEvento(@Param("tipoEvento") String tipoEvento, Pageable pageable);
+    Page<Sinal> findByTipoEvento(@Param("tipoEvento") TipoEvento tipoEvento, Pageable pageable);
 }
