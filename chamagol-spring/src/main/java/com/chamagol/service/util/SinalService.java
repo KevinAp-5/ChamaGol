@@ -1,6 +1,7 @@
 package com.chamagol.service.util;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -70,5 +71,9 @@ public class SinalService implements Serializable {
         sinalRepository.save(sinal);
 
         sinalCacheService.limparCache(); // Limpa o cache após deletar um sinal
+    }
+
+    public List<SinalListagem> getLatestSignals() {
+        return sinalCacheService.getTop10(); // Busca os 10 últimos sinais
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import com.chamagol.dto.util.TimelineResponse;
 import com.chamagol.enums.TipoEvento;
 
+import reactor.core.publisher.Flux;
+
 @Service
 public class TimelineService {
     private final SinalService sinalService;
@@ -21,5 +23,10 @@ public class TimelineService {
 
     public Page<TimelineResponse> getFilteredTimeline(TipoEvento tipoEvento, Pageable pageable) {
         return sinalService.getFilteredSinais(tipoEvento, pageable).map(TimelineResponse:: new);
+    }
+
+    public Flux<TimelineResponse> getLatestUpdates() {
+        return Flux.fromIterable(sinalService.getLatestSignals())
+                .map(TimelineResponse::new);
     }
 }

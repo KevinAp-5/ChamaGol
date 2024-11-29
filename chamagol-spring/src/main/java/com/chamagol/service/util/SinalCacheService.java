@@ -149,4 +149,32 @@ public class SinalCacheService {
 
         return sinaisPage.map(SinalListagem::new);
     }
+
+    public List<SinalListagem> getTop10() {
+        String cacheKey = "SinalLast10";
+    
+        // Tenta buscar do cache
+        List<Sinal> cachedSinais = sinalCache.get(cacheKey);
+    
+        if (cachedSinais != null && !cachedSinais.isEmpty()) {
+            System.out.println("Cache hit: " + cachedSinais);
+            return cachedSinais.stream().map(SinalListagem::new).toList();
+        }
+    
+        // Caso não esteja no cache, buscar no banco
+        List<Sinal> sinaisList = sinalRepository.findTop10ByOrderByCreatedAtDesc();
+    
+        if (sinaisList.isEmpty()) {
+            System.out.println("No signals found in the database.");
+            return List.of();
+        }
+    
+        System.out.println("Cache miss. Saving new data to cache.");
+    
+        // Salvar no cache
+        sinalCache.put(cacheKey, sinaisList, 20, TimeUnit.MINUTES);
+    
+        return sinaisList.stream().map(SinalListagem::new).toList();
+    }
+    
 }
