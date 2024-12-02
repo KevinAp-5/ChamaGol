@@ -1,7 +1,8 @@
 package com.chamagol.controller;
 
-import java.time.Duration;
+import java.util.List;
 
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -11,39 +12,66 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chamagol.dto.util.TimelineResponse;
+import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.enums.TipoEvento;
-import com.chamagol.service.util.TimelineService;
+import com.chamagol.service.util.SinalService;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 @RestController
 @RequestMapping("/api/timeline")
+@Slf4j
 public class TimelineController {
 
-    private final TimelineService timelineService;
+    private final RedissonClient redissonClient;
+    private final SinalService sinalService;
+    private final Sinks.Many<List<SinalListagem>> sink = Sinks.many().replay().latest();
 
-    public TimelineController(TimelineService timelineService) {
-        this.timelineService = timelineService;
-    }
-
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<TimelineResponse> streamTimeline() {
-        // Atualizações a cada 1 segundo, enviando novos sinais
-        return Flux.interval(Duration.ofSeconds(1))
-                   .flatMap(i -> timelineService.getLatestUpdates());
+    public TimelineController(RedissonClient redissonClient, SinalService sinalService) {
+        this.redissonClient = redissonClient;
+        this.sinalService = sinalService;
+         // Inscreve no tópico Redis para ouvir eventos de alteração
+        sinalService.getTopic().addListener(Object.class, (channel, message) -> {
+            // Atualiza o stream com os 10 sinais mais recentes
+            atualizarStream();
+        });
     }
 
     @GetMapping
-    public ResponseEntity<Page<TimelineResponse>> getTimeline(Pageable pageable) {
-        Page<TimelineResponse> timeline = timelineService.getTimeline(pageable);
+    public ResponseEntity<Page<SinalListagem>> getTimeline(Pageable pageable) {
+        var timeline = sinalService.getSinalActive(pageable);
         return ResponseEntity.ok(timeline);
     }
 
     @GetMapping("filter")
-    public ResponseEntity<Page<TimelineResponse>> getFilteredTimeline(
-        @RequestParam(value = "tipoEvento") TipoEvento tipoEvento, Pageable pageable
-    ) {
-        return ResponseEntity.ok(timelineService.getFilteredTimeline(tipoEvento, pageable));
+    public ResponseEntity<Page<SinalListagem>> getFilteredTimeline(
+            @RequestParam(value = "tipoEvento") TipoEvento tipoEvento, Pageable pageable) {
+        return ResponseEntity.ok(sinalService.getFilteredSinais(tipoEvento, pageable));
+    }
+
+
+    // Endpoint SSE para transmitir sinais
+    @GetMapping(value = "stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<List<SinalListagem>> streamSinais() {
+        // Envia os 10 sinais iniciais ao cliente
+        atualizarStream();
+
+        // Retorna o Flux para manter a conexão ativa
+        return sink.asFlux()
+        .doOnError(e -> {
+            // Log detalhado da exceção
+            log.error("Erro no stream de sinais", e);
+        })
+        .onErrorResume(e -> Flux.empty()); // Ou tratamento personalizado
+    }
+
+    // Método para atualizar o stream
+    private void atualizarStream() {
+        // Obtém os 10 sinais mais recentes do serviço
+        List<SinalListagem> latestSinais = sinalService.getLatestSignals();
+        // Emite os novos sinais para os clientes conectados
+        sink.tryEmitNext(latestSinais);
     }
 }
