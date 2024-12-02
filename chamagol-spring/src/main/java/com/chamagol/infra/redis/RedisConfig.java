@@ -1,6 +1,7 @@
 package com.chamagol.infra.redis;
 
 import org.redisson.Redisson;
+import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.spring.cache.RedissonSpringCacheManager;
@@ -26,5 +27,10 @@ public class RedisConfig {
     @Bean
     public CacheManager cacheManager(RedissonClient redissonClient) {
         return new RedissonSpringCacheManager(redissonClient);
+    }
+
+    @Bean
+    public RTopic sinalChangeTopic(RedissonClient redissonClient) {
+        return redissonClient.getTopic("sinal-change");
     }
 }
