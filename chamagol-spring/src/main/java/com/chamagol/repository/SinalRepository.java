@@ -24,7 +24,7 @@ public interface SinalRepository extends JpaRepository<Sinal, Long> {
 
 
     @Query(
-        value = "SELECT s FROM Sinal s WHERE s.status = 'ACTIVE' ORDER BY s.createdAt DESC FETCH FIRST 10 ROWS ONLY"
+        value = "SELECT s FROM Sinal s WHERE s.status = 'ACTIVE' ORDER BY s.id DESC FETCH FIRST 10 ROWS ONLY"
     )
     List<Sinal> findTop10ByOrderByCreatedAtDesc();
 }
