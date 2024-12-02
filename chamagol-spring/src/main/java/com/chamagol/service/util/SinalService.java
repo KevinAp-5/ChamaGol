@@ -3,6 +3,7 @@ package com.chamagol.service.util;
 import java.io.Serializable;
 import java.util.List;
 
+import org.redisson.api.RTopic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,19 +17,29 @@ import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.model.Sinal;
 import com.chamagol.repository.SinalRepository;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import reactor.core.publisher.FluxSink;
 
 @Service
 public class SinalService implements Serializable {
+
     private final transient SinalRepository sinalRepository;
     private final transient SinalMapper sinalMapper;
     private final transient SinalCacheService sinalCacheService;
+    private final transient RTopic topic;
 
-    public SinalService(SinalRepository sinalRepository, SinalMapper sinalMapper, SinalCacheService sinalCacheService) {
+    public SinalService(SinalRepository sinalRepository, SinalMapper sinalMapper, SinalCacheService sinalCacheService,
+            RTopic topic) {
         this.sinalRepository = sinalRepository;
         this.sinalMapper = sinalMapper;
         this.sinalCacheService = sinalCacheService;
+        this.topic = topic;
+    }
+
+    public RTopic getTopic() {
+        return topic;
     }
 
     // Retorna uma lista com todos os sinais, utilizando o cache
@@ -46,13 +57,15 @@ public class SinalService implements Serializable {
         return sinalCacheService.getFilteredSinais(tipoEvento, pageable);
     }
 
-    // Cria um novo sinal e limpa o cache relevante
+    // Método para criar um novo sinal
     @Transactional
-    public SinalListagem create(SinalDTO sinalDTO) {
+    public SinalListagem create(@Valid SinalDTO sinalDTO) {
         Sinal sinal = sinalMapper.toEntity(sinalDTO);
         sinalRepository.save(sinal);
 
         sinalCacheService.limparCache(); // Limpa o cache após criar um novo sinal
+
+        topic.publish("SINAL_ADDED"); // Publica evento de criação
         return new SinalListagem(sinal);
     }
 
@@ -61,19 +74,45 @@ public class SinalService implements Serializable {
         return sinalCacheService.getSinalById(id);
     }
 
-    // Deleta um sinal e limpa o cache relevante
+    // Método para realizar soft delete em um sinal
     @Transactional
     public void delete(@NotNull @Positive Long id) {
         Sinal sinal = sinalRepository.findById(id)
-            .orElseThrow(() -> new IDNotFoundException("Sinal não encontrado"));
+                .orElseThrow(() -> new IDNotFoundException("Sinal não encontrado"));
 
-        sinal.inactivate();
+        sinal.inactivate(); // Realiza soft delete
         sinalRepository.save(sinal);
 
-        sinalCacheService.limparCache(); // Limpa o cache após deletar um sinal
+        sinalCacheService.limparCache(); // Limpa o cache após deletar o sinal
+
+        topic.publish("SINAL_DELETED"); // Publica evento de deleção
     }
 
+    // Atualiza um sinal específico
+    @Transactional
+    public SinalListagem update(@Positive @NotNull Long id, @Valid SinalDTO sinalDTO) {
+        Sinal sinal = sinalRepository.findById(id)
+                .orElseThrow(() -> new IDNotFoundException("Sinal não encontrado"));
+
+        sinalRepository.save(sinal);
+
+        sinalCacheService.limparCache(); // Limpa o cache após a atualização
+
+        topic.publish("SINAL_UPDATED"); // Publica evento de atualização
+        return new SinalListagem(sinal);
+    }
+
+    // Obtém os 10 sinais mais recentes
     public List<SinalListagem> getLatestSignals() {
         return sinalCacheService.getTop10(); // Busca os 10 últimos sinais
+    }
+
+    // Inscreve-se em mudanças para enviar atualizações aos clientes
+    public void subscribeToChanges(FluxSink<SinalListagem> sink) {
+        topic.addListener(String.class, (channel, message) -> {
+            // Atualizar o cliente com os sinais mais recentes
+            List<SinalListagem> updatedSignals = getLatestSignals();
+            updatedSignals.forEach(sink::next);
+        });
     }
 }
