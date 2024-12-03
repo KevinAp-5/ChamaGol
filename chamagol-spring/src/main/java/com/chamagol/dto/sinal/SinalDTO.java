@@ -2,9 +2,14 @@ package com.chamagol.dto.sinal;
 
 import java.time.LocalDateTime;
 
+import com.chamagol.dto.sinal.converter.TipoEventoConverter;
+import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.Convert;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 
 public record SinalDTO(
@@ -27,7 +32,12 @@ public record SinalDTO(
     @NotBlank
     String acaoSinal,
 
-    LocalDateTime created_at
+    LocalDateTime created_at,
+
+    @JsonProperty("tipoEvento")
+    @Enumerated(EnumType.STRING)
+    @Convert(converter = TipoEventoConverter.class)
+    TipoEvento tipoEvento
 
 ) {
     public SinalDTO(Sinal sinal) {
@@ -37,8 +47,9 @@ public record SinalDTO(
             sinal.getNomeTimes(),
             sinal.getTempoPartida(),
             sinal.getPlacar(),
-            sinal.getPlacar(),
-            sinal.getCreatedAt()
+            sinal.getAcaoSinal(),
+            sinal.getCreatedAt(),
+            sinal.getTipoEvento()
         );
     }
 }

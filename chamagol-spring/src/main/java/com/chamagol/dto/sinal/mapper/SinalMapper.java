@@ -23,6 +23,7 @@ public class SinalMapper {
         sinal.setPlacar(sinalDTO.placar());
         sinal.setAcaoSinal(sinalDTO.acaoSinal());
         sinal.setCreatedAt(sinalDTO.created_at());
+        sinal.setTipoEvento(sinalDTO.tipoEvento());
 
         return sinal;
     }
@@ -30,6 +31,10 @@ public class SinalMapper {
     public SinalDTO toDTO(Sinal sinal) {
         if (sinal == null) {
             return null;
+        }
+
+        if (sinal.getTipoEvento() == null) {
+            throw new IllegalArgumentException("Tipo evento não pode ser nulo.");
         }
 
         return new SinalDTO(sinal);
