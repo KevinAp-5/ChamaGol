@@ -6,12 +6,9 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.validator.constraints.Length;
 
-import com.chamagol.dto.sinal.SinalListagem;
 import com.chamagol.enums.Status;
 import com.chamagol.enums.TipoEvento;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,15 +22,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = SinalListagem.class, name = "sinalListagem")
-})
 
 @Entity
 @Data
@@ -69,18 +57,20 @@ public class Sinal implements Serializable{
     @Length(min = 2, max = 255)
     @Column(name = "acao_sinal", nullable = false)
     private String acaoSinal;
-
+    
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
-
+    
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
-
+    
     @Column(name = "tipo_evento", nullable = false)
+    @JsonProperty("tipoEvento")
     @Enumerated(EnumType.STRING)
-    private TipoEvento tipoEvento = TipoEvento.DICA;
+    private TipoEvento tipoEvento;
 
     public void activate() {
         this.status = Status.ACTIVE;
