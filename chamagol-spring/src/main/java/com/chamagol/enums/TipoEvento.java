@@ -1,34 +1,38 @@
 package com.chamagol.enums;
 
-public enum TipoEvento {
-    /*
-     * Exemplos de tipoEvento:
-     * DICA: Um sinal enviado pelo mestre (por exemplo, "Aposte no próximo gol do Time A").
-     * GOL: Um gol marcado durante a partida.
-     * CARTÃO: Cartão amarelo ou vermelho recebido por um jogador.
-     * FINALIZADO: Indica que o jogo terminou.
-     * ALERTA: Mensagem administrativa (por exemplo, "Manutenção programada no sistema").
-     * PRO: Um sinal exclusivo para usuários PRO.
-     */
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+public enum TipoEvento {
     DICA("DICA"),
     GOL("GOL"),
     CARTAO("CARTAO"),
     ALERTA("ALERTA"),
     PRO("PRO");
 
-    private String tipo;
+    private final String name;
 
-    private TipoEvento(String tipo) {
-        this.tipo = tipo;
+    TipoEvento(String tipo) {
+        this.name = tipo;
     }
 
-    public String getTipo() {
-        return this.tipo;
+    @JsonValue
+    public String getName() {
+        return this.name;
+    }
+
+    @JsonCreator
+    public static TipoEvento fromString(String name) {
+        for (TipoEvento tipo : values()) {
+            if (tipo.name.equalsIgnoreCase(name)) {
+                return tipo;
+            }
+        }
+        return DICA; // Retorna valor padrão se não encontrar
     }
 
     @Override
     public String toString() {
-        return this.getTipo();
+        return this.name;
     }
 }
