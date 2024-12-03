@@ -2,7 +2,6 @@ package com.chamagol.controller;
 
 import java.util.List;
 
-import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -25,18 +24,16 @@ import reactor.core.publisher.Sinks;
 @Slf4j
 public class TimelineController {
 
-    private final RedissonClient redissonClient;
     private final SinalService sinalService;
     private final Sinks.Many<List<SinalListagem>> sink = Sinks.many().replay().latest();
 
-    public TimelineController(RedissonClient redissonClient, SinalService sinalService) {
-        this.redissonClient = redissonClient;
+    public TimelineController(SinalService sinalService) {
         this.sinalService = sinalService;
          // Inscreve no tópico Redis para ouvir eventos de alteração
-        sinalService.getTopic().addListener(Object.class, (channel, message) -> {
+        sinalService.getTopic().addListener(Object.class, (channel, message) -> 
             // Atualiza o stream com os 10 sinais mais recentes
-            atualizarStream();
-        });
+            atualizarStream()
+        );
     }
 
     @GetMapping
@@ -60,10 +57,10 @@ public class TimelineController {
 
         // Retorna o Flux para manter a conexão ativa
         return sink.asFlux()
-        .doOnError(e -> {
+        .doOnError(e -> 
             // Log detalhado da exceção
-            log.error("Erro no stream de sinais", e);
-        })
+            log.error("Erro no stream de sinais", e)
+        )
         .onErrorResume(e -> Flux.empty()); // Ou tratamento personalizado
     }
 
