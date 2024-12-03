@@ -61,6 +61,7 @@ public class SinalService implements Serializable {
     @Transactional
     public SinalListagem create(@Valid SinalDTO sinalDTO) {
         Sinal sinal = sinalMapper.toEntity(sinalDTO);
+
         sinalRepository.save(sinal);
 
         sinalCacheService.limparCache(); // Limpa o cache após criar um novo sinal
