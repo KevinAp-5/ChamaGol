@@ -1,18 +1,29 @@
+# Etapa 1: Build
 FROM ubuntu:20.04 AS build
 
-RUN apt update && apt clean
-RUN apt install openjdk-17-jdk -y && apt clean
+# Atualiza e instala dependências necessárias
+RUN apt update && apt install -y \
+    openjdk-17-jdk \
+    maven \
+    && apt clean
+
+# Define o diretório de trabalho
+WORKDIR /chamagol-spring
+
+# Copia o código-fonte para o contêiner
 COPY . .
 
-RUN apt install maven -y && apt clean
+# Executa o build do Maven
+RUN mvn clean package -DskipTests
 
-WORKDIR "/chamagol-spring"
-RUN mvn clean install -Dmaven.test.skip=true
-
+# Etapa 2: Runtime
 FROM openjdk:17-jdk-slim
 
+# Define a porta exposta pelo aplicativo
 EXPOSE 8080
 
-COPY --from=build /target/chamagol-spring/target/chamagol-0.0.1-SNAPSHOT.jar app.jar
+# Copia o artefato gerado do estágio de build
+COPY --from=build /chamagol-spring/target/chamagol-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT [ "java", "-jar" "app.jar" ]
+# Define o comando de inicialização
+ENTRYPOINT ["java", "-jar", "app.jar"]
