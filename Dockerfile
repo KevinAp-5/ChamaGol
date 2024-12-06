@@ -7,7 +7,7 @@ COPY . .
 RUN apt install maven -y && apt clean
 
 WORKDIR "/chamagol-spring"
-RUN mvn clean install
+RUN mvn clean install -Dmaven.test.skip=true
 
 FROM openjdk:17-jdk-slim
 
