@@ -17,7 +17,7 @@ import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
 import com.chamagol.exception.EmailSendingError;
-import com.chamagol.exception.UserAlreadyActive;
+import com.chamagol.exception.UserExistsActive;
 import com.chamagol.infra.EmailValidator;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioVerificadorEntity;
@@ -106,7 +106,7 @@ public class RegistroService {
         );
 
         if (usuario.getStatus() == Status.ACTIVE) {
-            throw new UserAlreadyActive(email);
+            throw new UserExistsActive(email);
         }
 
         UsuarioVerificadorEntity verificador = usuarioVerificadorRepository.findByUsuarioId(usuario.getId()).orElseThrow();

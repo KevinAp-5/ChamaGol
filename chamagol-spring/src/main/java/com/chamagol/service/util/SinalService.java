@@ -42,54 +42,47 @@ public class SinalService implements Serializable {
         return topic;
     }
 
-    // Retorna uma lista com todos os sinais, utilizando o cache
     public Page<SinalListagem> getSinal(Pageable pageable) {
         return sinalCacheService.getSinal(pageable);
     }
 
-    // Retorna uma lista de sinais ativos, utilizando o cache
     public Page<SinalListagem> getSinalActive(Pageable pageable) {
         return sinalCacheService.getSinalActive(pageable);
     }
 
-    // Retorna uma lista de sinais filtrados por tipo de evento, utilizando o cache
     public Page<SinalListagem> getFilteredSinais(TipoEvento tipoEvento, Pageable pageable) {
         return sinalCacheService.getFilteredSinais(tipoEvento, pageable);
     }
 
-    // Método para criar um novo sinal
     @Transactional
     public SinalListagem create(@Valid SinalDTO sinalDTO) {
         Sinal sinal = sinalMapper.toEntity(sinalDTO);
 
         sinalRepository.save(sinal);
 
-        sinalCacheService.limparCache(); // Limpa o cache após criar um novo sinal
+        sinalCacheService.limparCache();
 
-        topic.publish("SINAL_ADDED"); // Publica evento de criação
+        topic.publish("SINAL_ADDED");
         return new SinalListagem(sinal);
     }
 
-    // Recupera um sinal por ID, utilizando o cache
     public SinalListagem getSinalById(@Positive @NotNull Long id) {
         return sinalCacheService.getSinalById(id);
     }
 
-    // Método para realizar soft delete em um sinal
     @Transactional
     public void delete(@NotNull @Positive Long id) {
         Sinal sinal = sinalRepository.findById(id)
                 .orElseThrow(() -> new IDNotFoundException("Sinal não encontrado"));
 
-        sinal.inactivate(); // Realiza soft delete
+        sinal.inactivate();
         sinalRepository.save(sinal);
 
-        sinalCacheService.limparCache(); // Limpa o cache após deletar o sinal
+        sinalCacheService.limparCache();
 
-        topic.publish("SINAL_DELETED"); // Publica evento de deleção
+        topic.publish("SINAL_DELETED");
     }
 
-    // Atualiza um sinal específico
     @Transactional
     public SinalListagem update(@Positive @NotNull Long id, @Valid SinalDTO sinalDTO) {
         Sinal sinal = sinalRepository.findById(id)
@@ -97,21 +90,18 @@ public class SinalService implements Serializable {
 
         sinalRepository.save(sinal);
 
-        sinalCacheService.limparCache(); // Limpa o cache após a atualização
+        sinalCacheService.limparCache();
 
-        topic.publish("SINAL_UPDATED"); // Publica evento de atualização
+        topic.publish("SINAL_UPDATED");
         return new SinalListagem(sinal);
     }
 
-    // Obtém os 10 sinais mais recentes
     public List<SinalListagem> getLatestSignals() {
-        return sinalCacheService.getTop10(); // Busca os 10 últimos sinais
+        return sinalCacheService.getTop10();
     }
 
-    // Inscreve-se em mudanças para enviar atualizações aos clientes
     public void subscribeToChanges(FluxSink<SinalListagem> sink) {
         topic.addListener(String.class, (channel, message) -> {
-            // Atualizar o cliente com os sinais mais recentes
             List<SinalListagem> updatedSignals = getLatestSignals();
             updatedSignals.forEach(sink::next);
         });
