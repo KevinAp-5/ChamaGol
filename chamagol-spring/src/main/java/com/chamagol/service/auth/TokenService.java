@@ -14,6 +14,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.exception.TokenCreationException;
 import com.chamagol.exception.TokenInvalid;
@@ -24,8 +25,14 @@ import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TokenService {
-    @Value("${api.security.token.secret}")
+    @Value("${jwt.secret}")
     private String secret;
+
+    @Value("${jwt.tokenExpiration}")
+    private Integer tokenTime;
+
+    @Value("${jwt.refreshTokenExpiration}")
+    private Integer refreshTokenTime;
 
     private final AuthenticationManager authenticationManager;
 
@@ -33,13 +40,13 @@ public class TokenService {
         this.authenticationManager = authenticationManager;
     }
 
-    public String getToken(Usuario usuario) {
+    public String getToken(@Valid @NotNull Usuario usuario, Integer time) {
         try {
             var algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("ChamaGol")
                     .withSubject(usuario.getEmail())
-                    .withExpiresAt(expirarToken())
+                    .withExpiresAt(expirarToken(time))
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             throw new TokenCreationException("Erro ao gerar token", exception);
@@ -60,16 +67,25 @@ public class TokenService {
         }
     }
 
-    private Instant expirarToken() {
-        return LocalDateTime.now().plusHours(1).toInstant(ZoneOffset.of("-03:00"));
+    private Instant expirarToken(Integer time) {
+        return LocalDateTime.now().plusMinutes(time).toInstant(ZoneOffset.of("-03:00"));
     }
 
-    public String authenticatedTokenByLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
+    public TokenDTO authenticatedTokenByLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
             usuarioAutenticacao.email(),
             usuarioAutenticacao.senha()
             );
-        var auth = authenticationManager.authenticate(token);
-        return getToken((Usuario) auth.getPrincipal());
+
+        Usuario auth = (Usuario) authenticationManager.authenticate(token).getPrincipal();
+        return tokenBuilder(auth);
+    }
+
+    public TokenDTO tokenBuilder(@Valid @NotNull Usuario usuario) {
+        return TokenDTO
+            .builder()
+            .token(getToken(usuario, tokenTime))
+            .refreshToken(getToken(usuario, refreshTokenTime))
+            .build();
     }
 }
