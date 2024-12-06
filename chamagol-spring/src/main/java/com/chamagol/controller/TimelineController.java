@@ -44,7 +44,7 @@ public class TimelineController {
 
     @GetMapping("filter")
     public ResponseEntity<Page<SinalListagem>> getFilteredTimeline(
-            @RequestParam(value = "tipoEvento") TipoEvento tipoEvento, Pageable pageable) {
+            @RequestParam TipoEvento tipoEvento, Pageable pageable) {
         return ResponseEntity.ok(sinalService.getFilteredSinais(tipoEvento, pageable));
     }
 
