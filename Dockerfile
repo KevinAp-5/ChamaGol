@@ -8,10 +8,11 @@ RUN apt update && apt install -y \
     && apt clean
 
 # Define o diretório de trabalho
-WORKDIR /chamagol-spring
+WORKDIR /app
 
-# Copia o código-fonte para o contêiner
-COPY . .
+# Copia apenas os arquivos necessários para o Maven (evita copiar desnecessários)
+COPY pom.xml ./
+COPY src ./src
 
 # Executa o build do Maven
 RUN mvn clean package -DskipTests
@@ -23,7 +24,7 @@ FROM openjdk:17-jdk-slim
 EXPOSE 8080
 
 # Copia o artefato gerado do estágio de build
-COPY --from=build /chamagol-spring/target/chamagol-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/chamagol-0.0.1-SNAPSHOT.jar app.jar
 
 # Define o comando de inicialização
 ENTRYPOINT ["java", "-jar", "app.jar"]
