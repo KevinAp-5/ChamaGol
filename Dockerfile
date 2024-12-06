@@ -8,8 +8,7 @@ RUN apt update && apt install -y \
     && apt clean
 
 # Define o diretório de trabalho
-WORKDIR /app
-
+WORKDIR /chamagol-spring
 # Copia apenas os arquivos necessários para o Maven (evita copiar desnecessários)
 COPY pom.xml ./
 COPY src ./src
