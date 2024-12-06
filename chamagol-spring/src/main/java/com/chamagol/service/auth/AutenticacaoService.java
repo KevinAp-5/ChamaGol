@@ -1,7 +1,9 @@
 package com.chamagol.service.auth;
 
-
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import com.chamagol.dto.token.TokenDTO;
@@ -38,8 +40,7 @@ public class AutenticacaoService {
         if (user.getStatus() != Status.ACTIVE)
             throw new EmailNotConfirmed("Confirme o email para ativá-lo");
 
-        var tokenJWT = tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
-        return new TokenDTO(tokenJWT);
+        return tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
     }
 
     public String resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
@@ -50,8 +51,9 @@ public class AutenticacaoService {
         return "Link para redefinir senha foi enviada para o e-mail.";
     }
 
-    @CacheEvict(value = "usuario", allEntries = true)
-    public String confirmarRecuperacaoSenha(@NotBlank String token, @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
+    @CacheEvict(value = "usuarioCache", allEntries = true)
+    public String confirmarRecuperacaoSenha(@NotBlank String token,
+            @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
         boolean resetado = passwordResetService.resetPassword(token, confirmPasswordBody.novaSenha());
         if (!resetado) {
             throw new TokenInvalid("Token inválido ou expirado");
@@ -59,4 +61,23 @@ public class AutenticacaoService {
         return "Senha alterada com sucesso";
     }
 
+    public TokenDTO userRefreshToken(String tokenDTO) {
+        var subject = tokenService.getSubject(tokenDTO);
+        UserDetails userDetails = usuarioService.getUsuario(subject);
+        Usuario user = (Usuario) userDetails;
+
+        var token = new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(token);
+
+        return TokenDTO
+            .builder()
+            .token(tokenService.getToken(user, Integer.valueOf(15)))
+            .refreshToken(tokenService.getToken(user, Integer.valueOf(24*7*60)))
+            .build();
+    }
 }
