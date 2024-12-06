@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.chamagol.dto.token.RefreshTokenDTO;
+import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
@@ -71,6 +73,11 @@ public class AutenticacaoController {
         return ResponseEntity.ok(autenticacaoService.userLogin(usuarioAutenticacao));
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<TokenDTO> refreshSession(@RequestBody RefreshTokenDTO tokenDTO) {
+        return ResponseEntity.ok(autenticacaoService.userRefreshToken(tokenDTO.refreshToken()));
+    }
+
     @PostMapping("/password/reset")
     public ResponseEntity<String> requestPasswordReset(
         @RequestBody @Valid ResetPasswordBody resetPasswordBody
@@ -97,7 +104,7 @@ public class AutenticacaoController {
     }
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
-    return uriComponentsBuilder.path("/api/user/{id}")
+        return uriComponentsBuilder.path("/api/user/{id}")
             .buildAndExpand(userId).toUri();
-}
+    }
 }
