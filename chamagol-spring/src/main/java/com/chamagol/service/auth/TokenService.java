@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.exception.TokenCreationException;
@@ -64,6 +66,15 @@ public class TokenService {
 
         } catch (JWTVerificationException exception) {
             throw new TokenInvalid("Token inválido ou expirado");
+        }
+    }
+
+    public String getSubjectIgnoreExpiration(String token) {
+        try {
+            DecodedJWT decoded = JWT.decode(token);
+            return decoded.getSubject();
+        } catch (JWTDecodeException e) {
+            throw new TokenInvalid("token inválido");
         }
     }
 

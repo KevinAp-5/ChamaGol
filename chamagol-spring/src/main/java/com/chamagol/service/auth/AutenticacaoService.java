@@ -62,9 +62,13 @@ public class AutenticacaoService {
     }
 
     public TokenDTO userRefreshToken(String tokenDTO) {
-        var subject = tokenService.getSubject(tokenDTO);
+        var subject = tokenService.getSubjectIgnoreExpiration(tokenDTO);
         UserDetails userDetails = usuarioService.getUsuario(subject);
         Usuario user = (Usuario) userDetails;
+
+        if (user.getStatus() == Status.INACTIVE) {
+            throw new EmailNotConfirmed(user.getEmail());
+        }
 
         var token = new UsernamePasswordAuthenticationToken(
             userDetails,
