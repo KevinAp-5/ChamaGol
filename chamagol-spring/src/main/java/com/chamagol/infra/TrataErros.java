@@ -23,7 +23,7 @@ import com.chamagol.exception.EmailNotConfirmed;
 import com.chamagol.exception.EmailSendingError;
 import com.chamagol.exception.IDNotFoundException;
 import com.chamagol.exception.TokenInvalid;
-import com.chamagol.exception.UserAlreadyActive;
+import com.chamagol.exception.UserExistsActive;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -122,9 +122,9 @@ public class TrataErros {
         return new ResponseEntity<>("Dados inválidos: " + ex.getLocalizedMessage() + " " + ex.getCause(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(UserAlreadyActive.class)
+    @ExceptionHandler(UserExistsActive.class)
     public ResponseEntity<String> handleUserAlreadyActive(Exception ex) {
-        return new ResponseEntity<>("Usuário já ativo: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>("Usuário já existe: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(EmailNotConfirmed.class)

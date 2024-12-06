@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.chamagol.service.auth.TokenService;
-import com.chamagol.service.user.UsuarioCacheService;
+import com.chamagol.service.user.UsuarioService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,12 +23,11 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     @Lazy
-    private final UsuarioCacheService usuarioCacheService;
+    private final UsuarioService usuarioService;
 
-    @org.springframework.context.annotation.Lazy
-    public SecurityFilter(TokenService tokenService, UsuarioCacheService usuarioCacheService) {
+    public SecurityFilter(TokenService tokenService, UsuarioService usuarioService) {
         this.tokenService = tokenService;
-        this.usuarioCacheService = usuarioCacheService;
+        this.usuarioService = usuarioService;
     }
 
     @Override
@@ -48,7 +47,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private UsernamePasswordAuthenticationToken criarAutenticacao(String token) {
         var subject = tokenService.getSubject(token);
-        UserDetails usuario = usuarioCacheService.getUsuarioFromCache(subject); 
+        UserDetails usuario = usuarioService.getUsuario(subject);
 
         return new UsernamePasswordAuthenticationToken(
             usuario,
