@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.chamagol.exception.TokenInvalid;
 import com.chamagol.service.auth.TokenService;
 import com.chamagol.service.user.UsuarioService;
 
@@ -36,15 +37,36 @@ public class SecurityFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
     
-        var token = pegarToken(request);
-        if (token != null) {
-            var authentication = criarAutenticacao(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
+        try {
+            var token = pegarToken(request);
     
-        filterChain.doFilter(request, response);
+            if (token != null) {
+                var authentication = criarAutenticacao(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+    
+            filterChain.doFilter(request, response);
+    
+        } catch (TokenInvalid e) {
+            // Token inválido ou expirado
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                String.format("{\"error\": \"%s\"}", e.getMessage())
+            );
+    
+        } catch (Exception e) {
+            // Qualquer outra exceção
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                String.format("{\"error\": \"Erro interno no servidor: %s\"}", e.getMessage())
+            );
+        }
     }
-
+    
     private UsernamePasswordAuthenticationToken criarAutenticacao(String token) {
         var subject = tokenService.getSubject(token);
         UserDetails usuario = usuarioService.getUsuario(subject);
