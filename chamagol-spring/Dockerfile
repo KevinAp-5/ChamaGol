@@ -10,6 +10,7 @@ RUN apt update && apt install -y \
 # Define o diretório de trabalho
 WORKDIR /app
 
+RUN pwd \ ls -a
 # Copia apenas os arquivos necessários para o Maven
 COPY ./pom.xml ./
 COPY ./src ./src
