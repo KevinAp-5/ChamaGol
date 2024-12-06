@@ -8,6 +8,7 @@ RUN apt update && apt install -y \
     && apt clean
 
 # Define o diretório de trabalho
+RUN cd chamagol-spring
 WORKDIR /app
 
 RUN pwd \ ls -a
