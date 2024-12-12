@@ -1,6 +1,5 @@
 # Etapa de build
-FROM maven:3.8.5-openjdk-17 as build
-
+FROM maven:3.8.5-openjdk-17 AS build
 COPY chamagol-spring/src /app/src
 COPY chamagol-spring/pom.xml /app
 
