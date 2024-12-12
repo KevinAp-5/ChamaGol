@@ -85,11 +85,10 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
     @Transactional
     public void deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
-        usuario.inactivateUsario();
+        evictUsuario(usuario.getEmail());
     }
 
     @CacheEvict(value = "usuario", key = "#email")
@@ -97,7 +96,7 @@ public class UsuarioService {
     public void activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.activateUsuario();
-        usuarioEvict();
+        evictUsuario(usuario.getEmail());
     }
 
     public UsuarioListagem getMe() {
@@ -119,15 +118,11 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email).isPresent();
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
-    public void usuarioEvict() {
-        // Método para limpar o cache do usuário
-
-    }
-
     @CachePut(value = "usuario", key = "#usuario.email")
     public UserDetails atualizarUsuario(Usuario usuario) {
+        evictUsuario(usuario.getEmail());
         return usuarioRepository.save(usuario);
+
     }
 
     public void turnIntoMestre(UsuarioDTO usuarioDTO) {
