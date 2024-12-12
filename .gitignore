@@ -36,3 +36,4 @@ yarn-error.*
 
 ChamaGol.code-workspace
 *.vscode/
+pass.env
