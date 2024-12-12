@@ -91,7 +91,7 @@ public class UsuarioService {
         evictUsuario(usuario.getEmail());
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
     public void activate(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
@@ -118,7 +118,7 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email).isPresent();
     }
 
-    @CachePut(value = "usuario", key = "#usuario.email")
+    @CachePut(value = "usuarioCache", key = "#email")
     public UserDetails atualizarUsuario(Usuario usuario) {
         evictUsuario(usuario.getEmail());
         return usuarioRepository.save(usuario);
