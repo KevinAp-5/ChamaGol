@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, Keyboard, Pressable, SafeAreaView, StatusBar } from "react-native";
 import styles from "./style";
 import Title from "../Title";
-
+import "@expo/metro-runtime"
 const HomeScreen = ({navigation}) => {
   const navigateLogin = () => {
     navigation.navigate('Login');

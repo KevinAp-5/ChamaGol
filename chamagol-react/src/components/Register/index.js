@@ -4,7 +4,7 @@ import styles from "./style";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // Ícones de olho
 import { validateEmail, validateName, validatePassword } from "../Utilities/validations";
 import Title from "../Title/";
-
+import "@expo/metro-runtime"
 const Register = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

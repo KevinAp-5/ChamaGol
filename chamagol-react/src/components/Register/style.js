@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
   errorMessageContext: {
     justifyContent: "center",
     alignItems: "center"
+    
   },
-
   errorMessage: {
     color: "red",
   },

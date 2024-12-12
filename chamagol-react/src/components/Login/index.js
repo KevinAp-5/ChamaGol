@@ -12,7 +12,7 @@ import styles from "./style";
 import { validateEmail, validatePassword } from "../Utilities/validations";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Title from "../Title";
-
+import "@expo/metro-runtime"
 const Login = ({navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
