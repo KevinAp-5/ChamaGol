@@ -48,7 +48,6 @@ public class SecurityFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
     
         } catch (TokenInvalid e) {
-            // Token inválido ou expirado
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");

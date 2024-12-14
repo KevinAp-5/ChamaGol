@@ -62,7 +62,7 @@ public class AutenticacaoService {
     }
 
     public TokenDTO userRefreshToken(String tokenDTO) {
-        var subject = tokenService.getSubjectIgnoreExpiration(tokenDTO);
+        var subject = tokenService.getSubject(tokenDTO);
         UserDetails userDetails = usuarioService.getUsuario(subject);
         Usuario user = (Usuario) userDetails;
 
@@ -78,10 +78,6 @@ public class AutenticacaoService {
 
         SecurityContextHolder.getContext().setAuthentication(token);
 
-        return TokenDTO
-            .builder()
-            .token(tokenService.getToken(user, Integer.valueOf(15)))
-            .refreshToken(tokenService.getToken(user, Integer.valueOf(24*7*60)))
-            .build();
+        return tokenService.tokenBuilder(user);
     }
 }
