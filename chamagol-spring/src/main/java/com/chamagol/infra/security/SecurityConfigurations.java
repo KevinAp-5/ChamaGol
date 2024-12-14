@@ -13,50 +13,57 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
 public class SecurityConfigurations {
-	private SecurityFilter securityFilter;
-	private static final String MESTRE = "MESTRE";
 
-	public SecurityConfigurations(SecurityFilter securityFilter) {
-		this.securityFilter = securityFilter;
-	}
+    private final SecurityFilter securityFilter;
+    private static final String MESTRE = "MESTRE";
 
-	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-		return httpSecurity.csrf(AbstractHttpConfigurer::disable)
-				.sessionManagement(management -> management
-						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(requests -> requests
-						// Autenticação e Registro
-						.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/auth/register/confirm**").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirm**").permitAll()
+    public SecurityConfigurations(SecurityFilter securityFilter) {
+        this.securityFilter = securityFilter;
+    }
 
-						// Rotas para MESTRE
-						.requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
-						.requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
-						.requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                // Redireciona HTTP para HTTPS
+                .requiresChannel(channel -> channel
+                        .anyRequest().requiresSecure()) // Garante que todas as requisições usem HTTPS
+                .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF (para APIs Stateless)
+                .sessionManagement(management -> management
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Configura sessões Stateless
+                .authorizeHttpRequests(requests -> requests
+                        // Permitir acesso sem autenticação para essas rotas
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirm**").permitAll()
 
-						.requestMatchers("/api/users**").hasAnyRole("MESTRE", "ADMIN")
-						.requestMatchers("/api/users/**").hasAnyRole("MESTRE", "ADMIN")
+                        // Acesso restrito para o MESTRE
+                        .requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
+                        .requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
 
-						// Padrão para outros endpoints
-						.anyRequest().authenticated())
-				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-				.build();
-	}
-	
+                        // Acesso restrito para MESTRE e ADMIN
+                        .requestMatchers("/api/users**").hasAnyRole("MESTRE", "ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyRole("MESTRE", "ADMIN")
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-		return configuration.getAuthenticationManager();
-	}
+                        // Todas as outras requisições devem ser autenticadas
+                        .anyRequest().authenticated())
+                // Adiciona o filtro de segurança customizado antes do UsernamePasswordAuthenticationFilter
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
