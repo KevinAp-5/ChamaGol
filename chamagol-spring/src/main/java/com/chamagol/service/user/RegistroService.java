@@ -49,7 +49,7 @@ public class RegistroService {
     }
 
     @Transactional
-    @CacheEvict(value = "usuario", allEntries = true)
+    @CacheEvict(value = "usuarioCache", allEntries = true)
     public boolean confirmUser(UUID uuid) {
         UsuarioVerificadorEntity userVerificador = usuarioVerificadorRepository.findByUuid(uuid)
         .orElseThrow(

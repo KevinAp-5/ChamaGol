@@ -67,7 +67,7 @@ public class UsuarioService {
         return new UsuarioResponseEntityBody(user);
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
     public UsuarioResponseEntityBody update(
             @Valid @NotNull @Positive Long id,
