@@ -40,8 +40,8 @@ public class SecurityConfigurations {
 						.requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
 						.requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
 
-						.requestMatchers("/api/users**").hasRole("ADMIN")
-						.requestMatchers("/api/users/**").hasRole("ADMIN")
+						.requestMatchers("/api/users**").hasAnyRole("MESTRE", "ADMIN")
+						.requestMatchers("/api/users/**").hasAnyRole("MESTRE", "ADMIN")
 
 						// Padrão para outros endpoints
 						.anyRequest().authenticated())
