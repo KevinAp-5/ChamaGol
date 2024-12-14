@@ -100,7 +100,7 @@ public class AutenticacaoController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Erro ao validar email");
         }
 
-        return ResponseEntity.ok("Email validado com sucesso.");
+        return ResponseEntity.ok("Email validado com sucesso. Você já pode fazer login!");
     }
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
