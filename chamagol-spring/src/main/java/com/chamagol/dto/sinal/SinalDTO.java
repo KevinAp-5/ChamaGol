@@ -5,17 +5,26 @@ import com.chamagol.enums.TipoEvento;
 import com.chamagol.model.Sinal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.NotNull;
+
 public record SinalDTO(
     @JsonProperty("id")
     Long id,
 
+    @NotNull
     String campeonato,
+    @NotNull
     String nomeTimes,
+    @NotNull
     String tempoPartida,
+    @NotNull
     String placar,
+    @NotNull
     String acaoSinal,
+
     LocalDateTime created_at,
 
+    @NotNull
     @JsonProperty("tipoEvento")
     TipoEvento tipoEvento
 ) {
