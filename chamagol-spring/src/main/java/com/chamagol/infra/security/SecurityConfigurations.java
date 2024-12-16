@@ -28,19 +28,16 @@ public class SecurityConfigurations {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                // Redireciona HTTP para HTTPS
-                .requiresChannel(channel -> channel
-                        .anyRequest().requiresSecure()) // Garante que todas as requisições usem HTTPS
                 .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF (para APIs Stateless)
-                .sessionManagement(management -> management
+                .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Configura sessões Stateless
                 .authorizeHttpRequests(requests -> requests
-                        // Permitir acesso sem autenticação para essas rotas
+                        // Permitir acesso sem autenticação para estas rotas
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirm**").permitAll()
 
-                        // Acesso restrito para o MESTRE
+                        // Acesso restrito para MESTRE
                         .requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
                         .requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole(MESTRE)
@@ -51,8 +48,7 @@ public class SecurityConfigurations {
 
                         // Todas as outras requisições devem ser autenticadas
                         .anyRequest().authenticated())
-                // Adiciona o filtro de segurança customizado antes do UsernamePasswordAuthenticationFilter
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class) // Adiciona filtro customizado
                 .build();
     }
 
