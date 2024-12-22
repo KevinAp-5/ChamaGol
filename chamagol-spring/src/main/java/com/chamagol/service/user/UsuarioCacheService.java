@@ -21,7 +21,7 @@ public class UsuarioCacheService {
 
     public UsuarioCacheService(UsuarioRepository usuarioRepository, RedissonClient redissonClient) {
         this.usuarioRepository = usuarioRepository;
-        this.usuarioCache = redissonClient.getMapCache("usuario");
+        this.usuarioCache = redissonClient.getMapCache("usuarioCache");
     }
 
     public UserDetails getUsuarioFromCache(String email) {
