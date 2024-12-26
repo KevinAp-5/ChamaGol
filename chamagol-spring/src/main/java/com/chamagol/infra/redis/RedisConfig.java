@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class RedisConfig {
     @Value("${redis.connection.url}")
     private String redisConnection;
+
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
