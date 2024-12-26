@@ -149,7 +149,7 @@ public class RegistroService {
     }
 
     private String confirmEmailLink(UUID uuid) {
-        return "http://localhost:8080/api/auth/register/confirm?token=" + uuid;
+        return "http://chamagolprod.zapto.org/api/auth/register/confirm?token=" + uuid;
     }
 
     private boolean isEmailValid(String email) {
