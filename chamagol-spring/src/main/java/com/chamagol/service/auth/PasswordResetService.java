@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ import com.chamagol.service.util.EmailService;
 
 @Service
 public class PasswordResetService {
+    @Value("${api.url.prefix}")
+    private String apiUrl;
+
     private final UsuarioRepository usuarioRepository;
     private final UsuarioResetTokenRepository usuarioResetTokenRepository;    
     private final UsuarioService usuarioService;
@@ -93,7 +97,7 @@ public class PasswordResetService {
     }
 
     private String resetPasswordLink(String token) {
-        return "http://localhost:8080/api/auth/password/reset/confirm?token=" + token;
+        return apiUrl + "/auth/password/reset/confirm?token=" + token;
     }
 
     private boolean tokenIsValid(UsuarioResetPassword user) {

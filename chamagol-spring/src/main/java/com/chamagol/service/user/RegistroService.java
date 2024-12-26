@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +31,9 @@ import jakarta.validation.constraints.NotNull;
 
 @Service
 public class RegistroService {
+    @Value("${api.url.prefix}")
+    private String apiUrl;
+
     private final UsuarioVerificadorRepository usuarioVerificadorRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
@@ -149,7 +153,7 @@ public class RegistroService {
     }
 
     private String confirmEmailLink(UUID uuid) {
-        return "http://chamagolprod.zapto.org/api/auth/register/confirm?token=" + uuid;
+        return apiUrl+"/auth/register/confirm?token=" + uuid;
     }
 
     private boolean isEmailValid(String email) {
