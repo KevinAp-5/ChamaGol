@@ -36,4 +36,7 @@ public class UsuarioResetPassword {
     @ManyToOne
     @JoinColumn(name = "ID_USUARIO", referencedColumnName = "ID", unique = true)
     private Usuario usuario;
+
+    @Column
+    private Boolean confirmado;
 }

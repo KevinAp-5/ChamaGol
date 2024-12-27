@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: #0C3B2E; /* Primary Green */
+            color: #FFFFFF; /* White */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background-color: #FFFFFF;
+            color: #0C3B2E;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 400px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            font-size: 30px; /* Title */
+            margin-bottom: 20px;
+            color: #0C3B2E; /* Primary Green */
+        }
+        p {
+            font-size: 16px; /* Body Text */
+            margin-bottom: 30px;
+            color: #333333;
+        }
+        .success {
+            color: #6D9773; /* Accent Green */
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .error {
+            color: #FF0000; /* Red for errors */
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            background-color: #FFBA00; /* Accent Yellow */
+            color: #FFFFFF;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .button:hover {
+            background-color: #e0a600;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>E-mail confirmado!</h1>
+        <p class="success">E-mail confirmado com sucesso!</p>
+        <img th:src="@{/images/checkicon.png}" alt="check icon" width="50" height="50">
+        <p>Volte para o aplicativo.</p>
+
+    </div>
+</body>
+</html>

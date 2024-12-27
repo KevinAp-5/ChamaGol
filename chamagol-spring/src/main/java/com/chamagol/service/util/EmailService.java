@@ -76,4 +76,38 @@ public class EmailService{
                 "</table>\n" +
                 "</div>";
     } 
+
+    public String buildPasswordResetEmail(String nome, String link) {
+        return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
+                "<span style=\"display:none;font-size:1px;color:#fff;max-height:0\"></span>\n" +
+                "<table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;min-width:100%;width:100%!important\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n" +
+                "  <tbody><tr>\n" +
+                "    <td width=\"100%\" height=\"70\" bgcolor=\"#6D9773\" style=\"text-align:center;color:#ffffff;\">\n" +
+                "      <h1 style=\"font-size:24px;margin:0;font-weight:700;line-height:70px;\">Confirmação de Redefinição de Senha</h1>\n" +
+                "    </td>\n" +
+                "  </tr></tbody>\n" +
+                "</table>\n" +
+                "<table role=\"presentation\" class=\"content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:600px;width:100%!important;background-color:#ffffff;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);\">\n" +
+                "  <tbody><tr>\n" +
+                "    <td style=\"padding:20px;text-align:left;\">\n" +
+                "      <p style=\"margin:0 0 20px 0;font-size:18px;color:#333333;\">Olá <strong>" + nome + "</strong>,</p>\n" +
+                "      <p style=\"margin:0 0 20px 0;font-size:16px;color:#333333;\">Você solicitou a redefinição da sua senha no <strong>ChamaGol</strong>.</p>\n" +
+                "      <p style=\"margin:0 0 20px 0;font-size:16px;color:#333333;\">Para confirmar e redefinir sua senha, clique no botão abaixo:</p>\n" +
+                "      <div style=\"text-align:center;margin:20px 0;\">\n" +
+                "        <a href=\"" + link + "\" style=\"background-color:#6D9773;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:16px;border-radius:5px;display:inline-block;\">Confirmar Redefinição</a>\n" +
+                "      </div>\n" +
+                "      <p style=\"margin:0 0 20px 0;font-size:14px;color:#555555;\">Este link expirará em 15 minutos. Se você não solicitou a redefinição de senha, ignore este e-mail ou entre em contato com o suporte.</p>\n" +
+                "    </td>\n" +
+                "  </tr></tbody>\n" +
+                "</table>\n" +
+                "<table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;min-width:100%;width:100%!important;margin-top:20px;\">\n" +
+                "  <tbody><tr>\n" +
+                "    <td style=\"text-align:center;padding:10px 0;color:#6D9773;font-size:12px;\">\n" +
+                "      <p style=\"margin:0;\">© 2024 ChamaGol. Todos os direitos reservados.</p>\n" +
+                "    </td>\n" +
+                "  </tr></tbody>\n" +
+                "</table>\n" +
+                "</div>";
+    }
+
 }

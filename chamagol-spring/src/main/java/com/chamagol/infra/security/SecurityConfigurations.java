@@ -39,6 +39,7 @@ public class SecurityConfigurations {
 
                         .requestMatchers(HttpMethod.GET, "/api/runningMessage").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                         // Acesso restrito para MESTRE
                         .requestMatchers(HttpMethod.POST, "/api/sinal").hasRole(MESTRE)
                         .requestMatchers(HttpMethod.DELETE, "/api/sinal/*").hasRole(MESTRE)

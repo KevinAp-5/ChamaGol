@@ -1,16 +1,16 @@
 package com.chamagol.service.auth;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import com.chamagol.exception.TokenInvalid;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.repository.UsuarioRepository;
@@ -21,6 +21,9 @@ import com.chamagol.service.util.EmailService;
 
 @Service
 public class PasswordResetService {
+    @Value("${api.url.prefix}")
+    private String apiUrl;
+
     private final UsuarioRepository usuarioRepository;
     private final UsuarioResetTokenRepository usuarioResetTokenRepository;    
     private final UsuarioService usuarioService;
@@ -38,7 +41,7 @@ public class PasswordResetService {
         this.emailService = emailService;
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
     public boolean resetarSenhaEmail(String email) {
         Usuario user = (Usuario) usuarioService.getUsuario(email);
@@ -52,29 +55,34 @@ public class PasswordResetService {
 
         emailService.sendEmail(
             email,
-            "Cadastre uma nova senha",
-            "Acesse o link abaixo para cadastrar uma nova senha: \n" + link
+            "Confirme email",
+            emailService.buildPasswordResetEmail(formatName(user.getNome()), link)
         );
 
         return true;
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
-    public boolean resetPassword(String token, String novaSenha) {
-        UsuarioResetPassword usuarioResetPassword = usuarioResetTokenRepository.findByUuid(UUID.fromString(token)).orElseThrow(
-            () -> new TokenInvalid("Token inválido ou expirado.")
+    public boolean resetPassword(String email, String novaSenha) {
+        Usuario user = usuarioRepository.findIdByEmail(email).orElseThrow(
+            () -> new RuntimeException("usuário não encontrado.")
+        );
+
+        var usuarioResetPassword = usuarioResetTokenRepository.findByUsuarioId(user.getId()).orElseThrow(
+            () -> new RuntimeException("não foi confirmado a troca de senha.")
         );
 
         if (usuarioResetPassword == null)
             return false;
 
-        if (!tokenIsValid(usuarioResetPassword))
+        if (Boolean.FALSE.equals(usuarioResetPassword.getConfirmado())) {
             return false;
+        }
 
-        Usuario user = usuarioResetPassword.getUsuario();
+        user = usuarioResetPassword.getUsuario();
         updateUserPassword(user, novaSenha);
-        usuarioResetTokenInvalidator(usuarioResetPassword);
+        usuarioResetTokenRepository.delete(usuarioResetPassword);
 
         return true;
     }
@@ -93,11 +101,7 @@ public class PasswordResetService {
     }
 
     private String resetPasswordLink(String token) {
-        return "http://localhost:8080/api/auth/password/reset/confirm?token=" + token;
-    }
-
-    private boolean tokenIsValid(UsuarioResetPassword user) {
-        return !user.getDataExpira().isBefore(Instant.now());
+        return apiUrl + "/auth/password/reset/confirmEmail?token=" + token;
     }
 
     private void updateUserPassword(Usuario user, String novaSenha) {
@@ -105,8 +109,9 @@ public class PasswordResetService {
         usuarioRepository.save(user);
     }
 
-    private void usuarioResetTokenInvalidator(UsuarioResetPassword user) {
-        user.setDataExpira(Instant.now());
-        usuarioResetTokenRepository.save(user);
+    private String formatName(String nome) {
+        String[] nomes = nome.split(" ");
+        return StringUtils.capitalize(nomes[0]);
     }
+
 }

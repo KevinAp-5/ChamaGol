@@ -35,8 +35,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Table(name = "usuario")
-@Entity(name = "usuarios")
-
+@Entity
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
