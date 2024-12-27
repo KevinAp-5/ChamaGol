@@ -10,6 +10,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.chamagol.exception.TokenInvalid;
 import com.chamagol.model.Usuario;
@@ -56,8 +57,8 @@ public class PasswordResetService {
 
         emailService.sendEmail(
             email,
-            "Cadastre uma nova senha",
-            "Acesse o link abaixo para cadastrar uma nova senha: \n" + link
+            "Confirme email",
+            emailService.buildPasswordResetEmail(formatName(user.getNome()), link)
         );
 
         return true;
@@ -97,7 +98,7 @@ public class PasswordResetService {
     }
 
     private String resetPasswordLink(String token) {
-        return apiUrl + "/auth/password/reset/confirm?token=" + token;
+        return apiUrl + "/auth/password/reset/confirmEmail?token=" + token;
     }
 
     private boolean tokenIsValid(UsuarioResetPassword user) {
@@ -113,4 +114,10 @@ public class PasswordResetService {
         user.setDataExpira(Instant.now());
         usuarioResetTokenRepository.save(user);
     }
+
+    private String formatName(String nome) {
+        String[] nomes = nome.split(" ");
+        return StringUtils.capitalize(nomes[0]);
+    }
+
 }

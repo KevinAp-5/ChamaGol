@@ -23,6 +23,7 @@ import com.chamagol.infra.EmailValidator;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.repository.UsuarioResetTokenRepository;
 import com.chamagol.repository.UsuarioVerificadorRepository;
 import com.chamagol.service.util.EmailService;
 
@@ -35,6 +36,7 @@ public class RegistroService {
     private String apiUrl;
 
     private final UsuarioVerificadorRepository usuarioVerificadorRepository;
+    private final UsuarioResetTokenRepository usuarioResetTokenRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
@@ -42,9 +44,11 @@ public class RegistroService {
     private final EmailValidator emailValidator;
 
     public RegistroService(UsuarioVerificadorRepository usuarioVerificadorRepository,
-            UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder,
-            EmailService emailService, EmailValidator emailValidator) {
+            UsuarioResetTokenRepository usuarioResetTokenRepository, UsuarioRepository usuarioRepository,
+            UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder, EmailService emailService,
+            EmailValidator emailValidator) {
         this.usuarioVerificadorRepository = usuarioVerificadorRepository;
+        this.usuarioResetTokenRepository = usuarioResetTokenRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
@@ -73,6 +77,21 @@ public class RegistroService {
         Usuario user = userVerificador.getUsuario();
         user.activateUsuario();
         usuarioRepository.save(user);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean confirmarResetPassword(String uuid) {
+        var user = usuarioResetTokenRepository.findByUuid(UUID.fromString(uuid)).isPresent();
+        if (!user) {
+            return false;
+        }
+
+        int updated = usuarioResetTokenRepository.confirmReset(UUID.fromString(uuid));
+        if (updated == 0) {
+            return false;
+        }
 
         return true;
     }
@@ -144,7 +163,7 @@ public class RegistroService {
             formatName(usuario.getNome()),
             confirmEmailLink(usuarioVerificador.getUuid())
             );
-            emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
+        emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
         }
 
     private String formatName(String nome) {

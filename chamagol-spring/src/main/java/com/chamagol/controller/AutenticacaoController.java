@@ -6,14 +6,15 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chamagol.dto.token.RefreshTokenDTO;
@@ -34,7 +35,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-@RestController
+@Controller
 @RequestMapping("/api/auth")
 public class AutenticacaoController {
 
@@ -85,6 +86,18 @@ public class AutenticacaoController {
         return ResponseEntity.ok(autenticacaoService.resetSenhaEmail(resetPasswordBody));
     }
 
+    @GetMapping("/password/reset/confirmEmail")
+    public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
+        boolean confirmado = registroService.confirmarResetPassword(uuid);
+        if (!confirmado) {
+            model.addAttribute("status", "error");
+            return "index";
+        }
+
+        model.addAttribute("status", "sucess");
+        return "index";
+    }
+
     @GetMapping("/password/reset/confirm")
     public ResponseEntity<String> confirmResetPassword(
         @RequestParam("token") @NotBlank String token,
@@ -94,13 +107,14 @@ public class AutenticacaoController {
     }
 
     @GetMapping("/register/confirm")
-    public ResponseEntity<String> confirmUser (@RequestParam("token") String uuid) {
+    public String confirmUser (@RequestParam("token") String uuid, Model model) {
         boolean userConfirmed = registroService.confirmUser(UUID.fromString(uuid));
         if (!userConfirmed) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Erro ao validar email");
+            return "Erro ao validar email";
         }
 
-        return ResponseEntity.ok("Email validado com sucesso. Você já pode fazer login!");
+        return "index";
+
     }
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
