@@ -1,6 +1,5 @@
 package com.chamagol.service.auth;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.chamagol.exception.TokenInvalid;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.repository.UsuarioRepository;
@@ -43,7 +41,7 @@ public class PasswordResetService {
         this.emailService = emailService;
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
     public boolean resetarSenhaEmail(String email) {
         Usuario user = (Usuario) usuarioService.getUsuario(email);
@@ -64,22 +62,27 @@ public class PasswordResetService {
         return true;
     }
 
-    @CacheEvict(value = "usuario", key = "#email")
+    @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
-    public boolean resetPassword(String token, String novaSenha) {
-        UsuarioResetPassword usuarioResetPassword = usuarioResetTokenRepository.findByUuid(UUID.fromString(token)).orElseThrow(
-            () -> new TokenInvalid("Token inválido ou expirado.")
+    public boolean resetPassword(String email, String novaSenha) {
+        Usuario user = usuarioRepository.findIdByEmail(email).orElseThrow(
+            () -> new RuntimeException("usuário não encontrado.")
+        );
+
+        var usuarioResetPassword = usuarioResetTokenRepository.findByUsuarioId(user.getId()).orElseThrow(
+            () -> new RuntimeException("não foi confirmado a troca de senha.")
         );
 
         if (usuarioResetPassword == null)
             return false;
 
-        if (!tokenIsValid(usuarioResetPassword))
+        if (Boolean.FALSE.equals(usuarioResetPassword.getConfirmado())) {
             return false;
+        }
 
-        Usuario user = usuarioResetPassword.getUsuario();
+        user = usuarioResetPassword.getUsuario();
         updateUserPassword(user, novaSenha);
-        usuarioResetTokenInvalidator(usuarioResetPassword);
+        usuarioResetTokenRepository.delete(usuarioResetPassword);
 
         return true;
     }
@@ -101,18 +104,9 @@ public class PasswordResetService {
         return apiUrl + "/auth/password/reset/confirmEmail?token=" + token;
     }
 
-    private boolean tokenIsValid(UsuarioResetPassword user) {
-        return !user.getDataExpira().isBefore(Instant.now());
-    }
-
     private void updateUserPassword(Usuario user, String novaSenha) {
         user.setSenha(passwordEncoder.encode(novaSenha));
         usuarioRepository.save(user);
-    }
-
-    private void usuarioResetTokenInvalidator(UsuarioResetPassword user) {
-        user.setDataExpira(Instant.now());
-        usuarioResetTokenRepository.save(user);
     }
 
     private String formatName(String nome) {

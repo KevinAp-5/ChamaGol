@@ -52,9 +52,8 @@ public class AutenticacaoService {
     }
 
     @CacheEvict(value = "usuarioCache", allEntries = true)
-    public String confirmarRecuperacaoSenha(@NotBlank String token,
-            @Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
-        boolean resetado = passwordResetService.resetPassword(token, confirmPasswordBody.novaSenha());
+    public String confirmarRecuperacaoSenha(@Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
+        boolean resetado = passwordResetService.resetPassword(confirmPasswordBody.email(), confirmPasswordBody.novaSenha());
         if (!resetado) {
             throw new TokenInvalid("Token inválido ou expirado");
         }

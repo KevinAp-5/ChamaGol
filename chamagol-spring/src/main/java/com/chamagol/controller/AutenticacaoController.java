@@ -32,7 +32,6 @@ import com.chamagol.service.user.RegistroService;
 import com.chamagol.service.user.UsuarioCacheService;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Controller
@@ -90,20 +89,17 @@ public class AutenticacaoController {
     public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
         boolean confirmado = registroService.confirmarResetPassword(uuid);
         if (!confirmado) {
-            model.addAttribute("status", "error");
-            return "index";
+            return "erro ao atualizar senha.";
         }
 
-        model.addAttribute("status", "sucess");
         return "index";
     }
 
-    @GetMapping("/password/reset/confirm")
+    @PostMapping("/password/reset/confirm")
     public ResponseEntity<String> confirmResetPassword(
-        @RequestParam("token") @NotBlank String token,
         @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody
     ) {
-        return ResponseEntity.ok(autenticacaoService.confirmarRecuperacaoSenha(token, confirmPasswordBody));
+        return ResponseEntity.ok(autenticacaoService.confirmarRecuperacaoSenha(confirmPasswordBody));
     }
 
     @GetMapping("/register/confirm")
@@ -114,7 +110,6 @@ public class AutenticacaoController {
         }
 
         return "index";
-
     }
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
