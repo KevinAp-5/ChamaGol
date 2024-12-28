@@ -138,22 +138,22 @@ public class SinalCacheService {
         RMapCache<String, Sinal> sinalIdCache = rClient.getMapCache("sinalByIdCache");
         var cacheKey = buildSinalIdKeys(id, "sinal_");
         var sinal = sinalIdCache.get(cacheKey);
-    
+
         if (sinal != null) {
             log.info("cache hit id {}", id);
             return new SinalListagem(sinal);
         }
-    
+
         log.info("Cache miss id {}", id);
         Sinal dbResponse = sinalRepository.findById(id)
             .orElseThrow(() -> new IDNotFoundException(id + " sinal não encontrado"));
-        
+
         if (dbResponse != null) {
             sinalIdCache.put(cacheKey, dbResponse, 5, TimeUnit.MINUTES);
         } else {
             log.error("Unexpected null sinal for id {}", id);
         }
-        
+
         return new SinalListagem(dbResponse);
     }
 }

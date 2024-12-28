@@ -12,12 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ApiController {
 
     @GetMapping
-    public responseMessage runningMessage() {
+    public ResponseMessage runningMessage() {
         log.info("running message hit");
-        return new responseMessage("API está rodando");
+        return new ResponseMessage("API está rodando");
     }
 
-    private record responseMessage(String message) {
+    private record ResponseMessage(String message) {
     }
 }
 

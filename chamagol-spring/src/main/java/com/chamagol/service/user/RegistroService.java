@@ -99,25 +99,19 @@ public class RegistroService {
     @Transactional
     public ApiResponse<UsuarioListagem> createUser(@Valid @NotNull UsuarioDTO usuarioDTO) {
 
-        // Validação do formato do e-mail
         if (!isEmailValid(usuarioDTO.email())) {
             throw new EmailSendingError("E-mail com formato inválido.");
         }
 
-        // Verificação de e-mail existente
         if (isEmailAlreadyRegistered(usuarioDTO.email())) {
-            // envia um novo email de validação
             resendLink(usuarioDTO.email());
             return new ApiResponse<>(null, "Email de validação enviado.");
         }
 
-        // Criação do usuário
         Usuario usuario = saveUsuario(usuarioDTO);
 
-        // Criação do verificador de usuário
         UsuarioVerificadorEntity usuarioVerificador = createUsuarioVerificador(usuario);
 
-        // Envio de e-mail de confirmação
         sendConfirmationEmail(usuario, usuarioVerificador);
 
         return new ApiResponse<>(new UsuarioListagem(usuario), "Usuario criado com sucesso.");
