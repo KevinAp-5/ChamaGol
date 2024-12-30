@@ -1,5 +1,6 @@
 package com.chamagol.service.util;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.chamagol.exception.EmailSendingError;
 
@@ -19,6 +21,9 @@ public class EmailService{
 
     @Value("${spring.mail.username}")
     private String remetente;
+
+    @Value("${api.url.prefix}")
+    private String apiUrl;
 
     EmailService(JavaMailSender javaMailSender) {
         this.javaMailSender = javaMailSender;
@@ -42,6 +47,15 @@ public class EmailService{
                 throw new EmailSendingError(exception.getMessage(), exception.getCause());
             }
         });
+    }
+
+    public String formatName(String nome) {
+        String[] nomes = nome.split(" ");
+        return StringUtils.capitalize(nomes[0]);
+    }
+
+    public String confirmEmailLink(UUID uuid) {
+        return apiUrl+"/auth/register/confirm?token=" + uuid;
     }
 
     public String buildEmail(String nome, String link) {

@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
@@ -154,20 +153,11 @@ public class RegistroService {
 
     private void sendConfirmationEmail(Usuario usuario, UsuarioVerificadorEntity usuarioVerificador) {
         String emailBody = emailService.buildEmail(
-            formatName(usuario.getNome()),
-            confirmEmailLink(usuarioVerificador.getUuid())
+            emailService.formatName(usuario.getNome()),
+            emailService.confirmEmailLink(usuarioVerificador.getUuid())
             );
         emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
         }
-
-    private String formatName(String nome) {
-        String[] nomes = nome.split(" ");
-        return StringUtils.capitalize(nomes[0]);
-    }
-
-    private String confirmEmailLink(UUID uuid) {
-        return apiUrl+"/auth/register/confirm?token=" + uuid;
-    }
 
     private boolean isEmailValid(String email) {
         return emailValidator.test(email);
