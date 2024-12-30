@@ -77,6 +77,7 @@ public class UsuarioService {
         );
 
         user.updateUsuario(usuarioUpdate);
+        usuarioRepository.save(user);
         return new UsuarioResponseEntityBody(user);
     }
 
@@ -88,7 +89,10 @@ public class UsuarioService {
     @Transactional
     public void deleteSoft(@NotNull @Positive Long id) {
         Usuario usuario = usuarioRepository.getReferenceById(id);
+        usuario.setStatus(Status.INACTIVE);
         evictUsuario(usuario.getEmail());
+        usuarioRepository.save(usuario);
+
     }
 
     @CacheEvict(value = "usuarioCache", key = "#email")
@@ -97,6 +101,7 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.getReferenceById(id);
         usuario.activateUsuario();
         evictUsuario(usuario.getEmail());
+        usuarioRepository.save(usuario);
     }
 
     public UsuarioListagem getMe() {

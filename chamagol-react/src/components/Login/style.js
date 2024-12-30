@@ -70,16 +70,20 @@ const styles = StyleSheet.create({
 
   errorMessage: {
     color: "red",
+    marginBottom: 20
   },
-
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 100,
+  },
   button: {
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
     width: "90%",
     backgroundColor: "#0C3B2E",
-    paddingVertical: 14,
-    marginTop: 30,
+    height: 60
   },
 
   buttonText: {
@@ -93,7 +97,7 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: "center",
     justifyContent: "flex-end",
-    marginTop: 30,
+    marginTop: 20,
     paddingTop: 10,
   },
 
