@@ -82,17 +82,19 @@ public class AutenticacaoController {
     }
 
     @PostMapping("/password/reset")
-    public ResponseEntity<String> requestPasswordReset(
-        @RequestBody @Valid ResetPasswordBody resetPasswordBody
-    ) {
-        return ResponseEntity.ok(autenticacaoService.resetSenhaEmail(resetPasswordBody));
+    public ResponseEntity<String> requestPasswordReset(@RequestBody @Valid ResetPasswordBody resetPasswordBody) {
+        boolean canReset = autenticacaoService.resetSenhaEmail(resetPasswordBody);  
+        if (!canReset) {
+            return new ResponseEntity<>("Usuário não encontrado. Faça cadastro", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>("Link para redefinir senha foi enviada para o e-mail.", HttpStatus.OK);
     }
 
     @GetMapping("/password/reset/confirmEmail")
     public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
         boolean confirmado = registroService.confirmarResetPassword(uuid);
         if (!confirmado) {
-            return "erro ao atualizar senha.";
+            return "index-error";
         }
 
         return "index";
@@ -100,13 +102,12 @@ public class AutenticacaoController {
 
     @PostMapping("/password/reset/confirm")
     public ResponseEntity<String> confirmResetPassword(
-        @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody
-    ) {
+            @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody) {
         return ResponseEntity.ok(autenticacaoService.confirmarRecuperacaoSenha(confirmPasswordBody));
     }
 
     @GetMapping("/register/confirm")
-    public String confirmUser (@RequestParam("token") String uuid, Model model) {
+    public String confirmUser(@RequestParam("token") String uuid, Model model) {
         boolean userConfirmed = registroService.confirmUser(UUID.fromString(uuid));
         if (!userConfirmed) {
             return "Erro ao validar email";
