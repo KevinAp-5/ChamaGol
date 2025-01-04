@@ -41,71 +41,86 @@ const Login = ({ navigation }) => {
   };
 
   const fetchData = async (data) => {
-      try {
-          const res = await Api("POST", "auth/login", data);
-          console.log("Dados recebidos:", res.data);
-          const { token, user: refreshToken } = res.data;
+    try {
+      const res = await Api("POST", "auth/login", data);
+      console.log("Dados recebidos:", res.data);
 
-          await AsyncStorage.setItem("token", token);
-          await AsyncStorage.setItem("user", JSON.stringify(refreshToken));
-  
-          // Loga o evento de login
-          await Analytics.logEvent("user_login", {
-              user_id: refreshToken.id,
-              email: refreshToken.email,
-          });
-  
-          // Handle successful login (e.g., navigate to the home screen)
-          navigation.replace("Timeline", { user: res.data });
-      } catch (error) {
-          if (error.response) {
-              const { status, statusText } = error.response;
-  
-              // Check for 401 Unauthorized and show popup
-              if (status === 401) {
-                  Alert.alert(
-                      "Erro de Login",
-                      "Email ou senha inválida.",
-                      [{ text: "OK", onPress: () => console.log("Popup fechado") }],
-                      { cancelable: true }
-                  );
-              } else {
-                  Alert.alert(
-                      "Erro!",
-                      statusText,
-                      [{ text: "OK", onPress: () => console.log("Popup fechado") }]
-                  );
-              }
-          // } else {
-          //     // Handle network or connection issues
-          //     Alert.alert(
-          //         "Erro de Conexão",
-          //         "Não foi possível conectar ao servidor. Verifique sua conexão.",
-          //         [{ text: "OK", onPress: () => console.log("Popup fechado") }]
-          //     );
-          }
+      const { token, user: refreshToken } = res.data;
+
+      // Salva o token e informações do usuário
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(refreshToken));
+
+      // Loga o evento de login
+      await Analytics.logEvent("user_login", {
+        user_id: refreshToken.id,
+        email: refreshToken.email,
+      });
+
+      // Redireciona para a timeline após login bem-sucedido
+      navigation.replace("Timeline", { user: res.data });
+    } catch (error) {
+      const { status, data } = error.response;
+
+      // Lida com cada status code
+      switch (status) {
+        case 400: // Bad Request
+          Alert.alert(
+            "Erro de Validação",
+            data || "Dados inválidos enviados ao servidor.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        case 401: // Unauthorized
+          Alert.alert(
+            "Erro de Login",
+            "Email ou senha inválida.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        case 403: // Forbidden
+          Alert.alert(
+            "Acesso Negado",
+            "Você não tem permissão para acessar este recurso.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        case 404: // Not Found
+          Alert.alert(
+            "Erro",
+            data || "Recurso não encontrado.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        case 500: // Internal Server Error
+          Alert.alert(
+            "Erro no Servidor",
+            "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        case 502: // Bad Gateway
+          Alert.alert(
+            "Erro ao Enviar E-mail",
+            "Houve um problema ao enviar o e-mail. Tente novamente mais tarde.",
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+        default: // Outros status não tratados
+          Alert.alert(
+            "Erro Desconhecido",
+            `Status: ${status} - ${data || "Tente novamente mais tarde."}`,
+            [{ text: "OK", onPress: () => console.log("Popup fechado") }]
+          );
+          break;
+
       }
+    }
   };
-  
-
-  // const fetchData = async (data) => {
-  //   try {
-  //     const res = await Api("POST", "auth/login", data);
-  //     console.log("Dados recebidos:", res.data);
-  //       const { token, refreshToken } = res.data;
-
-  //       // Salva o token e os dados do usuário
-  //       await AsyncStorage.setItem("token", token);
-  //       await AsyncStorage.setItem("refreshToken", JSON.stringify(refreshToken));
-
-  //   } catch (error) {
-  //     console.log("Erro ao acessar API:", error.message);
-  //   }
-  // };
 
   const handleRegister = () => navigation.navigate("Register");
 
-  const passwordReset = () => navigation.navigate("ResetPassword");
+  const passwordReset = () => navigation.navigate("EmailInput");
 
   const emailValidate = (input) => {
     setEmail(input);
