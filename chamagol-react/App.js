@@ -8,6 +8,7 @@ import Login from './src/components/Login/';
 import Register from './src/components/Register/';
 import ResetPassword from './src/components/ResetPassword';
 import Timeline from './src/components/TimeLine/';
+import EmailInput from "./src/components/EmailInput";
 
 const Stack = createStackNavigator();
 
@@ -21,6 +22,8 @@ const App = () => {
         <Stack.Screen name= "Register" component={Register} options={{headerShown: false, gestureDirection: 'horizontal'}} />
         <Stack.Screen name= "ResetPassword" component={ResetPassword} options={{headerShown: false, gestureDirection: 'horizontal'}} />
         <Stack.Screen name= "Timeline" component={Timeline} />
+        <Stack.Screen name= "EmailInput" component={EmailInput} options={{headerShown: false, gestureDirection: 'horizontal'}} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
