@@ -19,7 +19,7 @@ let axiosConfig = {
 
 const Api = async (method, endpoint, data) => {
     console.log(API_URL + endpoint);
-
+    console.log(data);
     try {
         const res = await axios({
             method: method,

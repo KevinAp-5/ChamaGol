@@ -37,6 +37,8 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirm**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/auth/email/confirmed").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/runningMessage").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()

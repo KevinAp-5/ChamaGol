@@ -44,7 +44,11 @@ public class PasswordResetService {
     @CacheEvict(value = "usuarioCache", key = "#email")
     @Transactional
     public boolean resetarSenhaEmail(String email) {
-        Usuario user = (Usuario) usuarioService.getUsuario(email);
+        if (Boolean.FALSE.equals(usuarioService.userExistsByEmail(email))) {
+            return false;
+        }
+
+        Usuario user = (Usuario) usuarioRepository.findByEmail(email).orElseThrow();
 
         UsuarioResetPassword usuarioResetPassword = createUsuarioResetPassword(user);
 
@@ -58,7 +62,6 @@ public class PasswordResetService {
             "Confirme email",
             emailService.buildPasswordResetEmail(formatName(user.getNome()), link)
         );
-
         return true;
     }
 
@@ -93,6 +96,7 @@ public class PasswordResetService {
         usuarioResetPassword.setUsuario(usuario);
         usuarioResetPassword.setDataExpira(LocalDateTime.now().plusMinutes(20).toInstant(ZoneOffset.of("-03:00")));
         usuarioResetPassword.setUuid(UUID.randomUUID());
+        usuarioResetPassword.setConfirmado(false);
         return usuarioResetPassword;
     }
 

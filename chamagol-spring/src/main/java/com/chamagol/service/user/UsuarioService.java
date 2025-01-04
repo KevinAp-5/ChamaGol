@@ -20,6 +20,7 @@ import com.chamagol.enums.Roles;
 import com.chamagol.enums.Status;
 import com.chamagol.model.Usuario;
 import com.chamagol.repository.UsuarioRepository;
+import com.chamagol.repository.UsuarioResetTokenRepository;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -32,10 +33,13 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioCacheService usuarioCacheService;
+    private final UsuarioResetTokenRepository usuarioResetTokenRepository;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioCacheService usuarioCacheService) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioCacheService usuarioCacheService,
+            UsuarioResetTokenRepository usuarioResetTokenRepository) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioCacheService = usuarioCacheService;
+        this.usuarioResetTokenRepository = usuarioResetTokenRepository;
     }
 
     public UserDetails getUsuario(String email) {
@@ -142,5 +146,11 @@ public class UsuarioService {
         user.setUserRole(Roles.ADMIN);
         usuarioRepository.save(user);
         usuarioCacheService.evictUsuario(usuarioDTO.email());
+    }
+
+    public Boolean isUserActive(String email) {
+        Usuario user = (Usuario) this.getUsuario(email);
+        var userReset = usuarioResetTokenRepository.findByUsuarioId(user.getId()).orElseThrow(() -> new RuntimeException("Usuário não solicitou reset de senha."));
+        return userReset.getConfirmado();
     }
 }

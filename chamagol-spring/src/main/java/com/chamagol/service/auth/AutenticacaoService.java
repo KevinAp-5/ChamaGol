@@ -55,12 +55,8 @@ public class AutenticacaoService {
         return tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
     }
 
-    public String resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
-        boolean valid = passwordResetService.resetarSenhaEmail(resetPasswordBody.email());
-        if (Boolean.FALSE.equals(valid)) {
-            throw new TokenInvalid("Erro ao recuperar senha");
-        }
-        return "Link para redefinir senha foi enviada para o e-mail.";
+    public Boolean resetSenhaEmail(@Valid @NotNull ResetPasswordBody resetPasswordBody) {
+        return passwordResetService.resetarSenhaEmail(resetPasswordBody.email());
     }
 
     @CacheEvict(value = "usuarioCache", allEntries = true)

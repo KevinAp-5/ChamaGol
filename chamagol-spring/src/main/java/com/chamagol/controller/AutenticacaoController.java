@@ -30,6 +30,8 @@ import com.chamagol.model.Usuario;
 import com.chamagol.service.auth.AutenticacaoService;
 import com.chamagol.service.user.RegistroService;
 import com.chamagol.service.user.UsuarioCacheService;
+import com.chamagol.service.user.UsuarioService;
+import com.esotericsoftware.minlog.Log;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -42,22 +44,23 @@ public class AutenticacaoController {
     private final RegistroService registroService;
     private final UsuarioCacheService usuarioCacheService;
     private final UsuarioMapper usuarioMapper;
+    private final UsuarioService usuarioService;
 
     public AutenticacaoController(AutenticacaoService autenticacaoService, RegistroService registroService,
-            UsuarioCacheService usuarioCacheService, UsuarioMapper usuarioMapper) {
+            UsuarioCacheService usuarioCacheService, UsuarioMapper usuarioMapper, UsuarioService usuarioService) {
         this.autenticacaoService = autenticacaoService;
         this.registroService = registroService;
         this.usuarioCacheService = usuarioCacheService;
         this.usuarioMapper = usuarioMapper;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
     @Transactional
     public ResponseEntity<ApiResponse<UsuarioListagem>> create(
-        @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
-        UriComponentsBuilder uriComponentsBuilder
-        ) {
+            @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
+            UriComponentsBuilder uriComponentsBuilder) {
 
         var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
         var response = registroService.createUser(usuarioDTO);
@@ -79,17 +82,19 @@ public class AutenticacaoController {
     }
 
     @PostMapping("/password/reset")
-    public ResponseEntity<String> requestPasswordReset(
-        @RequestBody @Valid ResetPasswordBody resetPasswordBody
-    ) {
-        return ResponseEntity.ok(autenticacaoService.resetSenhaEmail(resetPasswordBody));
+    public ResponseEntity<String> requestPasswordReset(@RequestBody @Valid ResetPasswordBody resetPasswordBody) {
+        boolean canReset = autenticacaoService.resetSenhaEmail(resetPasswordBody);  
+        if (!canReset) {
+            return new ResponseEntity<>("Usuário não encontrado. Faça cadastro", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>("Link para redefinir senha foi enviada para o e-mail.", HttpStatus.OK);
     }
 
     @GetMapping("/password/reset/confirmEmail")
     public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
         boolean confirmado = registroService.confirmarResetPassword(uuid);
         if (!confirmado) {
-            return "erro ao atualizar senha.";
+            return "index-error";
         }
 
         return "index";
@@ -97,13 +102,12 @@ public class AutenticacaoController {
 
     @PostMapping("/password/reset/confirm")
     public ResponseEntity<String> confirmResetPassword(
-        @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody
-    ) {
+            @RequestBody @Valid ConfirmPasswordBody confirmPasswordBody) {
         return ResponseEntity.ok(autenticacaoService.confirmarRecuperacaoSenha(confirmPasswordBody));
     }
 
     @GetMapping("/register/confirm")
-    public String confirmUser (@RequestParam("token") String uuid, Model model) {
+    public String confirmUser(@RequestParam("token") String uuid, Model model) {
         boolean userConfirmed = registroService.confirmUser(UUID.fromString(uuid));
         if (!userConfirmed) {
             return "Erro ao validar email";
@@ -114,6 +118,13 @@ public class AutenticacaoController {
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
         return uriComponentsBuilder.path("/api/user/{id}")
-            .buildAndExpand(userId).toUri();
+                .buildAndExpand(userId).toUri();
+    }
+
+    @PostMapping("/email/confirmed")
+    public ResponseEntity<String> getUserActive(@RequestBody ResetPasswordBody dto) {
+        Boolean status = usuarioService.isUserActive(dto.email());
+        Log.info(status.toString());
+        return ResponseEntity.ok(dto.email() + ":" + (Boolean.TRUE.equals(status) ? "ACTIVE": "INACTIVE"));
     }
 }

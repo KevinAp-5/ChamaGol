@@ -7,14 +7,15 @@ import {
   Image 
 } from "react-native";
 import styles from "./style";
+import "@expo/metro-runtime";
+let icona = require("./check-icon.png");
 import Title from "../Title";
-import "@expo/metro-runtime"
-let icona = require("./check-icon.png")
 
 const EmailConfirmation = ({ navigation, route }) => {
+  const { email } = route.params || {};
 
-  const handleContinue = () => {
-    navigation.navigate('Login');
+  const handleResetPassword = () => {
+    navigation.navigate("ResetPassword", { email });
   };
 
   return (
@@ -22,24 +23,21 @@ const EmailConfirmation = ({ navigation, route }) => {
       <Title title="CHAMAGOL"/>
       <View style={styles.formContext}>
         <View style={styles.confirmationContainer}>
-          <Text style={styles.titleText}>E-mail Confirmado!</Text>
-          
+          <Text style={styles.titleText}>Email confirmado!</Text>
           <View style={styles.iconContainer}>
             <Image 
               source={icona}
               style={styles.confirmationIcon}
             />
           </View>
-
           <Text style={styles.confirmationText}>
-            Seu e-mail foi confirmado com sucesso. Você já pode fazer login na plataforma.
+            Seu e-mail foi confirmado com sucesso. Você já pode redefinir sua senha.
           </Text>
-
           <TouchableOpacity 
             style={styles.button} 
-            onPress={handleContinue}
+            onPress={handleResetPassword}
           >
-            <Text style={styles.buttonText}>FAZER LOGIN</Text>
+            <Text style={styles.buttonText}>REDEFINIR SENHA</Text>
           </TouchableOpacity>
         </View>
       </View>

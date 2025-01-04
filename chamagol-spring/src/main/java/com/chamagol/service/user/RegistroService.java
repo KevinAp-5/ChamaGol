@@ -20,6 +20,7 @@ import com.chamagol.exception.EmailSendingError;
 import com.chamagol.exception.UserExistsActive;
 import com.chamagol.infra.EmailValidator;
 import com.chamagol.model.Usuario;
+import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.repository.UsuarioResetTokenRepository;
@@ -59,9 +60,8 @@ public class RegistroService {
     @CacheEvict(value = "usuarioCache", allEntries = true)
     public boolean confirmUser(UUID uuid) {
         UsuarioVerificadorEntity userVerificador = usuarioVerificadorRepository.findByUuid(uuid)
-        .orElseThrow(
-            () -> new UsernameNotFoundException("Token não encontrado!")
-        );
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Token não encontrado!"));
 
         if (userVerificador.getUsuario().getStatus() == Status.ACTIVE) {
             throw new IllegalStateException("Email já foi confirmado!");
@@ -82,17 +82,18 @@ public class RegistroService {
 
     @Transactional
     public boolean confirmarResetPassword(String uuid) {
-        var user = usuarioResetTokenRepository.findByUuid(UUID.fromString(uuid)).isPresent();
-        if (!user) {
+        UsuarioResetPassword user = usuarioResetTokenRepository.findByUuid(UUID.fromString(uuid)).orElse(null);
+
+        if (user == null) {
             return false;
         }
 
-        int updated = usuarioResetTokenRepository.confirmReset(UUID.fromString(uuid));
-        if (updated == 0) {
-            return false;
+        if (user.getDataExpira().compareTo(Instant.now()) >= 0) {
+            user.setConfirmado(true);
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     @Transactional
@@ -118,14 +119,14 @@ public class RegistroService {
 
     private void resendLink(String email) {
         Usuario usuario = (Usuario) usuarioRepository.findByEmail(email).orElseThrow(
-            () -> new UsernameNotFoundException(email)
-        );
+                () -> new UsernameNotFoundException(email));
 
         if (usuario.getStatus() == Status.ACTIVE) {
             throw new UserExistsActive(email);
         }
 
-        UsuarioVerificadorEntity verificador = usuarioVerificadorRepository.findByUsuarioId(usuario.getId()).orElseThrow();
+        UsuarioVerificadorEntity verificador = usuarioVerificadorRepository.findByUsuarioId(usuario.getId())
+                .orElseThrow();
         updateVerificador(verificador);
 
         sendConfirmationEmail(usuario, verificador);
@@ -153,11 +154,10 @@ public class RegistroService {
 
     private void sendConfirmationEmail(Usuario usuario, UsuarioVerificadorEntity usuarioVerificador) {
         String emailBody = emailService.buildEmail(
-            emailService.formatName(usuario.getNome()),
-            emailService.confirmEmailLink(usuarioVerificador.getUuid())
-            );
+                emailService.formatName(usuario.getNome()),
+                emailService.confirmEmailLink(usuarioVerificador.getUuid()));
         emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
-        }
+    }
 
     private boolean isEmailValid(String email) {
         return emailValidator.test(email);
