@@ -30,6 +30,8 @@ import com.chamagol.model.Usuario;
 import com.chamagol.service.auth.AutenticacaoService;
 import com.chamagol.service.user.RegistroService;
 import com.chamagol.service.user.UsuarioCacheService;
+import com.chamagol.service.user.UsuarioService;
+import com.esotericsoftware.minlog.Log;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -42,22 +44,23 @@ public class AutenticacaoController {
     private final RegistroService registroService;
     private final UsuarioCacheService usuarioCacheService;
     private final UsuarioMapper usuarioMapper;
+    private final UsuarioService usuarioService;
 
     public AutenticacaoController(AutenticacaoService autenticacaoService, RegistroService registroService,
-            UsuarioCacheService usuarioCacheService, UsuarioMapper usuarioMapper) {
+            UsuarioCacheService usuarioCacheService, UsuarioMapper usuarioMapper, UsuarioService usuarioService) {
         this.autenticacaoService = autenticacaoService;
         this.registroService = registroService;
         this.usuarioCacheService = usuarioCacheService;
         this.usuarioMapper = usuarioMapper;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
     @Transactional
     public ResponseEntity<ApiResponse<UsuarioListagem>> create(
-        @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
-        UriComponentsBuilder uriComponentsBuilder
-        ) {
+            @RequestBody @Valid @NotNull UsuarioDTO usuarioDTO,
+            UriComponentsBuilder uriComponentsBuilder) {
 
         var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
         var response = registroService.createUser(usuarioDTO);
