@@ -118,6 +118,13 @@ public class AutenticacaoController {
 
     private URI buildUserUri(UriComponentsBuilder uriComponentsBuilder, Long userId) {
         return uriComponentsBuilder.path("/api/user/{id}")
-            .buildAndExpand(userId).toUri();
+                .buildAndExpand(userId).toUri();
+    }
+
+    @PostMapping("/email/confirmed")
+    public ResponseEntity<String> getUserActive(@RequestBody ResetPasswordBody dto) {
+        Boolean status = usuarioService.isUserActive(dto.email());
+        Log.info(status.toString());
+        return ResponseEntity.ok(dto.email() + ":" + (Boolean.TRUE.equals(status) ? "ACTIVE": "INACTIVE"));
     }
 }
