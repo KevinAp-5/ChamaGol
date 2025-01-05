@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   Alert, 
-  Image 
+  Image,
+  AsyncStorage
 } from "react-native";
 import ThreeDots from "../treedots";
 import styles from "./style";
@@ -29,6 +30,7 @@ const EmailInput = ({ navigation }) => {
   const handleSendEmail = async () => {
     if (!(validateEmail(email))) return Alert.alert("Erro", "Por favor, insira um e-mail válido.");
 
+    
     try {
       setLoading(true);
       await sendPasswordResetRequest(email);
@@ -37,6 +39,7 @@ const EmailInput = ({ navigation }) => {
       handleError(error);
     } finally {
       setLoading(false);
+      await AsyncStorage.setItem("email", email)
     }
   };
 

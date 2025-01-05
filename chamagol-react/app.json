@@ -18,11 +18,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/check-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.ChamaGol"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "newArchEnabled": true
+    "newArchEnabled": false
   }
 }
