@@ -38,6 +38,7 @@ const Login = ({ navigation }) => {
       setLoading(false);
     }
 
+    navigation.navigate("Timeline");
   };
 
   const fetchData = async (data) => {

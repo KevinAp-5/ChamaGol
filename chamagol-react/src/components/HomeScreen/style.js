@@ -1,12 +1,12 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+const ScreenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0C3B2E",
-    paddingTop: 0,
+    paddingTop: 20,
   },
-
   formContext: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -14,50 +14,57 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    paddingHorizontal: 20,
+    paddingVertical: 30,
   },
-
-  welcomeContext: {
-    justifyContent: "center",
+  header: {
     alignItems: "center",
-    marginBottom: 100
+    marginBottom: 40,
   },
-
+  welcomeImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
   welcomeText: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: "#6D9773",
+    marginBottom: 10,
   },
-
+  subtitleText: {
+    fontSize: 16,
+    color: "#000000",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
   button: {
-    borderRadius: 8,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    width: "90%",
-    backgroundColor: "#0C3B2E",
-    paddingVertical: 14,
-    marginTop: 11
+    width: ScreenWidth * 0.9,
+    paddingVertical: 15,
+    marginVertical: 10,
   },
-
   buttonLoginText: {
     fontSize: 20,
-    color: "#FFBA00",
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
-
   buttonRegisterText: {
     fontSize: 20,
-    color: "#FFFFFF",
-    justifyContent: "center",
-    alignContent: "center"
+    color: "#0C3B2E",
+    fontWeight: "bold",
   },
-
   footer: {
-    fontSize: 18,
-    fontStyle: 'italic',
     alignItems: "center",
-    marginVertical: 40,
-    paddingTop: 10,
-    color: "#000000"
-  }
+    marginTop: 30,
+  },
+  footerText: {
+    fontSize: 18,
+    fontStyle: "italic",
+    color: "#000000",
+  },
 });
 
-export default styles
+export default styles;

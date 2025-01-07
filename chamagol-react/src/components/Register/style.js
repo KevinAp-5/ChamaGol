@@ -14,66 +14,83 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
   },
 
   titleText: {
-    fontSize: 30,
-    fontWeight: 'bold',
+    fontSize: 34,
+    fontWeight: "bold",
     color: "#6D9773",
     marginBottom: 20,
+    textShadowColor: "rgba(0, 0, 0, 0.4)",
   },
 
   form: {
     width: "100%",
-    padding: 10,
+    paddingHorizontal: 20,
   },
 
   formLabel: {
     color: "#000000",
-    fontWeight: "bold",
-    fontSize: 18,
-    paddingLeft: 20,
-    paddingVertical: 5
+    fontWeight: "600",
+    fontSize: 16,
+    marginBottom: 5,
   },
 
   input: {
-    width: "90%",
-    borderRadius: 10,
-    backgroundColor: "#f6f6f6",
+    width: "100%",
+    borderRadius: 12,
+    backgroundColor: "#F9F9F9",
     height: 50,
-    margin: 12,
-    paddingHorizontal: 20
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E4E4E7",
   },
 
   passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
-    backgroundColor: '#f6f6f6',
-    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderRadius: 12,
+    backgroundColor: "#F9F9F9",
     height: 50,
-    margin: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#E4E4E7",
+    paddingHorizontal: 15,
   },
 
   passwordInput: {
     flex: 1,
-    paddingLeft: 20,
-    paddingRight: 45,
+    fontSize: 16,
   },
 
   icon: {
-    position: 'absolute',
-    right: 10,  // Coloca o ícone no lado direito
-    padding: 10,
+    marginLeft: 10,
   },
 
-  errorMessageContext: {
-    justifyContent: "center",
-    alignItems: "center"
-    
+  termsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
   },
-  errorMessage: {
-    color: "red",
+
+  termsText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginLeft: 10,
+  },
+
+  link: {
+    color: "#FFBA00",
+    fontWeight: "bold",
+    textDecorationLine: "underline",
   },
 
   button: {
@@ -87,34 +104,22 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    fontSize: 20,
-    color: "#FFBA00",
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
+
+  errorMessageContext: {
     justifyContent: "center",
-    alignContent: "center",
-  },
-
-  loginContext: {
-    padding: 15,
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: 30,
-    paddingTop: 30,
+    marginBottom: 10,
   },
 
-  loginText: {
-    fontSize: 16,
-    color: "#000000",
-    fontStyle: "italic"
+  errorMessage: {
+    color: "red",
+    fontWeight: "bold",
   },
-
-  LoginButtonText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: "#0C3B2E" 
-  },
-
-
 });
 
 export default styles;

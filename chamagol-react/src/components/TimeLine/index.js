@@ -16,6 +16,7 @@ const Timeline = () => {
           times: 'Time A vs Time B',
           placar: '1-0',
           tempo: '45\'',
+          dica: "Possibilidade de gol nos proximos minutos"
         }
       ]);
       Vibration.vibrate();
@@ -31,6 +32,7 @@ const Timeline = () => {
       <Text>{item.times}</Text>
       <Text>{item.placar}</Text>
       <Text>{item.tempo}</Text>
+      <Text>{item.dica}</Text>
     </View>
   );
 
