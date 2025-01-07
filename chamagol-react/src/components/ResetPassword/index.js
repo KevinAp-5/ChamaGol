@@ -28,7 +28,8 @@ const ResetPassword = ({ navigation }) => {
   const navigateHome = async () => {
     getEmail();
     try {
-        await sendRequestResetPassword({email: email, novaSenha: confirmPassword});
+      await new Promise(r => setTimeout(r, 5000));
+      await sendRequestResetPassword({email: email, novaSenha: confirmPassword});
     } catch (error) {
       handleError(error);
     }
