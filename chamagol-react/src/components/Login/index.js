@@ -82,7 +82,7 @@ const Login = ({ navigation }) => {
         case 403: // Forbidden
           Alert.alert(
             "Acesso Negado",
-            "Você não tem permissão para acessar este recurso.",
+            "Confirme o email para poder entrar!",
             [{ text: "OK", onPress: () => console.log("Popup fechado") }]
           );
           break;
@@ -114,7 +114,6 @@ const Login = ({ navigation }) => {
             [{ text: "OK", onPress: () => console.log("Popup fechado") }]
           );
           break;
-
       }
     }
   };
