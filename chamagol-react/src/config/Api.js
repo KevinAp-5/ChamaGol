@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 
-const API_URL = "http://192.168.1.8:8080/api/";
+const API_URL = "http://192.168.1.9:8080/api/";
 let axiosConfig = {
     headers: {
         'Content-Type' : 'application/json; charset=UTF-8',

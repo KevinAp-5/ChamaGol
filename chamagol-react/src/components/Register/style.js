@@ -101,11 +101,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C3B2E",
     paddingVertical: 14,
     marginTop: 20,
+    height: 60
   },
 
   buttonText: {
     fontSize: 18,
-    color: "#FFFFFF",
+    color: "#FFBA00",
     fontWeight: "bold",
     textTransform: "uppercase",
   },

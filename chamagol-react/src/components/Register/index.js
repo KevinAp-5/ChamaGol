@@ -1,12 +1,24 @@
 import React, { useState } from "react";
-import { Text, View, TextInput, Platform, Keyboard, Pressable, TouchableOpacity, SafeAreaView, Alert } from "react-native";
+import {
+  Text,
+  View,
+  TextInput,
+  Platform,
+  Keyboard,
+  Pressable,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert
+} from "react-native";
 import CheckBox from "expo-checkbox";
 import styles from "./style";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { validateEmail, validateName, validatePassword } from "../Utilities/validations";
+import Api from "../../config/Api"; // Configuração do endpoint
 import Title from "../Title/";
 import "@expo/metro-runtime";
 import lgpd_text from "./lgpd";
+import ThreeDots from "../treedots";
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -15,8 +27,9 @@ const Register = ({ navigation }) => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!isTermsAccepted) {
       Alert.alert(
         "Atenção",
@@ -24,8 +37,29 @@ const Register = ({ navigation }) => {
       );
       return;
     }
+
     applyValidations();
-    navigation.navigate("Home");
+
+    if (error) return;
+
+    setLoading(true);
+    const datauser = { nome: name, email: email, senha: password, assinatura: "AMADOR" };
+    try {
+      const response = await Api("POST", "auth/register", datauser);
+      Alert.alert("Sucesso", "Usuário registrado com sucesso!\nConfime o email para entrar.");
+      navigation.navigate("Login");
+    } catch (err) {
+      const { status, data } = err.response || {};
+      let message = "Erro desconhecido. Tente novamente mais tarde.";
+
+      if (status === 400) message = "Dados inválidos enviados ao servidor.";
+      else if (status === 409) message = "Email já cadastrado.";
+      else if (status === 500) message = "Erro no servidor. Tente novamente.";
+
+      Alert.alert("Erro de Registro", message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const nameValidate = (input) => {
@@ -63,9 +97,7 @@ const Register = ({ navigation }) => {
     setError("");
   };
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const toggleShowPassword = () => setShowPassword(!showPassword);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -121,9 +153,7 @@ const Register = ({ navigation }) => {
               Eu aceito os{" "}
               <Text
                 style={styles.link}
-                onPress={() =>
-                  Alert.alert("Termos de Uso", lgpd_text)
-                }
+                onPress={() => Alert.alert("Termos de Uso", lgpd_text)}
               >
                 Termos de Uso
               </Text>
@@ -141,9 +171,9 @@ const Register = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.button, !isTermsAccepted && { backgroundColor: "gray" }]}
           onPress={handleRegister}
-          disabled={!isTermsAccepted}
+          disabled={!isTermsAccepted || loading}
         >
-          <Text style={styles.buttonText}>CONFIRMAR</Text>
+          {loading ? <ThreeDots /> : <Text style={styles.buttonText}>  CONFIRMAR</Text>}
         </TouchableOpacity>
       </Pressable>
     </SafeAreaView>
