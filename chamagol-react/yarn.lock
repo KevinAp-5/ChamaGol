@@ -1772,6 +1772,11 @@
   resolved "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@react-native-community/checkbox@^0.5.17":
+  version "0.5.17"
+  resolved "https://registry.npmjs.org/@react-native-community/checkbox/-/checkbox-0.5.17.tgz"
+  integrity sha512-ZZx/eOH3SIxBg+hvA2zRd7lX5zPQEWcZU8C8Dn7WLdpJkiTkPmIUDFHWrmzxCnwZcyoD+BIt6gUZPKGGb9WmeQ==
+
 "@react-native-community/masked-view@^0.1.11":
   version "0.1.11"
   resolved "https://registry.npmjs.org/@react-native-community/masked-view/-/masked-view-0.1.11.tgz"
@@ -3954,6 +3959,11 @@ expo-asset@~11.0.1:
     expo-constants "~17.0.0"
     invariant "^2.2.4"
     md5-file "^3.2.3"
+
+expo-checkbox@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/expo-checkbox/-/expo-checkbox-4.0.0.tgz"
+  integrity sha512-kgmdau1cmlztRVEdjAQkdBCBSvI3W1Z6B+gTTr5ickbItxz07qt3j6dQEB3VDL69/bnIN/h9/iwNLVxuSn/C2Q==
 
 expo-constants@~17.0.0, expo-constants@~17.0.3:
   version "17.0.3"
@@ -6636,7 +6646,7 @@ react-native-vector-icons@^7.1.0:
     prop-types "^15.7.2"
     yargs "^15.0.2"
 
-react-native-web@~0.19.10:
+react-native-web@*, react-native-web@~0.19.10:
   version "0.19.13"
   resolved "https://registry.npmjs.org/react-native-web/-/react-native-web-0.19.13.tgz"
   integrity sha512-etv3bN8rJglrRCp/uL4p7l8QvUNUC++QwDbdZ8CB7BvZiMvsxfFIRM1j04vxNldG3uo2puRd6OSWR3ibtmc29A==
@@ -6650,7 +6660,7 @@ react-native-web@~0.19.10:
     postcss-value-parser "^4.2.0"
     styleq "^0.1.3"
 
-react-native@*, react-native@>=0.55.0, react-native@>=0.57, react-native@0.76.3:
+react-native@*, "react-native@>= 0.62", react-native@>=0.55.0, react-native@>=0.57, react-native@0.76.3:
   version "0.76.3"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.76.3.tgz"
   integrity sha512-0TUhgmlouRNf6yuDIIAdbQl0g1VsONgCMsLs7Et64hjj5VLMCA7np+4dMrZvGZ3wRNqzgeyT9oWJsUm49AcwSQ==

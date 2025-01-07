@@ -24,6 +24,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "newArchEnabled": false
+    "newArchEnabled": true
   }
 }
