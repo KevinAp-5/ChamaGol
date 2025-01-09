@@ -1,5 +1,6 @@
 package com.chamagol.model;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,6 +84,9 @@ public class Usuario implements UserDetails {
     @Column(length = 24, nullable = false)
     @Enumerated(EnumType.STRING)
     private Assinatura assinatura;
+
+    @Column(nullable = false)
+    private Instant createdAt;
 
     public void updateUsuario(@Valid UsuarioUpdate usuarioUpdate) {
         if (usuarioUpdate.nome() != null) {
