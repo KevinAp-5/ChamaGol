@@ -1,5 +1,6 @@
 package com.chamagol.model;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -83,6 +85,9 @@ public class Usuario implements UserDetails {
     @Column(length = 24, nullable = false)
     @Enumerated(EnumType.STRING)
     private Assinatura assinatura;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
 
     public void updateUsuario(@Valid UsuarioUpdate usuarioUpdate) {
         if (usuarioUpdate.nome() != null) {
@@ -166,5 +171,10 @@ public class Usuario implements UserDetails {
     @Override
     public boolean isEnabled() {
         return this.status == Status.ACTIVE;
+    }
+
+    @PrePersist    
+    protected void setCreatedAt() {
+        this.createdAt = Instant.now();
     }
 }

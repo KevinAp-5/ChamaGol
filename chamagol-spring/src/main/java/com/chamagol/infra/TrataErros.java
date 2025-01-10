@@ -124,12 +124,12 @@ public class TrataErros {
 
     @ExceptionHandler(UserExistsActive.class)
     public ResponseEntity<String> handleUserAlreadyActive(Exception ex) {
-        return new ResponseEntity<>("Usuário já existe: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>("Usuário já existe: " + ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(EmailNotConfirmed.class)
     public ResponseEntity<String> handleEmailNotConfirmed(Exception ex) {
-        return new ResponseEntity<>("Confirme o email: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>("Confirme o email: " + ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(EmailSendingError.class)
