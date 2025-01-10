@@ -16,6 +16,7 @@ import com.chamagol.model.UsuarioResetPassword;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.repository.UsuarioResetTokenRepository;
 import com.chamagol.service.user.UsuarioService;
+import com.chamagol.service.util.ControleEmailService;
 import com.chamagol.service.util.EmailService;
 
 
@@ -29,16 +30,18 @@ public class PasswordResetService {
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ControleEmailService controleEmailService;
 
 
     public PasswordResetService(UsuarioRepository usuarioRepository,
             UsuarioResetTokenRepository usuarioResetTokenRepository, UsuarioService usuarioService,
-            PasswordEncoder passwordEncoder, EmailService emailService) {
+            PasswordEncoder passwordEncoder, EmailService emailService, ControleEmailService controleEmailService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioResetTokenRepository = usuarioResetTokenRepository;
         this.usuarioService = usuarioService;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.controleEmailService = controleEmailService;
     }
 
     @CacheEvict(value = "usuarioCache", key = "#email")
@@ -62,6 +65,7 @@ public class PasswordResetService {
             "Confirme email",
             emailService.buildPasswordResetEmail(formatName(user.getNome()), link)
         );
+        controleEmailService.setControleEmail(user);
         return true;
     }
 

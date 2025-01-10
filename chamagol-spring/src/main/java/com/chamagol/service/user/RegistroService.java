@@ -25,6 +25,7 @@ import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioRepository;
 import com.chamagol.repository.UsuarioResetTokenRepository;
 import com.chamagol.repository.UsuarioVerificadorRepository;
+import com.chamagol.service.util.ControleEmailService;
 import com.chamagol.service.util.EmailService;
 
 import jakarta.validation.Valid;
@@ -42,11 +43,12 @@ public class RegistroService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final EmailValidator emailValidator;
+    private final ControleEmailService controleEmailService;
 
     public RegistroService(UsuarioVerificadorRepository usuarioVerificadorRepository,
             UsuarioResetTokenRepository usuarioResetTokenRepository, UsuarioRepository usuarioRepository,
             UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder, EmailService emailService,
-            EmailValidator emailValidator) {
+            EmailValidator emailValidator, ControleEmailService controleEmailService) {
         this.usuarioVerificadorRepository = usuarioVerificadorRepository;
         this.usuarioResetTokenRepository = usuarioResetTokenRepository;
         this.usuarioRepository = usuarioRepository;
@@ -54,6 +56,7 @@ public class RegistroService {
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.emailValidator = emailValidator;
+        this.controleEmailService = controleEmailService;
     }
 
     @Transactional
@@ -157,6 +160,7 @@ public class RegistroService {
                 emailService.formatName(usuario.getNome()),
                 emailService.confirmEmailLink(usuarioVerificador.getUuid()));
         emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
+        controleEmailService.setControleEmail(usuario);
     }
 
     private boolean isEmailValid(String email) {

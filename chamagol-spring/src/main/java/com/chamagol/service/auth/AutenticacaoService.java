@@ -1,5 +1,6 @@
 package com.chamagol.service.auth;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -17,10 +18,12 @@ import com.chamagol.dto.util.ResetPasswordBody;
 import com.chamagol.enums.Status;
 import com.chamagol.exception.EmailNotConfirmed;
 import com.chamagol.exception.TokenInvalid;
+import com.chamagol.model.ControleEmail;
 import com.chamagol.model.Usuario;
 import com.chamagol.model.UsuarioVerificadorEntity;
 import com.chamagol.repository.UsuarioVerificadorRepository;
 import com.chamagol.service.user.UsuarioService;
+import com.chamagol.service.util.ControleEmailService;
 import com.chamagol.service.util.EmailService;
 
 import jakarta.validation.Valid;
@@ -35,14 +38,17 @@ public class AutenticacaoService {
     private final UsuarioService usuarioService;
     private final EmailService emailService;
     private final UsuarioVerificadorRepository verificadorDB;
+    private final ControleEmailService controleEmailService;
 
     public AutenticacaoService(TokenService tokenService, PasswordResetService passwordResetService,
-            UsuarioService usuarioService, EmailService emailService, UsuarioVerificadorRepository verificadorDB) {
+            UsuarioService usuarioService, EmailService emailService, UsuarioVerificadorRepository verificadorDB,
+            ControleEmailService controleEmailService) {
         this.tokenService = tokenService;
         this.passwordResetService = passwordResetService;
         this.usuarioService = usuarioService;
         this.emailService = emailService;
         this.verificadorDB = verificadorDB;
+        this.controleEmailService = controleEmailService;
     }
 
     public TokenDTO userLogin(@Valid @NotNull UsuarioAutenticacao usuarioAutenticacao) {
@@ -51,7 +57,7 @@ public class AutenticacaoService {
         if (user.getStatus() != Status.ACTIVE) {
             activateUser(user);
             throw new EmailNotConfirmed("enviado email para ativar usuário.");
-    }
+        }
         return tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
     }
 
@@ -61,7 +67,8 @@ public class AutenticacaoService {
 
     @CacheEvict(value = "usuarioCache", allEntries = true)
     public String confirmarRecuperacaoSenha(@Valid @NotBlank ConfirmPasswordBody confirmPasswordBody) {
-        boolean resetado = passwordResetService.resetPassword(confirmPasswordBody.email(), confirmPasswordBody.novaSenha());
+        boolean resetado = passwordResetService.resetPassword(confirmPasswordBody.email(),
+                confirmPasswordBody.novaSenha());
         if (!resetado) {
             throw new TokenInvalid("Token inválido ou expirado");
         }
@@ -78,10 +85,9 @@ public class AutenticacaoService {
         }
 
         var token = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
-            userDetails.getAuthorities()
-        );
+                userDetails,
+                null,
+                userDetails.getAuthorities());
 
         SecurityContextHolder.getContext().setAuthentication(token);
 
@@ -93,10 +99,10 @@ public class AutenticacaoService {
         String link = emailService.confirmEmailLink(uuid);
         String emailText = emailService.buildEmail(formatedName, link);
         emailService.sendEmail(
-            user.getEmail(),
-            "Ativar usuário",
-            emailText
-        );
+                user.getEmail(),
+                "Ativar usuário",
+                emailText);
+        controleEmailService.setControleEmail(user);
     }
 
     private UsuarioVerificadorEntity returnVerificador(Usuario user) {
@@ -111,6 +117,11 @@ public class AutenticacaoService {
         ativador.setUuid(uuid);
 
         verificadorDB.save(ativador);
-        sendActivationEmail(user, uuid);
+        ControleEmail email = controleEmailService.getControleEmail(user.getId());
+
+        Boolean condition = Duration.between(email.getUltimoEmail(), Instant.now()).toMinutes() >= 10;
+        if (email.getQuantidadeEmails() == null || condition.booleanValue()) {
+            sendActivationEmail(user, uuid);
+        }
     }
 }
