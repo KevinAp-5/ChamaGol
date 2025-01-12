@@ -74,7 +74,7 @@ public class UsuarioService {
         return new UsuarioResponseEntityBody(user);
     }
 
-    public Page<Long> findtInactiveUsersFrom(Instant startDate, Pageable page) {
+    public Page<Long> findInactiveUsersFrom(Instant startDate, Pageable page) {
         return usuarioRepository.findInactiveUsersId(startDate, page);
     }
 
