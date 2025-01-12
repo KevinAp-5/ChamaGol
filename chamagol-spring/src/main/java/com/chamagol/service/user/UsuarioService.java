@@ -1,5 +1,8 @@
 package com.chamagol.service.user;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
@@ -69,6 +72,14 @@ public class UsuarioService {
     public UsuarioResponseEntityBody findById(@NotNull @Positive Long id) {
         var user = usuarioRepository.getReferenceById(id);
         return new UsuarioResponseEntityBody(user);
+    }
+
+    public Page<Long> findtInactiveUsersFrom(Instant startDate, Pageable page) {
+        return usuarioRepository.findInactiveUsersId(startDate, page);
+    }
+
+    public void deleteMultipleInativeUsersById(List<Long> usersId) {
+        usuarioRepository.deleteMultipleInativeUsersById(usersId);
     }
 
     @CacheEvict(value = "usuarioCache", key = "#email")
