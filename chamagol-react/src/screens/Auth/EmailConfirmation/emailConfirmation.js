@@ -8,9 +8,8 @@ import {
 } from "react-native";
 import styles from "./style";
 import "@expo/metro-runtime";
-let icona = require("./check-icon.png");
-import Title from "../Title";
-
+let icona = require("../../../../assets/images/check-icon.png");
+import Title from "../../../components/Title";
 const EmailConfirmation = ({ navigation, route }) => {
   const { email } = route.params || {};
 

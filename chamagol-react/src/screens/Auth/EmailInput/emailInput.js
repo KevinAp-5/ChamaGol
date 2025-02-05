@@ -9,12 +9,12 @@ import {
   Image,
   AsyncStorage
 } from "react-native";
-import ThreeDots from "../treedots";
+import ThreeDots from "../../../components/treedots";
 import styles from "./style";
-import Title from "../Title";
-import Api from "../../config/Api";
+import Title from "../../../components/Title";
+import Api from "../../../config/Api";
 
-const emailIcon = require("./mail.png");
+const emailIcon = require("../../../../assets/images/mail.png");
 const validateEmail = (email) => {
   return String(email)
     .toLowerCase()
