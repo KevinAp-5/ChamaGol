@@ -21,12 +21,28 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
 
+  // Caso utilize alguma imagem no topo, pode manter ou ajustar conforme necessário
+  topImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
+
   titleText: {
     fontSize: 34,
     fontWeight: "bold",
     color: "#6D9773",
     marginBottom: 20,
     textShadowColor: "rgba(0, 0, 0, 0.4)",
+  },
+
+  // Se necessário, subtítulo ou mensagem adicional pode ser ajustado
+  subtitleText: {
+    fontSize: 16,
+    color: "#6D9773",
+    textAlign: "center",
+    marginBottom: 30,
+    paddingHorizontal: 20,
   },
 
   form: {
@@ -66,31 +82,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
 
-  passwordInput: {
-    flex: 1,
-    fontSize: 16,
-  },
-
   icon: {
     marginLeft: 10,
   },
 
-  termsContainer: {
-    flexDirection: "row",
+  errorMessageContainer: {
+    justifyContent: "center",
     alignItems: "center",
-    marginVertical: 10,
+    // Se desejar, ajuste a margem inferior conforme sua necessidade
+    marginBottom: 10,
   },
 
-  termsText: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginLeft: 10,
-  },
-
-  link: {
-    color: "#FFBA00",
+  errorMessage: {
+    color: "red",
     fontWeight: "bold",
-    textDecorationLine: "underline",
   },
 
   button: {
@@ -101,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C3B2E",
     paddingVertical: 14,
     marginTop: 20,
-    height: 60
+    height: 60,
   },
 
   buttonText: {
@@ -109,17 +114,6 @@ const styles = StyleSheet.create({
     color: "#FFBA00",
     fontWeight: "bold",
     textTransform: "uppercase",
-  },
-
-  errorMessageContext: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  errorMessage: {
-    color: "red",
-    fontWeight: "bold",
   },
 });
 

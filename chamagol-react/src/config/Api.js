@@ -1,40 +1,44 @@
 import axios from "axios";
-import { useState } from "react";
 
-const API_URL = "http://192.168.1.9:8080/api/";
-let axiosConfig = {
-    headers: {
-        'Content-Type' : 'application/json; charset=UTF-8',
-        'Accept': 'Token',
-        "Access-Control-Allow-Origin": "*",
-        "Accept-Enconding": "gzip, defiate, br",
-    }
-  };
+const API_URL = "http://192.168.1.6:8080/api/";
 
-// const instance = axios.create({
-//   baseURL: API_URL,
-//   timeout: 12000,
-//   headers: axiosConfig.headers
-// });
+// Configuração de headers simplificada
+const axiosConfig = {
+  headers: {
+    "Content-Type": "application/json; charset=UTF-8",
+    Accept: "application/json", // Altere se o servidor requer algo diferente
+    Authorization: null, // Insira o token aqui se necessário
+  },
+};
 
 const Api = async (method, endpoint, data) => {
-    console.log(API_URL + endpoint);
-    console.log(data);
-    try {
-        const res = await axios({
-            method: method,
-            url: API_URL + endpoint,
-            headers: axiosConfig,
-            timeout: 15000,
-            data: data,
-        });
+  console.log(`${API_URL}${endpoint}`);
+  console.log(data);
 
-        console.log("Response data:", res.data); // Log opcional
-        return res; // Retorna a resposta completa
-    } catch (error) {
-        console.log("Erro de requisição: " + error.message);
-        throw error; // Repassa o erro para o chamador lidar
+  try {
+    const res = await axios({
+      method: method,
+      baseURL: API_URL,
+      url: endpoint,
+      headers: axiosConfig.headers,
+      timeout: 15000, // Tempo limite de 15 segundos
+      data: data, // Dados enviados no corpo
+    });
+
+    console.log("Response data:", res.data);
+    return res; // Retorna a resposta completa
+  } catch (error) {
+    // Tratamento de erro para identificação
+    if (error.response) {
+      console.error("Erro no servidor:", error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error("Erro na requisição (provavelmente CORS):", error.request);
+    } else {
+      console.error("Erro desconhecido:", error.message);
     }
+
+    throw error; // Repassa o erro para ser tratado onde foi chamado
+  }
 };
 
 export default Api;

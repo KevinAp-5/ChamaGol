@@ -2,28 +2,52 @@ import "@expo/metro-runtime";
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import EmailConfirmation from './src/components/EmailConfirm';
-import HomeScreen from './src/components/HomeScreen';
-import Login from './src/components/Login/';
-import Register from './src/components/Register/';
-import ResetPassword from './src/components/ResetPassword';
-import Timeline from './src/components/TimeLine/';
-import EmailInput from "./src/components/EmailInput";
+
+// Screens
+import HomeScreen from "./src/screens/Home/home.js";
+import Timeline from "./src/screens/Timeline/timeline.js";
+
+// Auth Screens
+import Login from "./src/screens/Auth/Login/login.js";
+import Register from "./src/screens/Auth/Register/register.js";
+import EmailInput from "./src/screens/Auth/EmailInput/emailInput.js";
+import ResetPassword from "./src/screens/Auth/ResetPassword/resetPassword.js";
+import EmailConfirmation from "./src/screens/Auth/EmailConfirmation/emailConfirmation.js";
+
 
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{gestureEnabled: true}}>
-        <Stack.Screen name= "EmailConfirmation" component={EmailConfirmation} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-        <Stack.Screen name= "Home" component={HomeScreen} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-        <Stack.Screen name= "Login" component={Login} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-        <Stack.Screen name= "Register" component={Register} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-        <Stack.Screen name= "ResetPassword" component={ResetPassword} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-        <Stack.Screen name= "Timeline" component={Timeline} />
-        <Stack.Screen name= "EmailInput" component={EmailInput} options={{headerShown: false, gestureDirection: 'horizontal'}} />
-
+      <Stack.Navigator 
+        initialRouteName="Home" 
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          cardStyle: { backgroundColor: '#FFFFFF' }
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="EmailInput" component={EmailInput} />
+        <Stack.Screen name="ResetPassword" component={ResetPassword} />
+        <Stack.Screen name="EmailConfirmation" component={EmailConfirmation} />
+        <Stack.Screen 
+          name="Timeline" 
+          component={Timeline}
+          options={{
+            headerShown: true,
+            headerTitle: 'CHAMAGOL Timeline',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#0C3B2E',
+            },
+            headerTintColor: '#FFBA00',
+          }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

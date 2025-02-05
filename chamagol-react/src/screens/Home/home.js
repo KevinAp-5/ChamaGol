@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, SafeAreaView, Image, Keyboard, Pressable } from "react-native";
 import {LinearGradient} from "expo-linear-gradient";
 import styles from "./style";
-import Title from "../Title";
+import Title from "../../components/Title";
 
 const HomeScreen = ({ navigation }) => {
   const navigateLogin = () => {
@@ -18,7 +18,7 @@ const HomeScreen = ({ navigation }) => {
       <Title title="CHAMAGOL" />
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
         <View style={styles.header}>
-          <Image source={require("./icon.png")} style={styles.welcomeImage} />
+          <Image source={require("../../../assets/images/homeicon.png")} style={styles.welcomeImage} />
           <Text style={styles.welcomeText}>Bem-vindo!</Text>
           <Text style={styles.subtitleText}>
             Entre ou cadastre-se para aproveitar nossos melhores serviços e sinais.

@@ -11,11 +11,11 @@ import {
   Alert,
   AsyncStorage
 } from "react-native";
-import { validatePassword, validatePasswordsMatch } from "../Utilities/validations";
+import { validatePassword, validatePasswordsMatch } from "../../../utilities/validations";
 import styles from "./style";
-import Title from "../Title/";
+import Title from "../../../components/Title";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Api from "../../config/Api";
+import Api from "../../../config/Api";
 
 const ResetPassword = ({ navigation }) => {
   const [password, setPassword] = useState("");
@@ -103,7 +103,7 @@ const ResetPassword = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <Title title="CHAMAGOL" />
       <Pressable onPress={Keyboard.dismiss} style={styles.formContext}>
-        <Image source={require("./icon.png")} style={styles.topImage} />
+        <Image source={require("../../../../assets/images/reseticon.png")} style={styles.topImage} />
         <Text style={styles.titleText}>Recuperar senha</Text>
         <Text style={styles.subtitleText}>
           Crie uma nova senha para sua conta. Certifique-se de que seja forte.
