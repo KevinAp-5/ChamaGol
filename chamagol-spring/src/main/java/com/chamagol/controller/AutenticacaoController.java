@@ -26,6 +26,7 @@ import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
+import com.chamagol.enums.Assinatura;
 import com.chamagol.model.Usuario;
 import com.chamagol.service.auth.AutenticacaoService;
 import com.chamagol.service.user.RegistroService;
@@ -65,6 +66,9 @@ public class AutenticacaoController {
         var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
         var response = registroService.createUser(usuarioDTO);
         Usuario user = usuarioMapper.toEntity(usuarioDTO);
+        if (user.getAssinatura() == Assinatura.PRO) {
+            user.setAssinatura(Assinatura.AMADOR);
+        }
 
         usuarioCacheService.atualizarUsuario(user.getEmail(), user);
 

@@ -25,7 +25,7 @@ public class UsuarioCacheService {
     }
 
     public UserDetails getUsuarioFromCache(String email) {
-        return usuarioCache.computeIfAbsent(email, Duration.ofMinutes(20), k -> getUsuario(email)); // Tempo de vida no cache
+        return usuarioCache.computeIfAbsent(email, Duration.ofMinutes(20), k -> getUsuario(email));
     }
 
     public void evictUsuario(String email) {
