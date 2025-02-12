@@ -4,11 +4,14 @@ package com.chamagol.controller;
 import java.net.URI;
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.chamagol.dto.token.AccessToken;
 import com.chamagol.dto.token.RefreshTokenDTO;
 import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
@@ -30,6 +34,8 @@ import com.chamagol.service.user.RegistroService;
 import com.chamagol.service.user.UsuarioService;
 import com.esotericsoftware.minlog.Log;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -62,13 +68,27 @@ public class AutenticacaoController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao) {
-        return ResponseEntity.ok(autenticacaoService.userLogin(usuarioAutenticacao));
+    public ResponseEntity<AccessToken> login(@RequestBody @Valid UsuarioAutenticacao usuarioAutenticacao, HttpServletResponse response) {
+        
+        TokenDTO token = autenticacaoService.userLogin(usuarioAutenticacao);
+        String refreshToken = token.refreshToken();
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refreshToken)
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("Strict")
+            .maxAge(60 * 60 * 24 * (long) 7)
+            .path("/api/auth/refresh-token")
+            .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+        return ResponseEntity.ok(new AccessToken(token.token()));
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<TokenDTO> refreshSession(@RequestBody RefreshTokenDTO tokenDTO) {
-        return ResponseEntity.ok(autenticacaoService.userRefreshToken(tokenDTO.refreshToken()));
+    @PostMapping("/refresh")
+    public ResponseEntity<AccessToken> refreshSession(@CookieValue("refresh_token") String refreshToken) {
+        TokenDTO tokens = autenticacaoService.userRefreshToken(refreshToken);
+        return ResponseEntity.ok(new AccessToken(tokens.token()));
     }
 
     @PostMapping("/password/reset")

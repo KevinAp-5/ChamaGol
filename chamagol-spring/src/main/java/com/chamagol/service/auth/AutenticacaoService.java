@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.chamagol.dto.token.AccessToken;
 import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.util.ConfirmPasswordBody;
@@ -55,7 +56,7 @@ public class AutenticacaoService {
         var user = (Usuario) usuarioService.getUsuario(usuarioAutenticacao.email());
 
         if (user.getStatus() != Status.ACTIVE) {
-            activateUser(user);
+            sendActivationEmail(user);
             throw new EmailNotConfirmed("enviado email para ativar usuário.");
         }
         return tokenService.authenticatedTokenByLogin(usuarioAutenticacao);
@@ -109,7 +110,7 @@ public class AutenticacaoService {
         return verificadorDB.findByUsuarioId(user.getId()).orElse(new UsuarioVerificadorEntity());
     }
 
-    private void activateUser(Usuario user) {
+    private void sendActivationEmail(Usuario user) {
         UUID uuid = UUID.randomUUID();
         UsuarioVerificadorEntity ativador = returnVerificador(user);
         ativador.setDataExpira(Instant.now().plus(20, ChronoUnit.MINUTES));
