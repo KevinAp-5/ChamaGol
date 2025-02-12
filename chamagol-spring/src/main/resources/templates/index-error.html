@@ -2,75 +2,72 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>CHAMAGOL</title>
-    <link rel="ball" href="../static/images/ball.png">
+    <link rel="icon" href="../static/images/ball.png">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
         body {
             margin: 0;
             font-family: Helvetica, Arial, sans-serif;
-            background-color: #0C3B2E; /* Primary Green */
-            color: #FFFFFF; /* White */
+            background-color: #0C3B2E;
+            color: #FFFFFF;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
         }
-        .container {
-            text-align: center;
+
+
+        /* Caixa principal */
+        .main-container {
             background-color: #FFFFFF;
             color: #0C3B2E;
-            border-radius: 30px;
-            padding: 40px;
-            max-width: 400px;
+            border-radius: 20px;
+            padding: 60px;
+            width: 90%;
+            height: 90%;
+            max-width: 800px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
         }
+
         h1 {
-            font-size: 30px; /* Title */
+            font-size: 60px;
             margin-bottom: 20px;
-            color: #0C3B2E; /* Primary Green */
+            color: #0C3B2E;
         }
+
         p {
-            font-size: 16px; /* Body Text */
-            margin-bottom: 30px;
+            font-size: 38px;
+            margin-bottom: 20px;
             color: #333333;
         }
-        .success {
-            color: #6D9773; /* Accent Green */
-            font-size: 18px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
+
         .error {
-            color: #FF0000; /* Red for errors */
-            font-size: 18px;
+            color: #6D9773;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        /* Ícone */
+        .icon {
+            width: 120px;
+            height: 120px;
             margin-bottom: 20px;
-            font-weight: bold;
         }
-        .button {
-            display: inline-block;
-            background-color: #FFBA00; /* Accent Yellow */
-            color: #FFFFFF;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 16px;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        .button:hover {
-            background-color: #e0a600;
-        }
-
-
     </style>
 </head>
 <body>
-    <div class="container">
+
+
+    <div class="main-container">
         <h1>Link expirado ou inválido!</h1>
         <p class="error">Solicite uma nova alteração de senha.</p>
-        <img th:src="@{/images/xicon.png}" alt="check icon" width="80" height="80">
+        <img class="icon" th:src="@{/images/xicon.png}" alt="Erro">
         <p>Volte para o aplicativo.</p>
-
     </div>
+
 </body>
 </html>
