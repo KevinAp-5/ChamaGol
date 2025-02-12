@@ -28,6 +28,10 @@ public class UsuarioMapper {
         usuario.setNome(usuarioDTO.nome());
         usuario.setEmail(usuarioDTO.email());
         usuario.setSenha(usuarioDTO.senha());
+        if (usuarioDTO.assinatura() == Assinatura.PRO) {
+            usuario.setAssinatura(Assinatura.AMADOR);
+            return usuario;
+        }
         usuario.setAssinatura(usuarioDTO.assinatura());
 
         return usuario;

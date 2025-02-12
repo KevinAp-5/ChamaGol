@@ -22,15 +22,11 @@ import com.chamagol.dto.token.TokenDTO;
 import com.chamagol.dto.usuario.UsuarioAutenticacao;
 import com.chamagol.dto.usuario.UsuarioDTO;
 import com.chamagol.dto.usuario.UsuarioListagem;
-import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.dto.util.ConfirmPasswordBody;
 import com.chamagol.dto.util.ResetPasswordBody;
-import com.chamagol.enums.Assinatura;
-import com.chamagol.model.Usuario;
 import com.chamagol.service.auth.AutenticacaoService;
 import com.chamagol.service.user.RegistroService;
-import com.chamagol.service.user.UsuarioCacheService;
 import com.chamagol.service.user.UsuarioService;
 import com.esotericsoftware.minlog.Log;
 
@@ -43,16 +39,12 @@ public class AutenticacaoController {
 
     private final AutenticacaoService autenticacaoService;
     private final RegistroService registroService;
-    private final UsuarioCacheService usuarioCacheService;
-    private final UsuarioMapper usuarioMapper;
     private final UsuarioService usuarioService;
 
     public AutenticacaoController(AutenticacaoService autenticacaoService, RegistroService registroService,
-            UsuarioCacheService usuarioCacheService, UsuarioMapper usuarioMapper, UsuarioService usuarioService) {
+            UsuarioService usuarioService) {
         this.autenticacaoService = autenticacaoService;
         this.registroService = registroService;
-        this.usuarioCacheService = usuarioCacheService;
-        this.usuarioMapper = usuarioMapper;
         this.usuarioService = usuarioService;
     }
 
@@ -65,12 +57,6 @@ public class AutenticacaoController {
 
         var uri = buildUserUri(uriComponentsBuilder, usuarioDTO.id());
         var response = registroService.createUser(usuarioDTO);
-        Usuario user = usuarioMapper.toEntity(usuarioDTO);
-        if (user.getAssinatura() == Assinatura.PRO) {
-            user.setAssinatura(Assinatura.AMADOR);
-        }
-
-        usuarioCacheService.atualizarUsuario(user.getEmail(), user);
 
         return ResponseEntity.created(uri).body(response);
     }
