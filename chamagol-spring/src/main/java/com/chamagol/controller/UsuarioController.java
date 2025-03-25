@@ -36,7 +36,7 @@ public class UsuarioController {
 
     @GetMapping
     public ResponseEntity<Page<UsuarioListagem>> listActiveUsers(Pageable pageable) {
-        return  ResponseEntity.ok(usuarioService.listActive(pageable));
+        return ResponseEntity.ok(usuarioService.listActive(pageable));
     }
 
     @GetMapping("/inactive")
@@ -46,24 +46,21 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseEntityBody> getUserById(
-        @PathVariable("id") @NotNull @Positive Long id
-    ) {
+            @PathVariable("id") @NotNull @Positive Long id) {
         return ResponseEntity.ok(usuarioService.findById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioResponseEntityBody> updateUser(
-        @PathVariable("id") @NotNull @Positive Long id,
-        @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate
-    ) {
+            @PathVariable("id") @NotNull @Positive Long id,
+            @RequestBody @Valid @NotNull UsuarioUpdate usuarioUpdate) {
         return ResponseEntity.ok(usuarioService.update(id, usuarioUpdate));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> softDeleteUser(
-        @PathVariable("id") @NotNull @Positive Long id
-    ) {
+            @PathVariable("id") @NotNull @Positive Long id) {
         usuarioService.deleteSoft(id);
         return ResponseEntity.noContent().build();
     }
@@ -72,16 +69,14 @@ public class UsuarioController {
     @DeleteMapping("/{id}/hard")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> hardDeleteUser(
-        @PathVariable("id") @NotNull @Positive Long id
-    ) {
+            @PathVariable("id") @NotNull @Positive Long id) {
         usuarioService.delete(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     @PutMapping("/{id}/activate")
     public ResponseEntity<Void> activateUser(
-        @PathVariable("id") @NotNull @Positive Long id
-    ) {
+            @PathVariable("id") @NotNull @Positive Long id) {
         usuarioService.activate(id);
         return ResponseEntity.noContent().build();
     }
