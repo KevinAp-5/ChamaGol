@@ -6,7 +6,6 @@ import java.util.List;
 import org.redisson.api.RTopic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +20,6 @@ import com.chamagol.repository.SinalRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import reactor.core.publisher.FluxSink;
 
 @Service
 public class SinalService implements Serializable {
@@ -30,15 +28,13 @@ public class SinalService implements Serializable {
     private final transient SinalMapper sinalMapper;
     private final transient SinalCacheService sinalCacheService;
     private final transient RTopic topic;
-    private final transient SimpMessagingTemplate messagingTemplate;
 
     public SinalService(SinalRepository sinalRepository, SinalMapper sinalMapper, SinalCacheService sinalCacheService,
-            RTopic topic, SimpMessagingTemplate messagingTemplate) {
+            RTopic topic) {
         this.sinalRepository = sinalRepository;
         this.sinalMapper = sinalMapper;
         this.sinalCacheService = sinalCacheService;
         this.topic = topic;
-        this.messagingTemplate = messagingTemplate;
     }
 
     public RTopic getTopic() {
@@ -69,8 +65,6 @@ public class SinalService implements Serializable {
         topic.publish("SINAL_ADDED");
 
         // Envia via WebSocket
-        List<SinalListagem> latestSignals = getLatestSignals();
-        messagingTemplate.convertAndSend("/topic/sinais", latestSignals);
 
         return new SinalListagem(sinal);
     }
@@ -91,9 +85,6 @@ public class SinalService implements Serializable {
 
         topic.publish("SINAL_DELETED");
 
-        // Envia via WebSocket
-        List<SinalListagem> latestSignals = getLatestSignals();
-        messagingTemplate.convertAndSend("/topic/sinais", latestSignals);
     }
 
     @Transactional
@@ -107,21 +98,10 @@ public class SinalService implements Serializable {
 
         topic.publish("SINAL_UPDATED");
 
-        // Envia via WebSocket
-        List<SinalListagem> latestSignals = getLatestSignals();
-        messagingTemplate.convertAndSend("/topic/sinais", latestSignals);
-
         return new SinalListagem(sinal);
     }
 
     public List<SinalListagem> getLatestSignals() {
         return sinalCacheService.getTop10();
-    }
-
-    public void subscribeToChanges(FluxSink<SinalListagem> sink) {
-        topic.addListener(String.class, (channel, message) -> {
-            List<SinalListagem> updatedSignals = getLatestSignals();
-            updatedSignals.forEach(sink::next);
-        });
     }
 }

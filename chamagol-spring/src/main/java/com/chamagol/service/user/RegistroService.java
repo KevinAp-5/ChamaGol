@@ -16,7 +16,6 @@ import com.chamagol.dto.usuario.UsuarioListagem;
 import com.chamagol.dto.usuario.mapper.UsuarioMapper;
 import com.chamagol.dto.util.ApiResponse;
 import com.chamagol.enums.Status;
-import com.chamagol.exception.EmailSendingError;
 import com.chamagol.exception.UserExistsActive;
 import com.chamagol.infra.EmailValidator;
 import com.chamagol.model.Usuario;
@@ -42,7 +41,6 @@ public class RegistroService {
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final EmailValidator emailValidator;
     private final ControleEmailService controleEmailService;
 
     public RegistroService(UsuarioVerificadorRepository usuarioVerificadorRepository,
@@ -55,7 +53,6 @@ public class RegistroService {
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
-        this.emailValidator = emailValidator;
         this.controleEmailService = controleEmailService;
     }
 
@@ -101,11 +98,6 @@ public class RegistroService {
 
     @Transactional
     public ApiResponse<UsuarioListagem> createUser(@Valid @NotNull UsuarioDTO usuarioDTO) {
-
-        if (!isEmailValid(usuarioDTO.email())) {
-            throw new EmailSendingError("E-mail com formato inválido.");
-        }
-
         if (isEmailAlreadyRegistered(usuarioDTO.email())) {
             resendLink(usuarioDTO.email());
             return new ApiResponse<>(null, "Email de validação enviado.");
@@ -161,10 +153,6 @@ public class RegistroService {
                 emailService.confirmEmailLink(usuarioVerificador.getUuid()));
         emailService.sendEmail(usuario.getEmail(), "ChamaGol", emailBody);
         controleEmailService.setControleEmail(usuario);
-    }
-
-    private boolean isEmailValid(String email) {
-        return emailValidator.test(email);
     }
 
     private boolean isEmailAlreadyRegistered(String email) {
