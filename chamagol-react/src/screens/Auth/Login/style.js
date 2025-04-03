@@ -57,6 +57,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    position: "relative",
+  },
+
   input: {
     width: "100%",
     borderRadius: 12,
@@ -64,38 +71,26 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 15,
     paddingHorizontal: 15,
+    paddingRight: 40, // Espaço extra para o ícone não sobrepor o texto
     fontSize: 16,
     borderWidth: 1,
     borderColor: "#E4E4E7",
   },
 
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    borderRadius: 12,
-    backgroundColor: "#F9F9F9",
-    height: 50,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#E4E4E7",
-    paddingHorizontal: 15,
-  },
-
   icon: {
-    marginLeft: 10,
+    position: "absolute",
+    right: 15,
+    top: 13,
   },
 
   errorMessageContainer: {
-    justifyContent: "center",
     alignItems: "center",
-    // Se desejar, ajuste a margem inferior conforme sua necessidade
-    marginBottom: 10,
   },
 
   errorMessage: {
     color: "red",
     fontWeight: "bold",
+    fontSize: 14,
   },
 
   button: {

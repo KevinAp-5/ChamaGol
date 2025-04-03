@@ -15,7 +15,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import ThreeDots from "../../../components/treedots";
 import Title from "../../../components/Title";
-import { validateEmail, validatePassword } from "../../../utilities/validations";
+import {
+  validateEmail,
+  validatePassword,
+} from "../../../utilities/validations";
 import styles from "./style";
 
 // Defina a URL da API para login (ajuste conforme necessário)
@@ -77,15 +80,23 @@ const Login = ({ navigation }) => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const { token, user } = response.data;
+      const { token, refreshToken } = response.data;
 
-      await AsyncStorage.setItem("token", token);
-      await AsyncStorage.setItem("user", JSON.stringify(user));
+      // Verifique se os valores existem antes de salvá-los
+      if (token) {
+        await AsyncStorage.setItem("token", token); // Corrigido: AsyncStorage.setItem
+      } else {
+        throw new Error("Token não encontrado na resposta.");
+      }
 
-      // Se você utiliza algum serviço de Analytics, descomente a linha abaixo:
-      // await Analytics.logEvent("user_login", { user_id: user.id, email: user.email });
+      if (refreshToken) {
+        await AsyncStorage.setItem("refreshToken", refreshToken); // Corrigido: AsyncStorage.setItem
+      } else {
+        throw new Error("Refresh token não encontrado na resposta.");
+      }
 
-      navigation.replace("Timeline", { user: response.data });
+      // Navegue para a próxima tela
+      navigation.replace("Timeline", { email });
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -100,7 +111,10 @@ const Login = ({ navigation }) => {
 
     switch (status) {
       case 400:
-        Alert.alert("Erro de Validação", "Dados inválidos enviados ao servidor.");
+        Alert.alert(
+          "Erro de Validação",
+          "Dados inválidos enviados ao servidor."
+        );
         break;
       case 401:
         Alert.alert("Erro de Login", "Email ou senha inválida.");
@@ -112,13 +126,22 @@ const Login = ({ navigation }) => {
         Alert.alert("Erro", message || "Recurso não encontrado.");
         break;
       case 500:
-        Alert.alert("Erro no Servidor", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
+        Alert.alert(
+          "Erro no Servidor",
+          "Ocorreu um erro inesperado. Tente novamente mais tarde."
+        );
         break;
       case 502:
-        Alert.alert("Erro ao Enviar E-mail", "Houve um problema ao enviar o e-mail. Tente novamente mais tarde.");
+        Alert.alert(
+          "Erro ao Enviar E-mail",
+          "Houve um problema ao enviar o e-mail. Tente novamente mais tarde."
+        );
         break;
       default:
-        Alert.alert("Erro", `Status: ${status} - ${message || "Tente novamente mais tarde."}`);
+        Alert.alert(
+          "Erro",
+          `Status: ${status} - ${message || "Tente novamente mais tarde."}`
+        );
         break;
     }
   };
@@ -127,8 +150,14 @@ const Login = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <Title title="CHAMAGOL" />
       {/* Envolvendo o conteúdo com ScrollView para permitir scroll com o teclado ativo */}
-      <ScrollView contentContainerStyle={styles.formContext} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={Keyboard.dismiss} style={{ width: "100%", alignItems: "center" }}>
+      <ScrollView
+        contentContainerStyle={styles.formContext}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Pressable
+          onPress={Keyboard.dismiss}
+          style={{ width: "100%", alignItems: "center" }}
+        >
           <Text style={styles.titleText}>LOGIN</Text>
           <View style={styles.form}>
             <Text style={styles.formLabel}>E-mail</Text>
@@ -142,11 +171,10 @@ const Login = ({ navigation }) => {
               autoCapitalize="none"
             />
 
-            {/* Apenas os campos necessários foram mantidos para padronizar com o registro */}
             <Text style={styles.formLabel}>Senha</Text>
             <View style={styles.passwordContainer}>
               <TextInput
-                style={[styles.input, { width: "85%", margin: 0, backgroundColor: "transparent", borderWidth: 0 }]}
+                style={styles.input}
                 value={password}
                 onChangeText={passwordValidate}
                 placeholder="Digite sua senha"
@@ -165,22 +193,41 @@ const Login = ({ navigation }) => {
             </View>
           </View>
 
+          {/* Mensagem de erro sobreposta */}
           {error ? (
             <View style={styles.errorMessageContainer}>
               <Text style={styles.errorMessage}>{error}</Text>
             </View>
           ) : null}
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-            {loading ? <ThreeDots /> : <Text style={styles.buttonText}>ENTRAR</Text>}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ThreeDots />
+            ) : (
+              <Text style={styles.buttonText}>ENTRAR</Text>
+            )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate("EmailInput")} style={{ marginTop: 20 }}>
-            <Text style={[styles.buttonText, { color: "#6D9773" }]}>Esqueceu a senha?</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("EmailInput")}
+            style={{ marginTop: 20 }}
+          >
+            <Text style={[styles.buttonText, { color: "#6D9773" }]}>
+              Esqueceu a senha?
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate("Register")} style={{ marginTop: 15 }}>
-            <Text style={[styles.buttonText, { color: "#6D9773" }]}>Cadastre-se</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Register")}
+            style={{ marginTop: 15 }}
+          >
+            <Text style={[styles.buttonText, { color: "#6D9773" }]}>
+              Cadastre-se
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </ScrollView>
