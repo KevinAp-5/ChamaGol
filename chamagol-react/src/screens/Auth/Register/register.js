@@ -169,7 +169,7 @@ const Register = ({ navigation }) => {
             style={styles.input}
             value={email}
             onChangeText={handleEmailChange}
-            placeholder="Seu email*"
+            placeholder="Seu email"
             placeholderTextColor="gray"
             keyboardType="email-address"
             autoCapitalize="none"
