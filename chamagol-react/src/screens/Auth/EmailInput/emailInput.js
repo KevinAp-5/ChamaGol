@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Alert, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
   Image,
-  AsyncStorage
+  AsyncStorage,
 } from "react-native";
 import ThreeDots from "../../../components/treedots";
 import styles from "./style";
@@ -18,9 +18,7 @@ const emailIcon = require("../../../../assets/images/mail.png");
 const validateEmail = (email) => {
   return String(email)
     .toLowerCase()
-    .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    );
+    .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
 };
 
 const EmailInput = ({ navigation }) => {
@@ -28,9 +26,9 @@ const EmailInput = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handleSendEmail = async () => {
-    if (!(validateEmail(email))) return Alert.alert("Erro", "Por favor, insira um e-mail válido.");
+    if (!validateEmail(email))
+      return Alert.alert("Erro", "Por favor, insira um e-mail válido.");
 
-    
     try {
       setLoading(true);
       await sendPasswordResetRequest(email);
@@ -39,7 +37,7 @@ const EmailInput = ({ navigation }) => {
       handleError(error);
     } finally {
       setLoading(false);
-      await AsyncStorage.setItem("email", email)
+      await AsyncStorage.setItem("email", email);
     }
   };
 
@@ -53,6 +51,7 @@ const EmailInput = ({ navigation }) => {
     let attempts = 0;
     const maxAttempts = 18;
 
+    await delay(5000); // Espera 5 segundos antes de começar a verificar
     while (attempts < maxAttempts) {
       const status = await getUserStatus(email);
       if (status === "ACTIVE") {
@@ -67,7 +66,9 @@ const EmailInput = ({ navigation }) => {
   };
 
   const getUserStatus = async (email) => {
-    const response = await Api("POST", "auth/email/confirmed", {email: email});
+    const response = await Api("POST", "auth/email/confirmed", {
+      email: email,
+    });
     const result = response.data.trim();
     const [, status] = result.split(":");
     return status;
@@ -77,7 +78,10 @@ const EmailInput = ({ navigation }) => {
 
   const handleError = (error) => {
     if (!error.response) {
-      Alert.alert("Erro", error.message || "Erro desconhecido. Tente novamente.");
+      Alert.alert(
+        "Erro",
+        error.message || "Erro desconhecido. Tente novamente."
+      );
       return;
     }
 
@@ -89,7 +93,10 @@ const EmailInput = ({ navigation }) => {
         Alert.alert("Erro de Validação", message);
         break;
       default:
-        Alert.alert("Erro Desconhecido", `Status: ${status || "N/A"} - ${message}`);
+        Alert.alert(
+          "Erro Desconhecido",
+          `Status: ${status || "N/A"} - ${message}`
+        );
         break;
     }
   };
@@ -113,8 +120,16 @@ const EmailInput = ({ navigation }) => {
           autoCapitalize="none"
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSendEmail} disabled={loading}>
-          {loading ? <ThreeDots /> : <Text style={styles.buttonText}>ENVIAR E-MAIL</Text>}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSendEmail}
+          disabled={loading}
+        >
+          {loading ? (
+            <ThreeDots />
+          ) : (
+            <Text style={styles.buttonText}>ENVIAR E-MAIL</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.tipText}>
