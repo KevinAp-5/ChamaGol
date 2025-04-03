@@ -16,30 +16,36 @@ import styles from "./style";
 import Title from "../../../components/Title";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Api from "../../../config/Api";
+import ThreeDots from "../../../components/treedots"; // Importação do componente de carregamento
 
-const ResetPassword = ({ navigation }) => {
+const ResetPassword = ({ navigation, route }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false); // Controle de visibilidade da senha
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Controle de visibilidade da confirmação de senha
-  const [email, setEmail] = useState(null);
+  const [loading, setLoading] = useState(false); // Estado de carregamento
+  const { email } = route.params || {}; // Obtenha o email da rota, se disponível
 
   const navigateHome = async () => {
     getEmail();
     try {
-      await new Promise(r => setTimeout(r, 5000));
-      await sendRequestResetPassword({email: email, novaSenha: confirmPassword});
+      setLoading(true); // Ativa o estado de carregamento
+      // await new Promise((r) => setTimeout(r, 5000));
+      await sendRequestResetPassword({ email: email, novaSenha: confirmPassword });
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoading(false); // Desativa o estado de carregamento
     }
     navigation.navigate("Login");
   };
 
   const getEmail = async () => {
     const userEmail = await AsyncStorage.getItem("email");
+    console.log(userEmail);
     setEmail(userEmail);
-  }
+  };
 
   const handleConfirm = () => {
     if (!validatePasswordsMatch(password, confirmPassword)) {
@@ -53,7 +59,7 @@ const ResetPassword = ({ navigation }) => {
     const response = await Api("POST", "auth/password/reset/confirm", data);
     if (response.status != 200) throw new Error("Erro ao trocar as senhas");
     Alert.alert("Sucesso!", "Senha foi alterada com sucesso.");
-  }
+  };
 
   const handleError = (error) => {
     if (!error.response) {
@@ -61,7 +67,7 @@ const ResetPassword = ({ navigation }) => {
       return;
     }
 
-    const {status, data} = error.response;
+    const { status, data } = error.response;
     const message = data || "Tente novamente mais tarde.";
 
     switch (status) {
@@ -75,8 +81,8 @@ const ResetPassword = ({ navigation }) => {
         Alert.alert("Erro", message);
         break;
     }
+  };
 
-  }
   const passwordValidate = (input) => {
     setPassword(input);
     if (!input) {
@@ -156,8 +162,8 @@ const ResetPassword = ({ navigation }) => {
             <Text style={styles.errorMessage}>{error}</Text>
           </View>
         ) : null}
-        <TouchableOpacity style={styles.button} onPress={handleConfirm}>
-          <Text style={styles.buttonText}>CONFIRMAR</Text>
+        <TouchableOpacity style={styles.button} onPress={handleConfirm} disabled={loading}>
+          {loading ? <ThreeDots /> : <Text style={styles.buttonText}>CONFIRMAR</Text>}
         </TouchableOpacity>
       </Pressable>
     </SafeAreaView>
