@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://192.168.1.6:8080/api/";
+const API_URL = "http://192.168.1.7:8080/api/";
 
 // Configuração de headers simplificada
 const axiosConfig = {
