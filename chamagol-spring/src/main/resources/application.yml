@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: dev
+  mail:
+    username: ${mail_username}
+    password: ${mail_password}
+server:
+  port: 8080
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE

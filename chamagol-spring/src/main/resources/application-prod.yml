@@ -1,0 +1,92 @@
+# Conversion to YAML from Properties formar report
+# Warnings:
+# - The yaml file had comments which are lost in the refactoring!
+spring:
+  application:
+    name: chamagol
+  datasource:
+    url: jdbc:postgresql://dpg-cvpup13uibrs7385fmr0-a.oregon-postgres.render.com:5432/chamagol_sql_6r0x
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 2000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+          batch_size: 30
+        generate_statistics: false
+        order_inserts: true
+        order_updates: true
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${mail_username}
+    password: ${mail_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60000
+      key-prefix: sinais
+      use-key-prefix: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 6000
+      repositories:
+        enabled: true
+redis:
+  connection:
+    url: ${redis_url}
+server:
+  error:
+    include-stacktrace: always
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: text/html,text/xml,text/plain,application/json,application/xml
+jwt:
+  secret: ${JWT_TOKEN:jwt_secret}
+  tokenExpiration: 1
+  refreshTokenExpiration: 168
+logging:
+  file:
+    name: chamagol.log
+  level:
+    org:
+      springframework:
+        cache: TRACE
+        data:
+          redis: DEBUG
+        boot:
+          autoconfigure:
+            cache: TRACE
+    io:
+      lettuce:
+        core: DEBUG
+api:
+  url:
+    prefix: chamagolprod.zapto.org/api
