@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "ChamaGol",
+    "slug": "ChamaGol",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF",
+      "imageWidth": 200
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kevenap5.ChamaGol",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.kevenap5.ChamaGol"
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9f845834-cde4-48a4-92c0-fb3aa6bca837"
+      }
+    }
+    
+  }
+  
+}
