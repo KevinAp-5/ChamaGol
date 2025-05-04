@@ -14,6 +14,7 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.repository.RefreshTokenRepository;
 
 import lombok.extern.slf4j.Slf4j;
+// TODO: migrar para interface para diminuir acoplamento
 
 @Service
 @Slf4j

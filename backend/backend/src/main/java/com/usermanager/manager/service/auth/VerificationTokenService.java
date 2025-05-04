@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+// TODO: migrar para interface para diminuir acoplamento
 
 @Service
 @Slf4j
@@ -54,12 +55,10 @@ public class VerificationTokenService {
             throw new TokenInvalid("Token is expired, please try again");
         }
 
-        // Enables user and saves it
         User user = verificationToken.getUser();
         user.setEnabled(true);
         userRepository.save(user);
 
-        // confirms the activation of the verification token
         verificationToken.setActivationDate(ZonedDateTime.now().toInstant());
         verificationToken.setActivated(true);
         verificationRepository.save(verificationToken);

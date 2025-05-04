@@ -30,6 +30,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = "id")
 @Builder
 public class VerificationToken {
+    // TODO: remover o id, e usar o uuid como id
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

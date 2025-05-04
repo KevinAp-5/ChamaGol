@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -56,8 +57,14 @@ public class User implements UserDetails {
     @Builder.Default
     private Boolean enabled = false;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private ZonedDateTime createdAt;
+
+    // TODO: adicione updatedAt
+    // TODO: adicionar status (ACTIVE, INACTIVE, BLOCKED, DELETED)
+    // TODO: adicionar subscription (FREE, PREMIUM)
+    // TODO: adicionar subscriptionPlan (MONTHLY, YEARLY)
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

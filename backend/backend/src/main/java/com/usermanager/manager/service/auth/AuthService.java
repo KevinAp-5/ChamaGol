@@ -35,6 +35,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 
+// TODO: migrar para interface para diminuir acoplamento
 @Service
 @Slf4j
 public class AuthService implements UserDetailsService {
