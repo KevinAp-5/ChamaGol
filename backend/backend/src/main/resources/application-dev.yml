@@ -2,9 +2,9 @@ spring:
   application:
     name: login
   datasource:
-    url: jdbc:postgresql://localhost:5432/login
-    username: keven
-    password: ${db_password}
+    url: jdbc:postgresql://localhost:5432/chamagol
+    username: postgres
+    password: postgres
     hikari:
       maximum-pool-size: 50 # Número máximo de conexões no pool
       minimum-idle: 10 # Número mínimo de conexões ociosas
