@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: login
+  datasource:
+    url: jdbc:postgresql://localhost:5432/login
+    username: keven
+    password: ${db_password}
+    hikari:
+      maximum-pool-size: 50 # Número máximo de conexões no pool
+      minimum-idle: 10 # Número mínimo de conexões ociosas
+      idle-timeout: 30000 # Tempo máximo que uma conexão pode ficar ociosa
+      max-lifetime: 1800000 # Tempo máximo de vida de uma conexão
+      connection-timeout: 20000 # Timeout para obter uma conexão do pool
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${mail_username}
+    password: ${mail_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+  error:
+    include-stacktrace: never
+  port: 8080
+  tomcat:
+    threads:
+      max: 22
+      min-spare: 2
+    accept-count: 100
+    connection-timeout: 5000
+    keep-alive-timeout: 60000
+    max-connections: 10000
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+api:
+  security:
+    token:
+      secret: ${jwt_secret:my-secret-key}
+      refresh:
+        expiration: 10080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  metrics:
+    enable:
+      all: true

@@ -1,0 +1,1 @@
+CREATE INDEX idx_refresh_token on refresh_token(token);

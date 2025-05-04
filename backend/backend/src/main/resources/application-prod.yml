@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: login
+  datasource:
+    url: jdbc:postgresql://dpg-d07uhaa4d50c73fhofsg-a.oregon-postgres.render.com/login_lyfe
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 50 # Número máximo de conexões no pool
+      minimum-idle: 10 # Número mínimo de conexões ociosas
+      idle-timeout: 30000 # Tempo máximo que uma conexão pode ficar ociosa
+      max-lifetime: 1800000 # Tempo máximo de vida de uma conexão
+      connection-timeout: 20000 # Timeout para obter uma conexão do pool
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false # Desabilitado para produção
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${mail_username}
+    password: ${mail_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+  error:
+    include-stacktrace: never
+  port: 8080
+  tomcat:
+    threads:
+      max: 50 # Ajustado para suportar maior carga em produção
+      min-spare: 10
+    accept-count: 200 # Número máximo de requisições na fila
+    connection-timeout: 5000
+    keep-alive-timeout: 60000
+    max-connections: 10000
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        security: WARN # Reduzido para WARN em produção
+api:
+  security:
+    token:
+      secret: ${jwt_secret:my-secret-key}
+      refresh:
+        expiration: 10080 # Expiração do token de refresh em minutos (7 dias)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  metrics:
+    enable:
+      all: true

@@ -1,0 +1,17 @@
+{"properties": [
+  {
+    "name": "api.security.token.secret",
+    "type": "java.lang.String",
+    "description": "secret token for generation security tokens JWT"
+  },
+  {
+    "name": "api.security.token.refresh.expiration",
+    "type": "java.lang.String",
+    "description": "expiration time in minutes for refresh token"
+  },
+  {
+    "name": "openroute.security.token.secret",
+    "type": "java.lang.String",
+    "description": "secret token for openroute IA models"
+  }
+]}
