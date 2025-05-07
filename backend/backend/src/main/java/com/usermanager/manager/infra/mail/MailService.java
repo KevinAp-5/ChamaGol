@@ -6,7 +6,7 @@ import com.usermanager.manager.model.email.MailProvider;
 
 @Service
 public class MailService {
-    private static final String API_PREFIX = "https://furia-challenge1.onrender.com/api/auth/";
+    private static final String API_PREFIX = "http://localhost:8080/api/auth/";
     public final MailProvider mailProvider;
 
     public MailService(MailProvider mailProvider) {
