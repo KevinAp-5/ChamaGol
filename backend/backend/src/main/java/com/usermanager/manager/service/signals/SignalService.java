@@ -5,7 +5,7 @@ import java.util.List;
 import com.usermanager.manager.dto.signal.SignalCreated;
 import com.usermanager.manager.dto.signal.SignalDTO;
 
-public interface SignalsService {
+public interface SignalService {
 
     public SignalCreated createSignal(SignalDTO data);
 

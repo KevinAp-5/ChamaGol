@@ -8,17 +8,17 @@ import com.usermanager.manager.dto.signal.SignalCreated;
 import com.usermanager.manager.dto.signal.SignalDTO;
 import com.usermanager.manager.mappers.SignalMapper;
 import com.usermanager.manager.model.signal.Signal;
-import com.usermanager.manager.repository.SignalsRepository;
-import com.usermanager.manager.service.signals.SignalsService;
+import com.usermanager.manager.repository.SignalRepository;
+import com.usermanager.manager.service.signals.SignalService;
 
 import jakarta.validation.Valid;
 
 @Service
-public class SignalsServiceImpl implements SignalsService {
-    private final SignalsRepository signalsRepository;
+public class SignalServiceImpl implements SignalService {
+    private final SignalRepository signalsRepository;
     private final SignalMapper signalMapper;
 
-    public SignalsServiceImpl(SignalsRepository signalsRepository, SignalMapper signalMapper) {
+    public SignalServiceImpl(SignalRepository signalsRepository, SignalMapper signalMapper) {
         this.signalsRepository = signalsRepository;
         this.signalMapper = signalMapper;
     }

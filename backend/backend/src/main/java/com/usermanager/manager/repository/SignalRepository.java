@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.usermanager.manager.model.signal.Signal;
 
 @Repository
-public interface SignalsRepository extends JpaRepository<Signal, Long>{
+public interface SignalRepository extends JpaRepository<Signal, Long>{
 
 }
