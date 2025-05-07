@@ -43,7 +43,7 @@ export default function LoginScreen({ navigation }: Props) {
       const response = await api(
         "POST",
         "auth/login",
-        { "login": email, password }
+        { "login": email, "password": password }
       );
       if (response.status === 200 && response.data?.token) {
         await SecureStore.setItemAsync('accessToken', response.data.token);
@@ -63,7 +63,7 @@ export default function LoginScreen({ navigation }: Props) {
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView

@@ -36,7 +36,7 @@ export default function ChatScreen() {
 
   // Conexão e assinatura do websocket
   useEffect(() => {
-    const socket = new SockJS("https://CHAMAGOL-challenge1.onrender.com/ws/chat");
+    const socket = new SockJS("http://192.168.1.7:8080/ws/chat");
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -215,7 +215,7 @@ export default function ChatScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <View style={[styles.content, { backgroundColor: colors.background }]}>
