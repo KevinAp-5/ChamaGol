@@ -43,8 +43,11 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        
+                        .requestMatchers("/api/signals/**").hasRole("ADMIN")
+                        .requestMatchers("/api/terms/**").hasRole("ADMIN")
+                        .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
 
