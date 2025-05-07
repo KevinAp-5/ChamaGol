@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.usermanager.manager.dto.authentication.AccessTokenDTO;
@@ -54,6 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("register")
+    @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(@RequestBody @Valid CreateUserDTO dto) {
         UserCreatedDTO response = userService.createUser(dto);
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/users")
@@ -74,6 +76,7 @@ public class AuthController {
     }
 
     @PostMapping("password/forget")
+    @ResponseBody
     public ResponseEntity<ResponseMessage> sendPasswordResetCode(@RequestBody @Valid UserEmailDTO data) {
         boolean response = authService.sendPasswordResetCode(data);
         if (!response)
@@ -84,6 +87,7 @@ public class AuthController {
     }
 
     @PostMapping("password/reset")
+    @ResponseBody
     public ResponseEntity<ResponseMessage> confirmPasswordReset(@RequestBody @Valid PasswordResetWithEmailDTO data) {
         authService.passwordReset(data);
 
@@ -101,6 +105,7 @@ public class AuthController {
     }
 
     @PostMapping("login")
+    @ResponseBody
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data,
             HttpServletResponse response) {
         TokensDTO tokens = authService.login(data);
@@ -109,6 +114,7 @@ public class AuthController {
     }
 
     @PostMapping("token/refresh")
+    @ResponseBody
     public ResponseEntity<LoginResponseDTO> refreshToken(
             @CookieValue(name = "refreshToken", defaultValue = "") String token, HttpServletResponse response) {
 
@@ -123,6 +129,7 @@ public class AuthController {
     }
 
     @PostMapping("activate")
+    @ResponseBody
     public ResponseEntity<ResponseMessage> activateUser(@RequestBody @Valid ActivateUserDTO data) {
         boolean activationSent = authService.sendActivationCode(data.email());
         if (!activationSent)
@@ -133,6 +140,7 @@ public class AuthController {
     }
 
     @PostMapping("email/confirmed")
+    @ResponseBody
     public ResponseEntity<ResponseMessage> isEmailConfirmed(@RequestBody UserEmailDTO data) {
         var user = userService.findUserByLogin(data.email());
         var verificationToken = verificationService.findVerificationByUser(user);
@@ -145,12 +153,14 @@ public class AuthController {
     }
 
     @PostMapping("me")
+    @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(@RequestBody @Valid AccessTokenDTO token) {
         var response = authService.getUserProfile(token);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("cron")
+    @ResponseBody
     public ResponseEntity<String> cronJob() {
         log.info("Application is running.");
         return ResponseEntity.ok("Application is working.");
