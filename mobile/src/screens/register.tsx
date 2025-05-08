@@ -12,12 +12,16 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import CheckBox from "expo-checkbox";
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Title from "../components/title";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { api } from "../config/Api";
 import ThreeDots from "../components/loading";
+import Logo from "../components/logo";
+import Footer from "../components/footer";
+import { fetchTerm } from "../components/termOfUse";
 
 export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -26,8 +30,18 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isTermAccepted, setIsTermAccepted] = useState(false);
+
+  const handlePress = async () => {
+    const term = await fetchTerm();
+    Alert.alert("Termos de uso", term || "Não foi possível carregar o termo.");
+  };
 
   const handleRegister = async () => {
+    if (!isTermAccepted) {
+      Alert.alert("Erro", "Aceite o termo de uso para prosseguir.");
+      return;
+    }
     if (!name || !email || !password) {
       Alert.alert("Erro", "Preencha todos os campos.");
       return;
@@ -77,10 +91,11 @@ export default function RegisterScreen({ navigation }: any) {
           <View
             style={[styles.content, { backgroundColor: colors.background }]}
           >
-            <Image
+            {/* <Image
               source={require("../assets/logo.png")}
               style={styles.logo}
-            />
+            /> */}
+            <Logo></Logo>
             <Text style={[styles.title, { color: colors.primary }]}>
               Crie sua conta
             </Text>
@@ -128,9 +143,10 @@ export default function RegisterScreen({ navigation }: any) {
               />
             </View>
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: colors.secondary }]}
+              style={[styles.button, 
+                { backgroundColor: !isTermAccepted ? colors.muted : colors.secondary}]}
               onPress={handleRegister}
-              disabled={loading}
+              disabled={loading || !isTermAccepted}
             >
               {loading ? (
                 <ThreeDots color={colors.background} />
@@ -140,12 +156,20 @@ export default function RegisterScreen({ navigation }: any) {
                 </Text>
               )}
             </TouchableOpacity>
+            <View style={styles.termsContainer}>
+              <CheckBox color={colors.accent} style={{outlineColor: colors.primary}}value={isTermAccepted} onValueChange={setIsTermAccepted}></CheckBox>
+              <Text style={styles.termsText}>
+                Eu aceito os {""}
+                <Text 
+                  style={{color: colors.highlight, fontWeight: "bold"}}
+                  onPress={handlePress}>
+                  Termos de Uso e declaro ser maior de idade
+                </Text>
+                .
+                </Text>
+            </View>
           </View>
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.muted }]}>
-              © 2025 CHAMAGOL. All Rights Reserved.
-            </Text>
-          </View>
+          <Footer></Footer>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -195,14 +219,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "bold",
   },
-  footer: {
-    alignItems: "center",
-    padding: 16,
-  },
-  footerText: {
-    fontSize: 12,
-    textAlign: "center",
-  },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -213,5 +229,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 15,
     top: 16,
+  },
+  termsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16
+  },
+  termsText: {
+    fontSize: 14,
+    marginLeft: 16,
   },
 });
