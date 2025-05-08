@@ -12,4 +12,6 @@ public interface TermOfUseRepository extends JpaRepository<TermOfUse, Long>{
     Optional<TermOfUse> findByVersion(String version);
 
     Optional<TermOfUse> findTopByOrderByCreatedAtDesc();
+
+    boolean existsByVersion(String version);
 }
