@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.usermanager.manager.dto.term.AcceptanceRequest;
+import com.usermanager.manager.dto.term.TermAcceptedResponse;
 import com.usermanager.manager.model.term.TermOfUse;
 import com.usermanager.manager.model.term.UserTermAcceptance;
 import com.usermanager.manager.model.user.User;
@@ -31,21 +32,18 @@ public class UserTermAcceptanceController {
     }
 
     @PostMapping("/accept-latest")
-    public ResponseEntity<?> acceptLatestTerm(@AuthenticationPrincipal User user,
+    public ResponseEntity<TermAcceptedResponse> acceptLatestTerm(@AuthenticationPrincipal User user,
                                               @Valid @RequestBody AcceptanceRequest request) {
-        TermOfUse latestTerm = termOfUseService.findLatest()
-                .orElseThrow(() -> new IllegalStateException("Nenhum termo cadastrado"));
+        TermOfUse latestTerm = termOfUseService.findLatest();
 
         UserTermAcceptance acceptance = acceptanceService.acceptTerm(user, latestTerm, request.isAdult());
 
-        return ResponseEntity.ok(acceptance);
+        return ResponseEntity.ok(new TermAcceptedResponse(acceptance.getTermOfUse(), acceptance.getIsAdult(), acceptance.getAcceptedAt(), acceptance.getUser().getLogin()));
     }
 
     @GetMapping("/has-accepted-latest")
     public ResponseEntity<Boolean> hasAcceptedLatest(@AuthenticationPrincipal User user) {
-        TermOfUse latestTerm = termOfUseService.findLatest()
-                .orElseThrow(() -> new IllegalStateException("Nenhum termo cadastrado"));
-
+        TermOfUse latestTerm = termOfUseService.findLatest();
         boolean accepted = acceptanceService.hasAcceptedLatestTerm(user, latestTerm);
         return ResponseEntity.ok(accepted);
     }
