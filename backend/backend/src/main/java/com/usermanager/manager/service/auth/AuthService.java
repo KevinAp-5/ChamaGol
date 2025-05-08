@@ -17,22 +17,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.authentication.AccessTokenDTO;
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
+import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
+import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
 import com.usermanager.manager.dto.user.ProfileDTO;
+import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
+import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.model.security.RefreshToken;
 import com.usermanager.manager.model.security.TokenProvider;
 import com.usermanager.manager.model.user.User;
+import com.usermanager.manager.model.verification.VerificationToken;
 import com.usermanager.manager.model.verification.enums.TokenType;
 import com.usermanager.manager.service.user.UserService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
 // TODO: migrar para interface para diminuir acoplamento
@@ -63,8 +69,32 @@ public class AuthService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userService.findUserByLoginOptional(username)
-                .orElseThrow(() -> new BadCredentialsException("Bad credentials: verify login or password"));
+                .orElseThrow(() -> new BadCredentialsException("Credenciais inválidas: verifique email ou senha."));
 
+    }
+
+    @Transactional
+    public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
+        log.info("register attempt: {}", dto.login());
+
+        if (userService.existsByLogin(dto.login())) {
+            throw new UserExistsException(dto.login());
+        }
+
+        if (dto.password().length() < 6) {
+            throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
+        }
+
+        String encryptedPassword = passwordEncoder.encode(dto.password());
+        User user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
+
+        VerificationToken verificationToken = verificationService.generateVerificationToken(user,
+                TokenType.EMAIL_VALIDATION);
+
+        mailService.sendVerificationMail(user.getLogin(), verificationToken.getUuid().toString());
+
+        log.info("register successfull {}", dto.login());
+        return new UserCreatedDTO(user);
     }
 
     @Transactional
