@@ -48,7 +48,7 @@ public class VerificationTokenService {
 
     @Transactional
     public boolean confirmVerificationToken(@NotNull UUID token) {
-        VerificationToken verificationToken = verificationRepository.findByUuid(token).orElseThrow(
+        VerificationToken verificationToken = verificationRepository.findById(token).orElseThrow(
                 () -> new TokenNotFoundException("Verification token was not found"));
 
         if (verificationToken.getExpirationDate().isBefore(ZonedDateTime.now().toInstant())) {
@@ -68,7 +68,7 @@ public class VerificationTokenService {
     }
 
     public VerificationToken findVerificationByToken(@Valid @NotBlank UUID token) {
-        var verificationToken = verificationRepository.findByUuid(token)
+        var verificationToken = verificationRepository.findById(token)
                 .orElseThrow(() -> new TokenNotFoundException("Verification token not found"));
 
         if (verificationToken.getExpirationDate().isBefore(ZonedDateTime.now().toInstant())) {
@@ -90,6 +90,10 @@ public class VerificationTokenService {
     @Transactional
     public void saveVerificationToken(VerificationToken verificationToken) {
         verificationRepository.save(verificationToken);
+    }
+
+    public VerificationToken findByIdOrElseNull(@NotNull UUID uuid) {
+        return verificationRepository.findById(uuid).orElse(null);
     }
 
 }
