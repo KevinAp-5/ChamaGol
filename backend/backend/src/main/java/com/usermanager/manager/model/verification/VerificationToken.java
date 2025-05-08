@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.verification.enums.TokenType;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,7 +18,6 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity(name = "VerificationToken")
@@ -27,19 +25,14 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
 @Builder
-public class VerificationToken {
-    // TODO: remover o id, e usar o uuid como id
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+public class VerificationToken { 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
-
-    @Column(columnDefinition = "UUID", nullable = false)
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
     
     private Instant creationDate;
