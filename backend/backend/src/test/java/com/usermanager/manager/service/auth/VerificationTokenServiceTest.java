@@ -87,7 +87,7 @@ class VerificationTokenServiceTest {
 
     @Test
     void confirmVerificationToken_ValidToken_ActivatesUserAndToken() {
-        when(verificationRepository.findByUuid(any(UUID.class))).thenReturn(Optional.of(validToken));
+        when(verificationRepository.findById(any(UUID.class))).thenReturn(Optional.of(validToken));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         boolean result = verificationTokenService.confirmVerificationToken(validTokenString);
@@ -106,7 +106,7 @@ class VerificationTokenServiceTest {
     @Test
     void confirmVerificationToken_TokenNotFound_ThrowsException() {
         // Arrange
-        when(verificationRepository.findByUuid(any(UUID.class))).thenReturn(Optional.empty());
+        when(verificationRepository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(TokenNotFoundException.class, () -> {
@@ -117,7 +117,7 @@ class VerificationTokenServiceTest {
     @Test
     void confirmVerificationToken_ExpiredToken_ThrowsException() {
         // Arrange
-        when(verificationRepository.findByUuid(any(UUID.class))).thenReturn(Optional.of(expiredToken));
+        when(verificationRepository.findById(any(UUID.class))).thenReturn(Optional.of(expiredToken));
 
         // Act & Assert
         assertThrows(TokenInvalid.class, () -> {
@@ -127,7 +127,7 @@ class VerificationTokenServiceTest {
 
     @Test
     void findVerificationByToken_ValidToken_ReturnsToken() {
-        when(verificationRepository.findByUuid(validTokenString)).thenReturn(Optional.of(validToken));
+        when(verificationRepository.findById(validTokenString)).thenReturn(Optional.of(validToken));
 
         VerificationToken result = verificationTokenService.findVerificationByToken(validTokenString);
 
@@ -137,7 +137,7 @@ class VerificationTokenServiceTest {
 
     @Test
     void findVerificationByToken_TokenNotFound_ThrowsException() {
-        when(verificationRepository.findByUuid(expiredTokenString)).thenReturn(Optional.empty());
+        when(verificationRepository.findById(expiredTokenString)).thenReturn(Optional.empty());
 
         assertThrows(TokenNotFoundException.class,
                 () -> verificationTokenService.findVerificationByToken(expiredTokenString));
@@ -145,7 +145,7 @@ class VerificationTokenServiceTest {
 
     @Test
     void findVerificationByToken_ExpiredToken_ThrowsException() {
-        when(verificationRepository.findByUuid(expiredTokenString)).thenReturn(Optional.of(expiredToken));
+        when(verificationRepository.findById(expiredTokenString)).thenReturn(Optional.of(expiredToken));
 
         assertThrows(TokenInvalidException.class,
                 () -> verificationTokenService.findVerificationByToken(expiredTokenString));

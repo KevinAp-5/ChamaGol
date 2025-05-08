@@ -32,11 +32,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
+import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
+import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
+import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
+import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.model.security.RefreshToken;
@@ -92,6 +96,59 @@ class AuthServiceTest {
                 .build();
 
         authenticationDTO = new AuthenticationDTO(testEmail, testPassword);
+    }
+
+    @Test
+    void register_Successful_ReturnsUserCreatedDTO() {
+        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, testPassword);
+        new User("Test User", testEmail, encodedPassword);
+        User savedUser = User.builder()
+                .id(1L)
+                .name("Test User")
+                .login(testEmail)
+                .password(encodedPassword)
+                .role(UserRole.USER)
+                .enabled(false)
+                .build();
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setUuid(UUID.randomUUID());
+
+        when(userService.existsByLogin(testEmail)).thenReturn(false);
+        when(passwordEncoder.encode(testPassword)).thenReturn(encodedPassword);
+        when(userService.save(any(User.class))).thenReturn(savedUser);
+        when(verificationService.generateVerificationToken(savedUser, TokenType.EMAIL_VALIDATION)).thenReturn(verificationToken);
+
+        UserCreatedDTO result = authService.register(createUserDTO);
+
+        assertNotNull(result);
+        assertEquals(savedUser.getLogin(), result.login());
+        verify(userService).existsByLogin(testEmail);
+        verify(passwordEncoder).encode(testPassword);
+        verify(userService).save(any(User.class));
+        verify(verificationService).generateVerificationToken(savedUser, TokenType.EMAIL_VALIDATION);
+        verify(mailService).sendVerificationMail(eq(savedUser.getLogin()), anyString());
+    }
+
+    @Test
+    void register_UserAlreadyExists_ThrowsUserExistsException() {
+        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, testPassword);
+
+        when(userService.existsByLogin(testEmail)).thenReturn(true);
+
+        assertThrows(UserExistsException.class, () -> authService.register(createUserDTO));
+        verify(userService).existsByLogin(testEmail);
+        verifyNoInteractions(passwordEncoder, verificationService, mailService);
+    }
+
+    @Test
+    void register_PasswordTooShort_ThrowsPasswordFormatNotValidException() {
+        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, "123");
+
+        when(userService.existsByLogin(testEmail)).thenReturn(false);
+
+        assertThrows(PasswordFormatNotValidException.class, () -> authService.register(createUserDTO));
+        verify(userService).existsByLogin(testEmail);
+        verifyNoInteractions(passwordEncoder, verificationService, mailService);
     }
 
     @Test
@@ -249,7 +306,8 @@ class AuthServiceTest {
     void refreshToken_ShouldThrowException_WhenRefreshTokenNotFound() {
         String invalidToken = "invalidToken";
 
-        when(refreshTokenService.findByToken(invalidToken)).thenThrow(new TokenNotFoundException("Refresh Token not found"));
+        when(refreshTokenService.findByToken(invalidToken))
+                .thenThrow(new TokenNotFoundException("Refresh Token not found"));
 
         assertThrows(TokenNotFoundException.class, () -> authService.refreshToken(invalidToken));
         verify(refreshTokenService, never()).invalidateToken(anyString());
@@ -261,7 +319,7 @@ class AuthServiceTest {
 
         // Simula o comportamento do método findByToken lançando TokenInvalidException
         when(refreshTokenService.findByToken(expiredToken))
-            .thenThrow(new TokenInvalidException("Refresh Token expired"));
+                .thenThrow(new TokenInvalidException("Refresh Token expired"));
 
         // Verifica se a exceção é lançada ao chamar o método refreshToken
         assertThrows(TokenInvalidException.class, () -> authService.refreshToken(expiredToken));
@@ -276,7 +334,7 @@ class AuthServiceTest {
 
         // Simula o comportamento do método findByToken lançando TokenInvalidException
         when(refreshTokenService.findByToken(usedToken))
-            .thenThrow(new TokenInvalidException("Refresh Token already used"));
+                .thenThrow(new TokenInvalidException("Refresh Token already used"));
 
         // Verifica se a exceção é lançada ao chamar o método refreshToken
         assertThrows(TokenInvalidException.class, () -> authService.refreshToken(usedToken));

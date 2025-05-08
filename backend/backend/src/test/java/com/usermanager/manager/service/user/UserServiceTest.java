@@ -6,13 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,19 +20,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.usermanager.manager.dto.authentication.CreateUserDTO;
-import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
-import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotFoundException;
 import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.mappers.UserMapper;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.user.UserRole;
-import com.usermanager.manager.model.verification.VerificationToken;
-import com.usermanager.manager.model.verification.enums.TokenType;
 import com.usermanager.manager.repository.UserRepository;
 import com.usermanager.manager.service.auth.VerificationTokenService;
 
@@ -60,7 +53,6 @@ class UserServiceTest {
     private UserService userService;
     
     private User user;
-    private final UUID testUuid = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -72,40 +64,6 @@ class UserServiceTest {
                 .role(UserRole.USER)
                 .enabled(true)
                 .build();
-    }
-
-    // Teste para createUser - Sucesso
-    @Test
-    void createUser_Success() {
-        // Arrange
-        CreateUserDTO dto = new CreateUserDTO("Test User", "test@example.com", "password123");
-        VerificationToken mockToken = new VerificationToken();
-        mockToken.setUuid(testUuid);
-
-        when(userRepository.findByLogin(dto.login())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(dto.password())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(verificationService.generateVerificationToken(any(), eq(TokenType.EMAIL_VALIDATION)))
-            .thenReturn(mockToken);
-
-        // Act
-        UserCreatedDTO result = userService.createUser(dto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(user.getId(), result.id());
-        verify(mailService).sendVerificationMail(eq(dto.login()), eq(testUuid.toString()));
-    }
-
-    // Teste para createUser - Usuário já existe
-    @Test
-    void createUser_UserExists() {
-        // Arrange
-        CreateUserDTO dto = new CreateUserDTO("Existing User", "existing@example.com", "password");
-        when(userRepository.findByLogin(dto.login())).thenReturn(Optional.of(user));
-
-        // Act & Assert
-        assertThrows(UserExistsException.class, () -> userService.createUser(dto));
     }
 
     // Teste para updateUser - Sucesso
