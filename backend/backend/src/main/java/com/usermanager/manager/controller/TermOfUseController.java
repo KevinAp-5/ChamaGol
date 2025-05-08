@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.usermanager.manager.dto.term.CreateTermRequest;
+import com.usermanager.manager.dto.term.TermDTO;
 import com.usermanager.manager.model.term.TermOfUse;
 import com.usermanager.manager.service.term.TermOfUseService;
 
@@ -17,7 +18,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/terms")
-//TODO: mudar para DTO
 public class TermOfUseController {
 
     private final TermOfUseService termOfUseService;
@@ -27,19 +27,21 @@ public class TermOfUseController {
     }
 
     @GetMapping("/latest")
-    public ResponseEntity<TermOfUse> getLatestTerm() {
+    public ResponseEntity<TermDTO> getLatestTerm() {
         return ResponseEntity.ok()
-                .body(termOfUseService.findLatest());
+                .body(new TermDTO(termOfUseService.findLatest()));
     }
 
     @GetMapping
-    public ResponseEntity<List<TermOfUse>> getAllTerms() {
-        return ResponseEntity.ok(termOfUseService.findAll());
+    public ResponseEntity<List<TermDTO>> getAllTerms() {
+        return ResponseEntity.ok(termOfUseService.findAll().stream()
+            .map(TermDTO::new)
+            .toList());
     }
 
     @PostMapping
-    public ResponseEntity<TermOfUse> createTerm(@Valid @RequestBody CreateTermRequest request) {
+    public ResponseEntity<TermDTO> createTerm(@Valid @RequestBody CreateTermRequest request) {
         TermOfUse term = termOfUseService.createTerm(request.version(), request.content());
-        return ResponseEntity.ok(term);
+        return ResponseEntity.ok(new TermDTO(term));
     }
 }
