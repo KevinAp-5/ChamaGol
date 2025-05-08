@@ -12,4 +12,6 @@ import com.usermanager.manager.model.user.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<UserDetails> findByLogin(String login);
+
+    boolean existsByLogin(String login);
 }
