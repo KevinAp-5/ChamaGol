@@ -34,6 +34,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class User implements UserDetails {
+
+    public User(String name, String login, String password) {
+        this.name = name;
+        this.login = login;
+        this.password = password;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
