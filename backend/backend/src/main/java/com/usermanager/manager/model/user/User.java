@@ -39,6 +39,8 @@ public class User implements UserDetails {
         this.name = name;
         this.login = login;
         this.password = password;
+        this.role = UserRole.USER;
+        this.enabled = false;
     }
 
     @Id
