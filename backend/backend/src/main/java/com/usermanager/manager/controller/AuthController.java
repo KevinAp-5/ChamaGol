@@ -28,8 +28,6 @@ import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.ProfileDTO;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.service.auth.AuthService;
-import com.usermanager.manager.service.auth.VerificationTokenService;
-import com.usermanager.manager.service.user.UserService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,14 +42,9 @@ public class AuthController {
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
     private final AuthService authService;
-    private final UserService userService;
-    private final VerificationTokenService verificationService;
 
-    public AuthController(AuthService authService, UserService userService,
-            VerificationTokenService verificationService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userService = userService;
-        this.verificationService = verificationService;
     }
 
     @PostMapping("register")
@@ -67,7 +60,7 @@ public class AuthController {
 
     @GetMapping("register/confirm")
     public String confirmUser(@RequestParam("token") @NotBlank String token) {
-        boolean validated = verificationService.confirmVerificationToken(convertStringToUUID(token));
+        boolean validated = authService.confirmVerificationToken(convertStringToUUID(token));
         if (validated) {
             return "account_confirmed";
         }
@@ -142,8 +135,8 @@ public class AuthController {
     @PostMapping("email/confirmed")
     @ResponseBody
     public ResponseEntity<ResponseMessage> isEmailConfirmed(@RequestBody UserEmailDTO data) {
-        var user = userService.findUserByLogin(data.email());
-        var verificationToken = verificationService.findVerificationByUser(user);
+        var user = authService.findUserByLogin(data.email());
+        var verificationToken = authService.findVerificationByUser(user);
         boolean validated = verificationToken.isActivated();
         if (validated) {
             return ResponseEntity.ok(new ResponseMessage("email activated."));

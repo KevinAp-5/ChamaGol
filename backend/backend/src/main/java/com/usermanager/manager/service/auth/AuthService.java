@@ -221,4 +221,16 @@ public class AuthService implements UserDetailsService {
         var user = userService.findUserByLogin(login);
         return new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt());
     }
+
+    public User findUserByLogin(@NotBlank String email) {
+        return userService.findUserByLogin(email);
+    }
+
+    public boolean confirmVerificationToken(UUID uuid) {
+        return verificationService.confirmVerificationToken(uuid);
+    }
+
+    public VerificationToken findVerificationByUser(User user) {
+        return verificationService.findVerificationByUser(user);
+    }
 }
