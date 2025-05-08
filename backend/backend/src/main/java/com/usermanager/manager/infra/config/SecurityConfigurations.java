@@ -46,7 +46,8 @@ public class SecurityConfigurations {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         
                         .requestMatchers("/api/signals/**").hasRole("ADMIN")
-                        .requestMatchers("/api/terms/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
                         .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
