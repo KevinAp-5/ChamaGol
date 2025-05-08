@@ -182,7 +182,11 @@ public class AuthService implements UserDetailsService {
 
     @Transactional
     public boolean confirmEmail(@NotBlank UUID token) {
-        var verificationToken = verificationService.findVerificationByToken(token);
+        var verificationToken = verificationService.findByIdOrElseNull(token);
+        if (verificationToken == null) {
+            return false;
+        }
+
         User user = verificationToken.getUser();
         log.info("user {} has confirmed email", user.getLogin());
 
