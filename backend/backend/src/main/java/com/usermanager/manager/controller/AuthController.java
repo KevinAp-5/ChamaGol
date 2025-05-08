@@ -57,7 +57,7 @@ public class AuthController {
     @PostMapping("register")
     @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(@RequestBody @Valid CreateUserDTO dto) {
-        UserCreatedDTO response = userService.createUser(dto);
+        UserCreatedDTO response = authService.register(dto);
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/users")
                 .path("/{id}")
                 .buildAndExpand(response.id())
