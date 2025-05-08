@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.usermanager.manager.exception.authentication.TokenInvalid;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
 import com.usermanager.manager.model.user.User;
@@ -35,9 +34,7 @@ public class VerificationTokenService {
 
     @Transactional
     public VerificationToken generateVerificationToken(@NotNull @Valid User user, TokenType tokenType) {
-        UUID token = UUID.randomUUID();
         VerificationToken verificationToken = VerificationToken.builder()
-                .uuid(token)
                 .user(user)
                 .creationDate(ZonedDateTime.now().toInstant())
                 .expirationDate(ZonedDateTime.now().plusHours(24).toInstant())
@@ -48,11 +45,13 @@ public class VerificationTokenService {
 
     @Transactional
     public boolean confirmVerificationToken(@NotNull UUID token) {
-        VerificationToken verificationToken = verificationRepository.findById(token).orElseThrow(
-                () -> new TokenNotFoundException("Verification token was not found"));
+        VerificationToken verificationToken = verificationRepository.findById(token).orElse(null);
+        if (verificationToken == null) {
+            return false;
+        }
 
         if (verificationToken.getExpirationDate().isBefore(ZonedDateTime.now().toInstant())) {
-            throw new TokenInvalid("Token is expired, please try again");
+            return false;
         }
 
         User user = verificationToken.getUser();
