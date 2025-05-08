@@ -12,6 +12,7 @@ import com.usermanager.manager.exception.authentication.PasswordFormatNotValidEx
 import com.usermanager.manager.exception.authentication.TokenInvalid;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
+import com.usermanager.manager.exception.term.TermExistsException;
 import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.exception.user.UserNotFoundException;
@@ -50,7 +51,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseMessage> handleException(Exception ex) {
         log.error("", ex);
-        return ResponseEntity.status(500).body(new ResponseMessage("Error: " + ex.getMessage()));
+        return ResponseEntity.status(500).body(new ResponseMessage("Error interno no servidor: " + ex.getMessage()));
     }
 
 
@@ -72,5 +73,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasswordFormatNotValidException.class)
     public ResponseEntity<ResponseMessage> handlePasswordFormatNotValid(PasswordFormatNotValidException ex) {
         return ResponseEntity.status(400).body(new ResponseMessage("Password format not valid: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(TermExistsException.class)
+    public ResponseEntity<ResponseMessage> handleTermExistsException(TermExistsException ex) {
+        return ResponseEntity.status(409).body(new ResponseMessage("Term already exists: " + ex.getMessage()));
     }
 }
