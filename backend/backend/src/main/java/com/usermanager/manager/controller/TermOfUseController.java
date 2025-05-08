@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/terms")
+//TODO: mudar para DTO
 public class TermOfUseController {
 
     private final TermOfUseService termOfUseService;
@@ -27,14 +28,13 @@ public class TermOfUseController {
 
     @GetMapping("/latest")
     public ResponseEntity<TermOfUse> getLatestTerm() {
-        return termOfUseService.findLatest()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+        return ResponseEntity.ok()
+                .body(termOfUseService.findLatest());
     }
 
     @GetMapping
-    public List<TermOfUse> getAllTerms() {
-        return termOfUseService.findAll();
+    public ResponseEntity<List<TermOfUse>> getAllTerms() {
+        return ResponseEntity.ok(termOfUseService.findAll());
     }
 
     @PostMapping
