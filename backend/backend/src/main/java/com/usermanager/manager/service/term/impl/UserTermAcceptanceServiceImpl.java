@@ -21,11 +21,16 @@ public class UserTermAcceptanceServiceImpl implements UserTermAcceptanceService 
 
     @Transactional
     public UserTermAcceptance acceptTerm(User user, TermOfUse termOfUse, Boolean isAdult) {
+        if (!isAdult) {
+            throw new IllegalAccessError("Usuários de menoridade não é permitido. Registro cancelado");
+        }
+
         // Verifica se já aceitou essa versão
         Optional<UserTermAcceptance> existing = acceptanceRepository.findByUserAndTermOfUse(user, termOfUse);
         if (existing.isPresent()) {
             return existing.get();
         }
+
         UserTermAcceptance acceptance = new UserTermAcceptance();
         acceptance.setUser(user);
         acceptance.setTermOfUse(termOfUse);
