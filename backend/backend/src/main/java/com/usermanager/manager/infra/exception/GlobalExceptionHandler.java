@@ -13,6 +13,7 @@ import com.usermanager.manager.exception.authentication.TokenInvalid;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
 import com.usermanager.manager.exception.term.TermExistsException;
+import com.usermanager.manager.exception.term.TermNotFoundException;
 import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.exception.user.UserNotFoundException;
@@ -78,5 +79,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TermExistsException.class)
     public ResponseEntity<ResponseMessage> handleTermExistsException(TermExistsException ex) {
         return ResponseEntity.status(409).body(new ResponseMessage("Term already exists: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(TermNotFoundException.class)
+    public ResponseEntity<ResponseMessage> handleTermNotFoundException(TermNotFoundException ex) {
+        return ResponseEntity.status(404).body(new ResponseMessage("No terms found: " + ex.getMessage()));
     }
 }

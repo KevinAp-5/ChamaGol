@@ -27,7 +27,6 @@ public class TimelineController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // Apenas ADMIN pode enviar mensagens pelo WebSocket
     @PreAuthorize("hasRole('ADMIN')")
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
@@ -35,7 +34,7 @@ public class TimelineController {
         return message;
     }
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {
         long id = counter.getAndIncrement();
 
