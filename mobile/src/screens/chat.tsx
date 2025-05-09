@@ -1,49 +1,50 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  SafeAreaView,
-  ActivityIndicator,
-} from "react-native";
-import { useTheme } from "../theme/theme";
-import Title from "../components/title";
 import { Client } from "@stomp/stompjs";
+import moment from "moment";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import SockJS from "sockjs-client";
-import ThreeDots from "../components/loading";
+import FireGif from "../components/fire";
+import Title from "../components/title";
+import { useTheme } from "../theme/theme";
 
 type Message = {
   id: string;
-  sender: string;
-  text: string;
-  loading?: boolean;
+  campeonato: string;
+  nomeTimes: string;
+  tempoPartida: string;
+  placar: string;
+  acaoSinal: string;
+  createdAt: string;
+  status: "ACTIVE" | "INACTIVE" | string;
+  isNew?: boolean; // flag para animação
 };
 
-export default function ChatScreen() {
+const FIRE_GIF = require("../assets/fire.gif");
+
+export default function TimelineScreen() {
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>("");
-  const [username] = useState<string>("Você");
   const [stompClient, setStompClient] = useState<Client | null>(null);
-  const [botTyping, setBotTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Conexão e assinatura do websocket
   useEffect(() => {
     const socket = new SockJS("http://192.168.1.7:8080/ws/chat");
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
         setStompClient(client);
+        console.log("Conectado ao WebSocket");
       },
       onDisconnect: () => {
         setStompClient(null);
+        console.log("Desconectado do WebSocket");
       },
       onStompError: (frame) => {
         console.error("Broker reported error: " + frame.headers["message"]);
@@ -59,152 +60,88 @@ export default function ChatScreen() {
     };
   }, []);
 
-  // Assina o tópico de mensagens
   useEffect(() => {
     if (!stompClient) return;
 
-    // Mensagens normais
     const subscriptionMsg = stompClient.subscribe("/topic/messages", (msg) => {
       if (msg.body) {
-        const chatMsg = JSON.parse(msg.body);
-        setBotTyping(false);
-        setMessages((prev) => {
-          // Se for mensagem do usuário e já existe, não adiciona de novo
-          if (
-            chatMsg.sender === username &&
-            prev.some(
-              (m) =>
-                m.sender === username &&
-                m.text === chatMsg.text &&
-                !m.loading
-            )
-          ) {
-            return prev;
-          }
-          let filtered = prev;
-          if (chatMsg.sender === "CHAMAGOL IA") {
-            filtered = prev.filter((m) => !m.loading);
-          }
-          return [
-            ...filtered,
-            {
-              id: Date.now().toString() + Math.random().toString(),
-              sender: chatMsg.sender,
-              text: chatMsg.text,
-            },
-          ];
-        });
-      }
-    });
+        const signalMsg: Message = JSON.parse(msg.body);
+        const newMessage = {
+          ...signalMsg,
+          id: signalMsg.id.toString(),
+          isNew: true,
+        };
 
-    // Sinal de "digitando"
-    const subscriptionTyping = stompClient.subscribe("/topic/typing", () => {
-      setMessages((prev) => {
-        // Só adiciona o loading se não existir ainda
-        if (!prev.some((m) => m.loading)) {
-          return [
-            ...prev,
-            {
-              id: "typing-indicator",
-              sender: "CHAMAGOL IA",
-              text: "",
-              loading: true,
-            },
-          ];
-        }
-        return prev;
-      });
-      setBotTyping(true);
+        setMessages((prev) => [...prev, newMessage]);
+
+        // Vibrar ao receber novo sinal
+        // Vibration.vibrate(500);
+
+        // Remover flag isNew após 3 segundos para parar animação
+        setTimeout(() => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === newMessage.id ? { ...m, isNew: false } : m
+            )
+          );
+        }, 3000);
+
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
     });
 
     return () => {
       subscriptionMsg.unsubscribe();
-      subscriptionTyping.unsubscribe();
     };
   }, [stompClient]);
 
-  // Envia mensagem para o backend
-  const sendMessage = () => {
-    if (stompClient && input.trim()) {
-      const userMsg = {
-        id: Date.now().toString() + Math.random().toString(),
-        sender: username,
-        text: input,
-      };
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        {
-          id: "typing-indicator",
-          sender: "CHAMAGOL IA",
-          text: "",
-          loading: true,
-        },
-      ]);
-      stompClient.publish({
-        destination: "/app/chat",
-        body: JSON.stringify({ sender: username, text: input }),
-      });
-      setInput("");
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  };
-
   const renderItem = ({ item }: { item: Message }) => {
-    const isMine = item.sender === username;
-    if (item.loading) {
-      return (
-        <View
-          style={[
-            styles.messageContainer,
-            styles.botBubble,
-            {
-              alignSelf: "flex-start",
-              backgroundColor: colors.card,
-              borderTopLeftRadius: 0,
-              borderTopRightRadius: 16,
-              borderBottomLeftRadius: 16,
-              borderBottomRightRadius: 16,
-              marginLeft: 0,
-              marginRight: 40,
-            },
-          ]}
-        >
-          <ThreeDots color={colors.secondary} />
-        </View>
-      );
-    }
+    const isActive = item.status === "ACTIVE";
+
     return (
       <View
         style={[
           styles.messageContainer,
-          isMine ? styles.myBubble : styles.botBubble,
           {
-            alignSelf: isMine ? "flex-end" : "flex-start",
-            backgroundColor: isMine ? colors.secondary : colors.card,
-            borderTopRightRadius: isMine ? 0 : 16,
-            borderTopLeftRadius: isMine ? 16 : 0,
-            borderBottomLeftRadius: 16,
-            borderBottomRightRadius: 16,
-            marginLeft: isMine ? 40 : 0,
-            marginRight: isMine ? 0 : 40,
+            backgroundColor: colors.card,
+            borderLeftColor: isActive ? colors.secondary : colors.muted,
+            borderLeftWidth: 5,
+            shadowColor: colors.muted,
           },
         ]}
       >
-        {!isMine && (
-          <Text style={[styles.user, { color: colors.accent, marginBottom: 2 }]}>
-            {item.sender}
+        <View style={styles.header}>
+          <Text style={[styles.campeonato, { color: colors.accent }]}>
+            {item.campeonato}
           </Text>
-        )}
-        <Text
-          style={[
-            styles.text,
-            { color: isMine ? colors.background : colors.primary },
-          ]}
-        >
-          {item.text}
+          <Text style={[styles.createdAt, { color: colors.muted }]}>
+            {moment(item.createdAt).format("DD/MM/YYYY HH:mm")}
+          </Text>
+        </View>
+
+        <View style={styles.rowWithIcon}>
+          <Text style={[styles.nomeTimes, { color: colors.primary, flex: 1 }]}>
+            {item.nomeTimes}
+          </Text>
+          {/* Mostra fogo pequeno se isNew */}
+          {item.isNew && (
+            <FireGif></FireGif>
+          )}
+        </View>
+
+        <View style={styles.matchInfo}>
+          <Text style={[styles.tempoPartida, { color: colors.highlight }]}>
+            {item.tempoPartida}
+          </Text>
+          <Text style={[styles.placar, { color: colors.highlight }]}>
+            {item.placar}
+          </Text>
+        </View>
+
+        <Text style={[styles.acaoSinal, { color: colors.secondary }]}>
+          {item.acaoSinal}
         </Text>
       </View>
     );
@@ -213,61 +150,32 @@ export default function ChatScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
-        <View style={[styles.content, { backgroundColor: colors.background }]}>
-          <Title title="CHAMAGOL Chat" />
+      <View style={[styles.content, { backgroundColor: colors.background }]}>
+        <Title title="Timeline" />
+        {messages.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              Nenhum sinal disponível no momento.
+            </Text>
+          </View>
+        ) : (
           <FlatList
             ref={flatListRef}
             data={messages}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            contentContainerStyle={{ flexGrow: 1, paddingVertical: 16 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingVertical: 16,
+              paddingHorizontal: 8,
+            }}
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
             }
             showsVerticalScrollIndicator={false}
           />
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: colors.primary,
-                  borderColor: colors.secondary,
-                  backgroundColor: colors.card,
-                },
-              ]}
-              placeholder="Digite sua mensagem..."
-              placeholderTextColor={colors.muted}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={sendMessage}
-              returnKeyType="send"
-              multiline
-            />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                {
-                  backgroundColor: input.trim()
-                    ? colors.secondary
-                    : colors.muted,
-                },
-              ]}
-              onPress={sendMessage}
-              disabled={!input.trim()}
-            >
-              <Text style={[styles.sendButtonText, { color: colors.background }]}>
-                Enviar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -280,60 +188,67 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   messageContainer: {
-    maxWidth: "75%",
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-    minHeight: 40,
-    justifyContent: "center",
+    width: "90%",
+    alignSelf: "center",
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 14,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
-  myBubble: {
-    backgroundColor: "#6200EE",
-  },
-  botBubble: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-  user: {
-    fontWeight: "bold",
-    fontSize: 13,
-  },
-  text: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  inputContainer: {
+  header: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    marginTop: 8,
-    paddingBottom: 8,
-    backgroundColor: "transparent",
+    justifyContent: "space-between",
+    marginBottom: 6,
   },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 8,
-    fontSize: 16,
-    minHeight: 44,
-    maxHeight: 120,
-  },
-  sendButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 70,
-  },
-  sendButtonText: {
+  campeonato: {
     fontWeight: "bold",
     fontSize: 16,
+  },
+  createdAt: {
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  rowWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  nomeTimes: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  fireIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 8,
+  },
+  matchInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  tempoPartida: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  placar: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  acaoSinal: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    fontStyle: "italic",
   },
 });
