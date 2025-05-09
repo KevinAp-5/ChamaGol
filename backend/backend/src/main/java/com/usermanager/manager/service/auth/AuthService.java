@@ -24,6 +24,7 @@ import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
 import com.usermanager.manager.dto.user.ProfileDTO;
+import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
@@ -193,6 +194,7 @@ public class AuthService implements UserDetailsService {
 
         // Enables user and saves it
         user.setEnabled(true);
+        user.setStatus(Status.ACTIVE);
         userService.saveUser(user);
 
         // Updates verificationToken to set it as activated/enabled
