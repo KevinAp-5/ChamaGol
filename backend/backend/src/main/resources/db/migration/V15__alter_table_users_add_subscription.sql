@@ -1,0 +1,2 @@
+ALTER TABLE users
+add subscription VARCHAR(255) NOT NULL DEFAULT 'FREE';
