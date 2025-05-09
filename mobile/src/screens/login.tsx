@@ -1,30 +1,29 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
-  View,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  StatusBar,
-  Alert,
-  PanResponder,
+  View
 } from "react-native";
-import { useTheme } from "../theme/theme";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
-import ThreeDots from "../components/loading";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Title from "../components/title";
-import { Platform } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { api } from "../config/Api";
-type Props = NativeStackScreenProps<RootStackParamList, "Login">;
-import * as SecureStore from "expo-secure-store";
-import Logo from "../components/logo";
+import { RootStackParamList } from "../../App";
 import Footer from "../components/footer";
+import ThreeDots from "../components/loading";
+import Logo from "../components/logo";
+import Title from "../components/title";
+import { api } from "../config/Api";
+import { useTheme } from "../theme/theme";
+import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 export default function LoginScreen({ navigation }: Props) {
   const { colors } = useTheme();
@@ -35,7 +34,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha e-mail e senha.");
+      showCustomAlert("Preencha e-mail e senha.", "Erro");
       return;
     }
     setLoading(true);
@@ -49,16 +48,17 @@ export default function LoginScreen({ navigation }: Props) {
         await SecureStore.setItemAsync('accessToken', response.data.token);
         navigation.navigate("Home");
       } else {
-        Alert.alert("Erro", "E-mail ou senha inválidos.");
+        showCustomAlert("E-mail ou senha inválidos.", "Erro");
       }
     } catch (error: any) {
-      Alert.alert("Erro", error?.response?.data?.message || "Erro ao fazer login.");
+      showCustomAlert(error?.response?.data?.message || "Erro ao fazer login.", "Erro");
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <CustomAlertProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <KeyboardAvoidingView
@@ -154,6 +154,7 @@ export default function LoginScreen({ navigation }: Props) {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </CustomAlertProvider>
   );
 }
 
