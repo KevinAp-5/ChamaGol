@@ -1,15 +1,40 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useTheme } from '../theme/theme';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Footer from '../components/footer';
+import * as SecureStore from "expo-secure-store";
+import { api } from "../config/Api";
+import { TermModal } from '../components/term';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const [showTermModal, setShowTermModal] = useState(false);
+
+  useEffect(() => {
+    const checkTermAcceptance = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("accessToken");
+        if (!token) return;
+        const response = await api(
+          "GET",
+          "acceptance/has-accepted-latest",
+          undefined,
+          { Authorization: `Bearer ${token}` }
+        );
+        if (response.status === 200 && response.data === false) {
+          setShowTermModal(true);
+        }
+      } catch (error: any) {
+        Alert.alert("Erro", "Erro ao verificar aceite dos termos.");
+      }
+    };
+    checkTermAcceptance();
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -34,7 +59,11 @@ export default function HomeScreen({ navigation }: Props) {
       >
         <Text style={[styles.cardText, { color: colors.primary }]}>ℹ️ Sobre Nós</Text>
       </TouchableOpacity>
-      <Footer></Footer>
+      <Footer />
+      <TermModal
+        visible={showTermModal}
+        onAccepted={() => setShowTermModal(false)}
+      />
     </SafeAreaView>
   );
 }
