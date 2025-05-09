@@ -17,9 +17,11 @@ import com.usermanager.manager.service.term.TermOfUseService;
 import com.usermanager.manager.service.term.UserTermAcceptanceService;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/acceptance")
+@Slf4j
 public class UserTermAcceptanceController {
 
     private final UserTermAcceptanceService acceptanceService;
@@ -31,9 +33,9 @@ public class UserTermAcceptanceController {
         this.termOfUseService = termOfUseService;
     }
 
+    // TODO: adicionar o aceitar do termo no controller de registro
     @PostMapping("/accept-latest")
-    public ResponseEntity<TermAcceptedResponse> acceptLatestTerm(@AuthenticationPrincipal User user,
-                                              @Valid @RequestBody AcceptanceRequest request) {
+    public ResponseEntity<TermAcceptedResponse> acceptLatestTerm(@AuthenticationPrincipal User user, @Valid @RequestBody AcceptanceRequest request) {
         TermOfUse latestTerm = termOfUseService.findLatest();
 
         UserTermAcceptance acceptance = acceptanceService.acceptTerm(user, latestTerm, request.isAdult());

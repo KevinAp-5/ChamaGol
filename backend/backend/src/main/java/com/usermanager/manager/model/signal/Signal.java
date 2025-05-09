@@ -48,5 +48,7 @@ public class Signal {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Status status = Status.ACTIVE;
+
+    // TODO: adicionar Enum para tipo de sinal (PRO, DICA, GOL, OUTRO)
     
 }

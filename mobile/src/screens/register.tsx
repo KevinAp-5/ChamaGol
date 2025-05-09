@@ -23,6 +23,7 @@ import Logo from "../components/logo";
 import Footer from "../components/footer";
 import { fetchTerm } from "../components/termOfUse";
 
+// TODO: adicionar a tela de espera de confirmação de email igual na password reset
 export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [showPassword, setShowPassword] = useState(false);

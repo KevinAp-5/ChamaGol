@@ -14,6 +14,7 @@ export interface ApiResponse<T = unknown> {
   headers: Record<string, string>;
 }
 
+// TODO: ADICIONAR método para atualizar o access token com o refreshTOken
 // Tipos de métodos HTTP suportados
 type HttpMethod = Method;
 
