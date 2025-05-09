@@ -1,75 +1,22 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>CHAMAGOL</title>
-    <link rel="icon" href="../static/images/furia.png">
+    <title>CHAMAGOL - Conta Confirmada</title>
+    <link rel="icon" href="/images/icon.png">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <style>
-        body {
-            margin: 0;
-            font-family: Helvetica, Arial, sans-serif;
-            background-color: #0C3B2E;
-            color: #FFFFFF;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-
-
-        /* Caixa principal */
-        .main-container {
-            background-color: #FFFFFF;
-            color: #000000;
-            border-radius: 20px;
-            padding: 60px;
-            width: 90%;
-            height: 90%;
-            max-width: 800px;
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        h1 {
-            font-size: 60px;
-            margin-bottom: 20px;
-            color: #000;
-        }
-
-        p {
-            font-size: 38px;
-            margin-bottom: 20px;
-            color: #333333;
-        }
-
-        .success {
-            color: #6D9773;
-            font-size: 30px;
-            font-weight: bold;
-        }
-
-        /* Ícone */
-        .icon {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 20px;
-        }
-
-    </style>
+    <link rel="stylesheet" th:href="@{/css/account_confirmed.css}">
 </head>
 <body>
-
-    <!-- <div class="header-bar"></div> Pequena barra verde no topo -->
-
     <div class="main-container">
-        <h1>Registro confirmado!</h1>
-        <p class="success">Registro confirmado com sucesso!</p>
-        <img class="icon" th:src="@{/images/checkicon.png}" alt="check icon">
-        <p>Volte para o aplicativo.</p>
+        <img th:src="${confirmed} ? '/images/checkicon.png' : '/images/xicon.png'" class="icon" alt="Status Icon"/>
+        <div th:if="${confirmed}">
+            <div class="success">Conta confirmado com sucesso!</div>
+            <div class="message">Agora você já pode voltar ao aplicativo e conhecer nosso serviço!</div>
+        </div>
+        <div th:if="${!confirmed}">
+            <div class="error">Não foi possível confirmar o e-mail.</div>
+            <div class="message">O link pode estar expirado ou já ter sido utilizado.<br>Solicite um novo no aplicativo.</div>
+        </div>
     </div>
-
 </body>
 </html>

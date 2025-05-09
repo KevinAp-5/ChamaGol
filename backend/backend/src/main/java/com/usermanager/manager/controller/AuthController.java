@@ -59,13 +59,10 @@ public class AuthController {
     }
 
     @GetMapping("register/confirm")
-    public String confirmUser(@RequestParam("token") @NotBlank String token) {
+    public String confirmUser(@RequestParam("token") @NotBlank String token, Model model) {
         boolean validated = authService.confirmVerificationToken(convertStringToUUID(token));
-        if (validated) {
-            return "account_confirmed";
-        }
-
-        return "account_not_confirmed";
+        model.addAttribute("confirmed", validated);
+        return "account_confirmed";
     }
 
     @PostMapping("password/forget")
@@ -89,11 +86,9 @@ public class AuthController {
 
     @GetMapping("/password/reset/confirmEmail")
     public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
-        boolean confirmado = authService.confirmEmail(convertStringToUUID(uuid));
-        if (!confirmado) {
-            return "index-error";
-        }
+        boolean confirmed = authService.confirmEmail(convertStringToUUID(uuid));
 
+        model.addAttribute("confirmed", confirmed);
         return "index";
     }
 
