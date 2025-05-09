@@ -9,7 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import com.usermanager.manager.enums.Status;
+import com.usermanager.manager.enums.Subscription;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +44,8 @@ public class User implements UserDetails {
         this.password = password;
         this.role = UserRole.USER;
         this.enabled = false;
+        this.status = Status.INACTIVE;
+        this.subscription = Subscription.FREE;
     }
 
     @Id
@@ -78,6 +82,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @Builder.Default
     private Status status = Status.INACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Subscription subscription = Subscription.FREE;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
