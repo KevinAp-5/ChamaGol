@@ -70,10 +70,9 @@ public class User implements UserDetails {
     @CreationTimestamp
     private ZonedDateTime createdAt;
 
-    // TODO: adicione updatedAt
-    // TODO: adicionar status (ACTIVE, INACTIVE, BLOCKED, DELETED)
-    // TODO: adicionar subscription (FREE, PREMIUM)
-    // TODO: adicionar subscriptionPlan (MONTHLY, YEARLY)
+    @Column(name = "updated_at", nullable = true)
+    private ZonedDateTime updatedAt;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -171,6 +171,7 @@ public class AuthService implements UserDetailsService {
 
         // Updates password and saves it
         user.setPassword(passwordEncoder.encode(data.newPassword()));
+        user.setUpdatedAt(ZonedDateTime.now());
         userService.saveUser(user);
         log.info("user {} has changed password", user.getLogin());
 
@@ -209,6 +210,7 @@ public class AuthService implements UserDetailsService {
 
         var verificationToken = verificationService.findVerificationByUser(user);
         user.setPassword(passwordEncoder.encode(data.password()));
+        user.setUpdatedAt(ZonedDateTime.now());
         userService.saveUser(user);
         verificationToken.setActivationDate(ZonedDateTime.now().toInstant());
         verificationToken.setActivated(true);
