@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -15,18 +16,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.usermanager.manager.dto.authentication.AccessTokenDTO;
 import com.usermanager.manager.dto.authentication.ActivateUserDTO;
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
 import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.LoginResponseDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
+import com.usermanager.manager.dto.authentication.RefreshTokenRequest;
 import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
 import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.ProfileDTO;
+import com.usermanager.manager.enums.ClientType;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
+import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.auth.AuthService;
 
 import jakarta.servlet.http.Cookie;
@@ -95,25 +98,53 @@ public class AuthController {
     @PostMapping("login")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data,
-            HttpServletResponse response) {
+            HttpServletResponse response, @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
         TokensDTO tokens = authService.login(data);
-        response.addCookie(createCookie("refreshToken", tokens.refreshToken()));
-        return ResponseEntity.ok().body(new LoginResponseDTO(tokens.accessToken()));
+        if (clientType == ClientType.WEB) {
+            response.addCookie(createCookie("refreshToken", tokens.refreshToken()));
+        }
+        LoginResponseDTO responseDTO = new LoginResponseDTO(tokens.accessToken());
+
+        if (clientType == ClientType.MOBILE) {
+            responseDTO.setRefreshToken(tokens.refreshToken());
+        }
+        return ResponseEntity.ok().body(responseDTO);
     }
 
     @PostMapping("token/refresh")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> refreshToken(
-            @CookieValue(name = "refreshToken", defaultValue = "") String token, HttpServletResponse response) {
+            @CookieValue(name = "refreshToken", defaultValue = "") String cookieToken,
+            HttpServletResponse response,
+            @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
+            @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
 
-        if (token.isBlank())
+        String refreshToken = cookieToken;
+
+        if ((refreshToken == null || refreshToken.isBlank()) && refreshTokenRequest != null) {
+            refreshToken = refreshTokenRequest.token();
+        }
+
+        if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponseDTO("Refresh token is missing."));
+        }
 
-        TokensDTO newTokens = authService.refreshToken(token);
+        TokensDTO newTokens = authService.refreshToken(refreshToken);
 
-        response.addCookie(createCookie("refreshToken", newTokens.refreshToken()));
-        return ResponseEntity.ok().body(new LoginResponseDTO(newTokens.accessToken()));
+        // Atualiza o cookie apenas para clientes WEB
+        if (clientType == ClientType.WEB) {
+            response.addCookie(createCookie("refreshToken", newTokens.refreshToken()));
+        }
+
+        LoginResponseDTO responseDTO = new LoginResponseDTO(newTokens.accessToken());
+
+        // Inclui refresh token no payload apenas para clientes MOBILE
+        if (clientType == ClientType.MOBILE) {
+            responseDTO.setRefreshToken(newTokens.refreshToken());
+        }
+
+        return ResponseEntity.ok(responseDTO);
     }
 
     @PostMapping("activate")
