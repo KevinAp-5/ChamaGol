@@ -33,9 +33,9 @@ public class SecurityConfigurations {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'"))
-                        .frameOptions(frame -> frame.sameOrigin()))
+                // .headers(headers -> headers
+                //         .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'; "))
+                //         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
@@ -48,6 +48,7 @@ public class SecurityConfigurations {
                         .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
+                        .requestMatchers("/api/acceptance/**").permitAll()
                         .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
