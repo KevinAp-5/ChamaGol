@@ -19,15 +19,12 @@ export default function ProfileScreen({ navigation }: any) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = await SecureStore.getItem("accessToken");
-      console.log("Token:", token);
-
       try {
-        const response = await api("POST", "/auth/me", { token: token });
+      
+        const response = await api("POST", "/auth/me");
         if (response.status === 200 && response.data) {
           setUsername(response.data.name);
           setEmail(response.data.email);
-          // Formata a data para dd/MM/yyyy
           const date = new Date(response.data.createdAt);
           const formatted = `${date.getDate().toString().padStart(2, "0")}/${(
             date.getMonth() + 1
@@ -37,12 +34,12 @@ export default function ProfileScreen({ navigation }: any) {
           setCreated(formatted);
         }
       } catch (error) {
-        Alert.alert("Erro", "Não foi possível carregar o perfil.");
+        // Alert.alert("Erro", "Não foi possível carregar o perfil.");
       }
     };
     fetchProfile();
   }, []);
-
+  
   const handleLogout = () => {
     Alert.alert("Logout", "Você tem certeza que deseja sair?", [
       { text: "Cancelar", style: "cancel" },

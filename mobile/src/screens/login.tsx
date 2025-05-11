@@ -20,7 +20,7 @@ import Footer from "../components/footer";
 import ThreeDots from "../components/loading";
 import Logo from "../components/logo";
 import Title from "../components/title";
-import { api } from "../config/Api";
+import { api, setAuthToken } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
@@ -42,10 +42,16 @@ export default function LoginScreen({ navigation }: Props) {
       const response = await api(
         "POST",
         "auth/login",
-        { "login": email, "password": password }
+        { login: email, password }
       );
-      if (response.status === 200 && response.data?.token) {
-        await SecureStore.setItemAsync('accessToken', response.data.token);
+      if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
+        const accessToken = response.data.token || response.data.accessToken;
+        const refreshToken = response.data.refreshToken;
+        await SecureStore.setItemAsync('accessToken', accessToken);
+        if (refreshToken) {
+          await SecureStore.setItemAsync('refreshToken', refreshToken);
+        }
+        setAuthToken(accessToken); // Atualiza o header da instância
         navigation.navigate("Home");
       } else {
         showCustomAlert("E-mail ou senha inválidos.", "Erro");
@@ -56,7 +62,7 @@ export default function LoginScreen({ navigation }: Props) {
       setLoading(false);
     }
   };
-
+  
   return (
     <CustomAlertProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
