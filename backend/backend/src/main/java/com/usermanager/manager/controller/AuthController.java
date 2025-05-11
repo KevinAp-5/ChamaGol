@@ -142,9 +142,8 @@ public class AuthController {
 
     @PostMapping("me")
     @ResponseBody
-    public ResponseEntity<ProfileDTO> getUserInfo(@RequestBody @Valid AccessTokenDTO token) {
-        var response = authService.getUserProfile(token);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ProfileDTO> getUserInfo(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt()));
     }
 
     @GetMapping("cron")

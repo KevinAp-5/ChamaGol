@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.usermanager.manager.dto.authentication.AccessTokenDTO;
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
 import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetDTO;
@@ -23,7 +22,6 @@ import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
-import com.usermanager.manager.dto.user.ProfileDTO;
 import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.user.UserExistsException;
@@ -222,12 +220,6 @@ public class AuthService implements UserDetailsService {
     public boolean isEmailConfirmed(UserEmailDTO data) {
         var user = userService.findUserByLogin(data.email());
         return user.isEnabled();
-    }
-
-    public ProfileDTO getUserProfile(@NotBlank AccessTokenDTO data) {
-        var login = tokenProvider.getUsernameFromToken(data.token());
-        var user = userService.findUserByLogin(login);
-        return new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt());
     }
 
     public User findUserByLogin(@NotBlank String email) {
