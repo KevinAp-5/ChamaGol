@@ -1,0 +1,2 @@
+ALTER TABLE signals
+ADD tipo_evento VARCHAR(255) NOT NULL DEFAULT 'DICA'
