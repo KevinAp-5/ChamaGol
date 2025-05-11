@@ -32,6 +32,7 @@ export default function TimelineScreen() {
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [stompClient, setStompClient] = useState<Client | null>(null);
+  // TODO: otimizar a flatList
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function TimelineScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <View style={[styles.content, { backgroundColor: colors.background }]}>
-        <Title title="Timeline" />
+        {/* <Title title="Timeline" /> */}
         {messages.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.muted }]}>

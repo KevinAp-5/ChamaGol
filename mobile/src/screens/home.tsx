@@ -8,6 +8,7 @@ import Footer from '../components/footer';
 import * as SecureStore from "expo-secure-store";
 import { api } from "../config/Api";
 import { TermModal } from '../components/term';
+import { showCustomAlert } from '../components/CustomAlert';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -24,13 +25,16 @@ export default function HomeScreen({ navigation }: Props) {
           "GET",
           "acceptance/has-accepted-latest",
           undefined,
-          { Authorization: `Bearer ${token}` }
+          { headers: {Authorization: `Bearer ${token}`} }
         );
         if (response.status === 200 && response.data === false) {
           setShowTermModal(true);
         }
+        if (response.status === 404) {
+          showCustomAlert("Erro ao validar usuários, faça login novamente", "Erro");
+        }
       } catch (error: any) {
-        Alert.alert("Erro", "Erro ao verificar aceite dos termos.");
+        showCustomAlert("Erro ao verificar aceite dos termos.", "Erro");
       }
     };
     checkTermAcceptance();
@@ -45,7 +49,7 @@ export default function HomeScreen({ navigation }: Props) {
         style={[styles.card, { borderColor: colors.secondary }]}
         onPress={() => navigation.navigate('Chat')}
       >
-        <Text style={[styles.cardText, { color: colors.primary }]}>💬 Chat dos torcedores!</Text>
+        <Text style={[styles.cardText, { color: colors.primary }]}>💬 Sinais!</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.card, { borderColor: colors.secondary }]}
