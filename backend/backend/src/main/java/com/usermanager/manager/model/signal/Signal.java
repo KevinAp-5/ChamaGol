@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.usermanager.manager.enums.Status;
+import com.usermanager.manager.enums.TipoEvento;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,11 +45,15 @@ public class Signal {
     @CreationTimestamp
     @Column(updatable = false)
     private ZonedDateTime createdAt;
-    
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Status status = Status.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private TipoEvento tipoEvento = TipoEvento.DICA;
+
     // TODO: adicionar Enum para tipo de sinal (PRO, DICA, GOL, OUTRO)
-    
+    // TODO: implementar a regra de negócios para não mostrar os sinais PRO para usuários free
 }

@@ -42,4 +42,6 @@ public class SignalController {
     public ResponseEntity<List<SignalDTO>> getAllSignals() {
         return ResponseEntity.ok(signalsService.getSignal());
     }
+
+    // TODO; criar endpoint para pegar os ultimos 10 sinais
 }
