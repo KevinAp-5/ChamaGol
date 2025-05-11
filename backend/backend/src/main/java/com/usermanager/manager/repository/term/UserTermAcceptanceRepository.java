@@ -13,7 +13,7 @@ import com.usermanager.manager.model.user.User;
 public interface UserTermAcceptanceRepository extends JpaRepository<UserTermAcceptance, Long> {
     Optional<UserTermAcceptance> findByUserAndTermOfUse(User user, TermOfUse termOfUse);
 
-    boolean existsByUserAndTermOfUse(User use, TermOfUse teermOfUse);
+    boolean existsByUserAndTermOfUse(User user, TermOfUse termOfUse);
 
     Optional<UserTermAcceptance> findTopByUserOrderByAcceptedAtDesc(User user);
 }

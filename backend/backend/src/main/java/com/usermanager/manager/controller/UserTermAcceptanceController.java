@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.usermanager.manager.dto.term.AcceptanceRequest;
 import com.usermanager.manager.dto.term.TermAcceptedResponse;
+import com.usermanager.manager.exception.user.UserNotFoundException;
 import com.usermanager.manager.model.term.TermOfUse;
 import com.usermanager.manager.model.term.UserTermAcceptance;
 import com.usermanager.manager.model.user.User;
@@ -45,6 +46,9 @@ public class UserTermAcceptanceController {
 
     @GetMapping("/has-accepted-latest")
     public ResponseEntity<Boolean> hasAcceptedLatest(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            throw new UserNotFoundException("");
+        }
         TermOfUse latestTerm = termOfUseService.findLatest();
         boolean accepted = acceptanceService.hasAcceptedLatestTerm(user, latestTerm);
         return ResponseEntity.ok(accepted);
