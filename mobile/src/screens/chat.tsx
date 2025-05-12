@@ -1,4 +1,4 @@
-import { Client } from "@stomp/stompjs";
+import { Client, StompHeaders } from "@stomp/stompjs";
 import moment from "moment";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -13,6 +13,7 @@ import SockJS from "sockjs-client";
 import FireGif from "../components/fire";
 import Title from "../components/title";
 import { useTheme } from "../theme/theme";
+import * as SecureStore from 'expo-secure-store';
 
 type Message = {
   id: string;
@@ -32,11 +33,47 @@ export default function TimelineScreen() {
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [stompClient, setStompClient] = useState<Client | null>(null);
-  // TODO: otimizar a flatList
+  const [token, setToken] = useState<string | null>(null);
+  const [isTokenLoaded, setIsTokenLoaded] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
 
+  // Primeiro, recupera o token e configura o estado
   useEffect(() => {
-    const socket = new SockJS("http://192.168.1.7:8080/ws/chat");
+    const getToken = async () => {
+      try {
+        const storedToken = await SecureStore.getItemAsync('accessToken');
+        if (storedToken) {
+          setToken(storedToken);
+          console.log("Token encontrado:", storedToken);
+        } else {
+          console.log("Token não encontrado!");
+        }
+        // Marca que o processo de carregamento do token foi concluído, independentemente do resultado
+        setIsTokenLoaded(true);
+      } catch (error) {
+        console.error("Erro ao buscar token:", error);
+        // Também marca como concluído em caso de erro
+        setIsTokenLoaded(true);
+      }
+    };
+
+    getToken();
+  }, []);
+
+  useEffect(() => {
+    // Só executa se o processo de carregamento do token foi concluído
+    if (!isTokenLoaded) {
+      return;
+    }
+
+    // Se não tiver token, loga e não tenta conectar
+    if (!token) {
+      console.warn("Tentativa de conectar ao WebSocket sem token");
+      return;
+    }
+
+    console.log("Conectando ao WebSocket com token:", `http://192.168.1.7:8080/ws/chat?token=${token}`);
+    const socket = new SockJS(`http://192.168.1.7:8080/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -59,8 +96,9 @@ export default function TimelineScreen() {
     return () => {
       client.deactivate();
     };
-  }, []);
+  }, [isTokenLoaded, token]);
 
+  // Subscrição às mensagens
   useEffect(() => {
     if (!stompClient) return;
 
@@ -74,9 +112,6 @@ export default function TimelineScreen() {
         };
 
         setMessages((prev) => [...prev, newMessage]);
-
-        // Vibrar ao receber novo sinal
-        // Vibration.vibrate(500);
 
         // Remover flag isNew após 3 segundos para parar animação
         setTimeout(() => {
@@ -128,7 +163,7 @@ export default function TimelineScreen() {
           </Text>
           {/* Mostra fogo pequeno se isNew */}
           {item.isNew && (
-            <FireGif></FireGif>
+            <FireGif />
           )}
         </View>
 
@@ -156,7 +191,11 @@ export default function TimelineScreen() {
         {messages.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.muted }]}>
-              Nenhum sinal disponível no momento.
+              {!isTokenLoaded 
+                ? "Carregando..." 
+                : !token 
+                  ? "Erro ao recuperar token. Faça login novamente." 
+                  : "Nenhum sinal disponível no momento."}
             </Text>
           </View>
         ) : (
