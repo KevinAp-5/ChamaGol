@@ -61,6 +61,20 @@ public class TokenService implements TokenProvider{
         }
     }
 
+    public boolean isTokenValid(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            token = JWT.require(algorithm)
+                .withIssuer(TOKEN_ISSUER)
+                .build()
+                .verify(token)
+                .getSubject();
+            return true;
+        } catch (JWTVerificationException e) {
+            return false;
+        }
+    }
+
     public String getUsernameFromToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
@@ -75,7 +89,7 @@ public class TokenService implements TokenProvider{
     }
 
     private Instant genExpirationDate() {
-        return LocalDateTime.now().plusMinutes(45).toInstant(ZoneOffset.of("-03:00"));
+        return LocalDateTime.now().plusMinutes(2).toInstant(ZoneOffset.of("-03:00"));
     }
 
     private Instant genExpirationDate(long minutesAmount) {
