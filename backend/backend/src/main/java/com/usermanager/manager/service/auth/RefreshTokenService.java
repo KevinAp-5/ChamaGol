@@ -31,9 +31,16 @@ public class RefreshTokenService {
 
     @Transactional
     public String createRefreshToken(User user) {
+        refreshTokenRepository.deleteByUser(user);
+
         String token = tokenProvider.generateToken(user, expirationTime);
         if (token == null) {
             throw new TokenNotFoundException("Failed to generate refresh token");
+        }
+
+        boolean exists = refreshTokenRepository.existsByToken(token);
+        if (exists) {
+            refreshTokenRepository.deleteByToken(token);
         }
 
         RefreshToken refreshToken = new RefreshToken(user, token);
