@@ -54,6 +54,5 @@ public class Signal {
     @Builder.Default
     private TipoEvento tipoEvento = TipoEvento.DICA;
 
-    // TODO: adicionar Enum para tipo de sinal (PRO, DICA, GOL, OUTRO)
     // TODO: implementar a regra de negócios para não mostrar os sinais PRO para usuários free
 }

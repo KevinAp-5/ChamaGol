@@ -10,7 +10,6 @@ public class ManagerApplication {
 		SpringApplication.run(ManagerApplication.class, args);
 		// TODO: adicionar gateway de pagamentos
 		// TODO: adicionar envio de notificações mesmo com app fechado
-		// TODO: envio dos sinais via WEBSOCKETS in app
 		// TODO: criar um Scheduler para ir limpando as entidades antigas
 	}
 
