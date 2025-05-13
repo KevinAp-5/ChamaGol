@@ -38,15 +38,9 @@ public class RefreshTokenService {
             throw new TokenNotFoundException("Failed to generate refresh token");
         }
 
-        boolean exists = refreshTokenRepository.existsByToken(token);
-        if (exists) {
-            refreshTokenRepository.deleteByToken(token);
-        }
-
         RefreshToken refreshToken = new RefreshToken(user, token);
 
-        refreshTokenRepository.save(refreshToken);
-        return token;
+        return refreshTokenRepository.save(refreshToken).getToken();
     }
 
     @Transactional
