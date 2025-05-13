@@ -10,21 +10,22 @@ import {
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../config/Api";
-import * as SecureStore from "expo-secure-store";
 export default function ProfileScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [created, setCreated] = useState("");
+  const [subscription, setSubscription] = useState<String | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
       
-        const response = await api("POST", "/auth/me");
+        const response = await api.get("/auth/me");
         if (response.status === 200 && response.data) {
           setUsername(response.data.name);
           setEmail(response.data.email);
+          setSubscription(response.data.userSubscription);
           const date = new Date(response.data.createdAt);
           const formatted = `${date.getDate().toString().padStart(2, "0")}/${(
             date.getMonth() + 1
@@ -77,6 +78,10 @@ export default function ProfileScreen({ navigation }: any) {
           </Text>
           <Text style={[styles.label, { color: colors.muted }]}>E-mail:</Text>
           <Text style={[styles.value, { color: colors.primary }]}>{email}</Text>
+          <Text style={[styles.label, { color: colors.muted }]}>Assinatura:</Text>
+          <Text style={[styles.value, { color: colors.primary }]}>
+            {subscription}
+          </Text>
           <Text style={[styles.label, { color: colors.muted }]}>
             Data de Registro:
           </Text>
