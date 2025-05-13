@@ -3,6 +3,7 @@ package com.usermanager.manager.controller;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -171,10 +172,18 @@ public class AuthController {
         return ResponseEntity.badRequest().body(new ResponseMessage("email not activated."));
     }
 
-    @PostMapping("me")
+    @GetMapping("token/validate")
+    public ResponseEntity<String> validateToken(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(401).body("invalid");
+        }
+        return ResponseEntity.ok("valid");        
+    }
+    
+    @GetMapping("me")
     @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt()));
+        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(), user.getSubscription().getValue()));
     }
 
     @GetMapping("cron")
