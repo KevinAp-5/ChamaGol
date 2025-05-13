@@ -39,19 +39,20 @@ export default function LoginScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
-      const response = await api(
-        "POST",
+      const response = await api.post(
         "auth/login",
         { login: email, password }
       );
       if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
         const accessToken = response.data.token || response.data.accessToken;
         const refreshToken = response.data.refreshToken;
+
         await SecureStore.setItemAsync('accessToken', accessToken);
+        console.log("token " + await SecureStore.getItemAsync('accessToken'));
         if (refreshToken) {
           await SecureStore.setItemAsync('refreshToken', refreshToken);
         }
-        setAuthToken(accessToken); // Atualiza o header da instância
+        // api.setToken(accessToken); // Atualiza o header da instância
         navigation.navigate("Home");
       } else {
         showCustomAlert("E-mail ou senha inválidos.", "Erro");
@@ -64,7 +65,7 @@ export default function LoginScreen({ navigation }: Props) {
   };
   
   return (
-    <CustomAlertProvider>
+    <CustomAlertProvider> 
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <KeyboardAvoidingView
