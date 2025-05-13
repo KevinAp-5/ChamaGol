@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import { api } from "../config/Api";
 import { TermModal } from '../components/term';
 import { showCustomAlert } from '../components/CustomAlert';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -17,14 +18,40 @@ export default function HomeScreen({ navigation }: Props) {
   const [showTermModal, setShowTermModal] = useState(false);
 
   useEffect(() => {
+    const fetchSubcription = async() => {
+      try {
+        const token = await SecureStore.getItemAsync("accessToken");
+        if (!token) {
+          console.log("erro ao recuperrar o token.");
+        }
+        const response = await api.get (
+          "users/subscription",
+          { headers: { Authorization: `Bearer ${token}`}}
+        );
+        if (response.status === 200 && response.data.userSubscription) {
+          try { 
+            await AsyncStorage.setItem("subscription", response.data.userSubscription);
+            console.log("dados da subscription " + response.data.userSubscription);
+          } catch (error) {
+            console.log("erro ao salvar dados no asynStorage");
+          }
+        } else {
+          console.log("rtuim");
+        }
+      } catch (error) {
+          console.log("\nerro ao recuperar assinatura do usuário\n-----\n");
+      }
+    };
+    fetchSubcription();
+  }, []);
+
+  useEffect(() => {
     const checkTermAcceptance = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
         if (!token) return;
-        const response = await api(
-          "GET",
+        const response = await api.get(
           "acceptance/has-accepted-latest",
-          undefined,
           { headers: {Authorization: `Bearer ${token}`} }
         );
         if (response.status === 200 && response.data === false) {
