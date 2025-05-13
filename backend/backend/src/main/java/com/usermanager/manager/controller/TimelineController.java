@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 
 import com.usermanager.manager.dto.common.ChatMessage;
 import com.usermanager.manager.enums.Status;
+import com.usermanager.manager.enums.TipoEvento;
 import com.usermanager.manager.model.signal.Signal;
 
 @Controller
@@ -37,7 +38,10 @@ public class TimelineController {
     @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {
         long id = counter.getAndIncrement();
-
+        TipoEvento evento = TipoEvento.DICA;
+        if (id % 3 == 0) {
+            evento = TipoEvento.PRO;
+        }
         Signal signal = Signal.builder()
                 .id(id)
                 .campeonato("Campeonato Brasileiro")
@@ -47,6 +51,7 @@ public class TimelineController {
                 .acaoSinal("Aposta: Vitória do Flamengo")
                 .createdAt(ZonedDateTime.now())
                 .status(Status.ACTIVE)
+                .tipoEvento(evento)
                 .build();
 
         messagingTemplate.convertAndSend("/topic/messages", signal);
