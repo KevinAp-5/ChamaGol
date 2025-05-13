@@ -58,7 +58,7 @@ export default function RequestPasswordReset({ navigation }: any) {
     setCanResend(false);
     try {
       // 1. Envia o e-mail para o backend
-      const response = await api("POST", "auth/password/forget", { email });
+      const response = await api.post("auth/password/forget", { email });
       if (response.status !== 200) {
         throw new Error(response.data?.message || "Erro ao enviar solicitação.");
       }
@@ -82,7 +82,7 @@ export default function RequestPasswordReset({ navigation }: any) {
 
     while (attempts < maxAttempts) {
       try {
-        const response = await api("POST", "auth/email/confirmed", { email });
+        const response = await api.post("auth/email/confirmed", { email });
         // O backend retorna { message: "email activated." } se confirmado
         if (
           response.status === 200 &&

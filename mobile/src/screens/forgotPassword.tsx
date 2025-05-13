@@ -50,8 +50,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     }
     setLoading(true);
     try {
-      const response = await api(
-        "POST",
+      const response = await api.post(
         "auth/password/reset",
         { email, password: newPassword }
       );
