@@ -7,13 +7,17 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View
+  View,
+  TouchableOpacity
 } from "react-native";
 import SockJS from "sockjs-client";
 import FireGif from "../components/fire";
 import Title from "../components/title";
 import { useTheme } from "../theme/theme";
 import * as SecureStore from 'expo-secure-store';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../App';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Message = {
   id: string;
@@ -25,11 +29,16 @@ type Message = {
   createdAt: string;
   status: "ACTIVE" | "INACTIVE" | string;
   isNew?: boolean; // flag para animação
+  tipoEvento?: string; // Adicionado para o tipo do evento
 };
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 const FIRE_GIF = require("../assets/fire.gif");
 
-export default function TimelineScreen() {
+export default function TimelineScreen({ route }: Props) {
+  // Mudar o armazenamento dessa variável com asyncStorage.
+  const [ userSubscription, setUserSubscription ] = useState<String | null>(null); // "PRO" ou "FREE"
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [stompClient, setStompClient] = useState<Client | null>(null);
@@ -37,7 +46,25 @@ export default function TimelineScreen() {
   const [isTokenLoaded, setIsTokenLoaded] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
 
+  useEffect(() => {
+    const getUserSubscription = async () => {
+      try {
+        const storedUserSubscription = await AsyncStorage.getItem("subscription");
+        if (!storedUserSubscription) {
+          console.log("userSubscription == false -> CHAT.tsx");
+          return;
+        }
+        setUserSubscription(storedUserSubscription);
+      } catch (error) {
+        console.log("erro ao recuperar userSubscription -> CHAT.tsx")
+      }
+    }
+    getUserSubscription();
+  }, []);
+
   // Primeiro, recupera o token e configura o estado
+  // TODO: validar se o token é valido antes do handshake do websocket
+  // TODO: não precisa implementar por agora o refresh dos tokens
   useEffect(() => {
     const getToken = async () => {
       try {
@@ -136,6 +163,26 @@ export default function TimelineScreen() {
   const renderItem = ({ item }: { item: Message }) => {
     const isActive = item.status === "ACTIVE";
 
+    // Supondo que o tipo do sinal está em item.tipoEvento (ex: "PRO", "GOL", etc)
+    console.log(item.tipoEvento);
+    if (item.tipoEvento === "PRO" && userSubscription !== "PRO") {
+      return (
+        <View style={[styles.messageContainer, { backgroundColor: colors.card, borderLeftColor: colors.secondary, borderLeftWidth: 5 }]}>
+          <Text style={{ color: colors.secondary, fontWeight: "bold", fontSize: 18, marginBottom: 8 }}>
+            Sinal exclusivo para assinantes PRO!
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: colors.secondary, borderRadius: 8, padding: 10, marginTop: 8 }}
+            onPress={() => {/* navegue para tela de assinatura ou mostre modal */}}
+          >
+            <Text style={{ color: colors.background, fontWeight: "bold" }}>
+              Seja PRO e desbloqueie sinais exclusivos!
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     return (
       <View
         style={[
@@ -177,7 +224,7 @@ export default function TimelineScreen() {
         </View>
 
         <Text style={[styles.acaoSinal, { color: colors.secondary }]}>
-          {item.acaoSinal}
+          {item.tipoEvento} | {item.acaoSinal}
         </Text>
       </View>
     );
