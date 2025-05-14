@@ -30,9 +30,9 @@ public class PaymentController {
         // Configura itens do pagamento
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
-                .title("Produto Teste")
+                .title("Assinatura teste")
                 .quantity(1)
-                .unitPrice(new BigDecimal("100.00"))
+                .unitPrice(new BigDecimal("10.00"))
                 .build());
 
         // Configura preferência
@@ -42,9 +42,9 @@ public class PaymentController {
                         .email("comprador@teste.com")
                         .build())
                 .backUrls(PreferenceBackUrlsRequest.builder()
-                        .success("http://seusite.com/success")
-                        .failure("http://seusite.com/failure")
-                        .pending("http://seusite.com/pending")
+                        .success("https://chamagol-9gfb.onrender.com/api/payment/success")
+                        .failure("https://chamagol-9gfb.onrender.com/api/payment/failure")
+                        .pending("https://chamagol-9gfb.onrender.com/api/payment/pending")
                         .build())
                 .autoReturn("approved")
                 .build();
@@ -54,8 +54,7 @@ public class PaymentController {
         try {
             preference = client.create(request);
         } catch (MPException | MPApiException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException("Erro ao gerar preferência" + e.getMessage());
         }
 
         return ResponseEntity.ok(preference.getId());
