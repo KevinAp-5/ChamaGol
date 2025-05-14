@@ -20,7 +20,7 @@ import Footer from "../components/footer";
 import ThreeDots from "../components/loading";
 import Logo from "../components/logo";
 import Title from "../components/title";
-import { api, setAuthToken } from "../config/Api";
+import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
