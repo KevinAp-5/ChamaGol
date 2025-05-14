@@ -31,7 +31,7 @@ public class RefreshTokenService {
 
     @Transactional
     public String createRefreshToken(User user) {
-        refreshTokenRepository.deleteByUser(user);
+        // refreshTokenRepository.deleteByUser(user);
 
         String token = tokenProvider.generateToken(user, expirationTime);
         if (token == null) {
@@ -39,6 +39,9 @@ public class RefreshTokenService {
         }
 
         RefreshToken refreshToken = new RefreshToken(user, token);
+        if (existsByToken(token)) {
+            refreshTokenRepository.deleteByToken(token);
+        }
 
         return refreshTokenRepository.save(refreshToken).getToken();
     }
@@ -53,6 +56,7 @@ public class RefreshTokenService {
         return true;
     }
 
+    @Transactional
     public boolean existsByToken(String token) {
         return refreshTokenRepository.existsByToken(token);
     }
