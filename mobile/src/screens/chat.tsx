@@ -162,12 +162,16 @@ export default function TimelineScreen({ route }: Props) {
 
   const renderItem = ({ item }: { item: Message }) => {
     const isActive = item.status === "ACTIVE";
+    const isPROSignal = item.tipoEvento === "PRO";
 
-    // Supondo que o tipo do sinal está em item.tipoEvento (ex: "PRO", "GOL", etc)
-    console.log(item.tipoEvento);
-    if (item.tipoEvento === "PRO" && userSubscription !== "PRO") {
+    // Primeiro verifica se é PRO e usuário não é PRO
+    if (isPROSignal && userSubscription !== "PRO") {
       return (
-        <View style={[styles.messageContainer, { backgroundColor: colors.card, borderLeftColor: colors.secondary, borderLeftWidth: 5 }]}>
+        <View style={[styles.messageContainer, { 
+          backgroundColor: colors.card, 
+          borderLeftColor: colors.secondary, 
+          borderLeftWidth: 5 
+        }]}>
           <Text style={{ color: colors.secondary, fontWeight: "bold", fontSize: 18, marginBottom: 8 }}>
             Sinal exclusivo para assinantes PRO!
           </Text>
@@ -192,6 +196,8 @@ export default function TimelineScreen({ route }: Props) {
             borderLeftColor: isActive ? colors.secondary : colors.muted,
             borderLeftWidth: 5,
             shadowColor: colors.muted,
+            elevation: isPROSignal ? 8 : 5,
+            shadowOpacity: isPROSignal ? 0.3 : 0.15,
           },
         ]}
       >
@@ -208,10 +214,7 @@ export default function TimelineScreen({ route }: Props) {
           <Text style={[styles.nomeTimes, { color: colors.primary, flex: 1 }]}>
             {item.nomeTimes}
           </Text>
-          {/* Mostra fogo pequeno se isNew */}
-          {item.isNew && (
-            <FireGif />
-          )}
+          {item.isNew && <FireGif />}
         </View>
 
         <View style={styles.matchInfo}>
@@ -223,9 +226,16 @@ export default function TimelineScreen({ route }: Props) {
           </Text>
         </View>
 
-        <Text style={[styles.acaoSinal, { color: colors.secondary }]}>
-          {item.tipoEvento} | {item.acaoSinal}
-        </Text>
+        <View style={styles.bottomRow}>
+          <Text style={[styles.acaoSinal, { color: colors.secondary }]}>
+            {item.acaoSinal}
+          </Text>
+          {isPROSignal && (
+            <View style={styles.proTag}>
+              <Text style={[styles.proTagText, { color: colors.accent }]}>PRO</Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   };
@@ -337,5 +347,37 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontStyle: "italic",
+  },
+  proBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    zIndex: 1,
+  },
+  proBadgeText: {
+    color: '#000000',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  proTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#FF7043",
+  },
+  proTagText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
