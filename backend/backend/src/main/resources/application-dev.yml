@@ -45,6 +45,7 @@ logging:
       springframework:
         security: TRACE
 api:
+  url: http://localhost:8080/api/auth/
   security:
     token:
       secret: ${jwt_secret:my-secret-key}

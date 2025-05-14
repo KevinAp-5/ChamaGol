@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${title}">Status do Pagamento</title>
+    <link rel="stylesheet" th:href="@{/css/payment-result.css}" />
+</head>
+<body>
+    <div class="container" th:classappend="${cssClass}">
+        <h1 th:text="${title}">Título</h1>
+        <p th:text="${message}">Mensagem do pagamento</p>
+        <a href="/" class="btn-home">Voltar para a página inicial</a>
+    </div>
+</body>
+</html>
