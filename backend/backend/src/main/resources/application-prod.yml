@@ -2,9 +2,9 @@ spring:
   application:
     name: login
   datasource:
-    url: jdbc:postgresql://dpg-d07uhaa4d50c73fhofsg-a.oregon-postgres.render.com/login_lyfe
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://dpg-d0i0ssemcj7s739ja8ig-a.oregon-postgres.render.com/backend_764d
+    username: ${DB_USERNAME_TEST}
+    password: ${DB_PASSWORD_TEST}
     hikari:
       maximum-pool-size: 50 # Número máximo de conexões no pool
       minimum-idle: 10 # Número mínimo de conexões ociosas
@@ -46,6 +46,7 @@ logging:
       springframework:
         security: WARN # Reduzido para WARN em produção
 api:
+  url: ${APP_URL}
   security:
     token:
       secret: ${jwt_secret:my-secret-key}
