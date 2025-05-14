@@ -5,3 +5,6 @@ openroute:
   security:
     token:
       secret: ${openroute_token}
+mercadopago:
+  access:
+    token: APP_USR-7932267681467452-051323-724026344d14827a95e5b5e6713fea3f-2233077483
