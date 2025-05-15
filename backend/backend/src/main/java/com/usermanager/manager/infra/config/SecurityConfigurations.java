@@ -44,7 +44,8 @@ public class SecurityConfigurations {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        
+                       
+                        .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
