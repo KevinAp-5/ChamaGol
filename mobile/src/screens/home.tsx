@@ -90,6 +90,12 @@ export default function HomeScreen({ navigation }: Props) {
       >
         <Text style={[styles.cardText, { color: colors.primary }]}>ℹ️ Sobre Nós</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.card, { borderColor: colors.secondary }]}
+        onPress={() => navigation.navigate('ProSubscription')}
+      >
+        <Text style={[styles.cardText, { color: colors.primary }]}>💎 Assinaturas</Text>
+      </TouchableOpacity>
       <Footer />
       <TermModal
         visible={showTermModal}
