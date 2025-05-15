@@ -11,6 +11,7 @@ import ForgotPasswordScreen from './src/screens/forgotPassword';
 import PasswordResetEmailConfirmed from './src/screens/passwordResetEmailConfirmed';
 import SplashScreen from './src/screens/splash';
 import RequestPasswordReset from './src/screens/requestPasswordReset';
+import ProSubscriptionScreen from './src/screens/subscription';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   PasswordResetEmailConfirmed: undefined;
   RequestPassword: undefined;
+  ProSubscription: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -30,7 +32,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="ForgotPassword" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="ProSubscription" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -41,6 +43,7 @@ export default function App() {
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="PasswordResetEmailConfirmed" component={PasswordResetEmailConfirmed} />
         <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
+        <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   ); 
