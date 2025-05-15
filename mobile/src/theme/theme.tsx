@@ -10,6 +10,7 @@ export const theme = {
     //highlight: '#B71C1C', // Vermelho escuro para destaques
     highlight: '#000', // Vermelho escuro para destaques
     card: '#FFFFFF', // Cartões brancos (mantido)
+    error: "#FF4444",
   },
   fonts: {
     regular: 'System',
