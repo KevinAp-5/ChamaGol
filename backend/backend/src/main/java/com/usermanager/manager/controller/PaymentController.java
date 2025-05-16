@@ -1,12 +1,15 @@
 package com.usermanager.manager.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mercadopago.client.payment.PaymentClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
@@ -26,8 +29,11 @@ import com.mercadopago.client.preference.PreferencePaymentTypeRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
-import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
+import com.mercadopago.resources.user.User;
+import com.usermanager.manager.infra.service.WebhookService;
+import com.usermanager.manager.model.webhook.WebhookEvent;
+import com.usermanager.manager.model.webhook.enums.EventStatus;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +43,12 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentController {
     @Value("${mercadopago.webhook.secret.token}")
     private String mercadoPagoSecret;
+
+    private final WebhookService webhookService;
+
+    public PaymentController(WebhookService webhookService) {
+        this.webhookService = webhookService;
+    }
 
     @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
@@ -58,18 +70,15 @@ public class PaymentController {
                 return ResponseEntity.status(401).body("Assinatura inválida");
             }
 
-            Map<String, Object> data = (Map<String, Object>) payload.get("data");
-            if (data != null) {
-                String paymentId = String.valueOf(data.get("id"));
-                log.info("Processing payment ID: {}", paymentId);
+             // Salvar o payload JSON como String (pode usar ObjectMapper para converter)
+            ObjectMapper mapper = new ObjectMapper();
+            String payloadJson = mapper.writeValueAsString(payload);
 
-                PaymentClient client = new PaymentClient();
-                Payment payment_status = client.get(Long.valueOf(paymentId));
-                log.info("Payment {} status: {}", paymentId, payment_status.getStatus());
-                log.debug("Full payment details: {}", payment_status);
-            } else {
-                log.warn("Received webhook with null data");
-            }
+            WebhookEvent event = new WebhookEvent();
+            event.setPayloadJson(payloadJson);
+            event.setStatus(EventStatus.PENDING);
+            event.setReceivedAt(LocalDateTime.now());
+            webhookService.saveWebhookEvent(event); 
 
             return ResponseEntity.ok("Notificação recebida");
 
@@ -126,7 +135,11 @@ public class PaymentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment() throws MPException {
+    public ResponseEntity<String> createPayment(@AuthenticationPrincipal User user) throws MPException {
+        if (user == null) {
+            return ResponseEntity.status(401).body("unauthorized");
+        }
+    
         log.info("Initiating payment creation");
         PreferenceClient client = new PreferenceClient();
 
@@ -154,6 +167,7 @@ public class PaymentController {
                 .payer(PreferencePayerRequest.builder()
                         .email("comprador@teste.com")
                         .build())
+                .externalReference(String.valueOf(user.getId()))
                 .backUrls(PreferenceBackUrlsRequest.builder()
                         .success("https://chamagol-9gfb.onrender.com/api/payment/success")
                         .failure("https://chamagol-9gfb.onrender.com/api/payment/failure")
