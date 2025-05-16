@@ -63,6 +63,11 @@ public class  UserService {
         return userMapper.userToUserDTO(response);
     }
 
+    public User findById(@Positive @NotNull Long id) {
+        return userRepository.findById(id).orElseThrow(
+                () -> new UserNotFoundException("with ID: " + id));
+    }
+
     @Transactional
     public boolean deleteUserById(@Positive @NotNull Long id) {
         User userToDelete = userRepository.findById(id).orElse(null);
