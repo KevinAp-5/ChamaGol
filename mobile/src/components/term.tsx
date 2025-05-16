@@ -21,8 +21,7 @@ export const TermModal: React.FC<TermModalProps> = ({ visible, onAccepted }) => 
     setAccepting(true);
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-      const response = await api(
-        "POST",
+      const response = await api.post(
         "acceptance/accept-latest",
         { isAdult: true },
         { headers: { Authorization: `Bearer ${token}` } }

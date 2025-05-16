@@ -4,7 +4,7 @@ import { Alert } from "react-native";
 
 export async function fetchTerm(): Promise<string | undefined> {
   try {
-    const response = await api("GET", "terms/latest");
+    const response = await api.get("terms/latest");
 
     if (response.status === 200) {
       return (response.data as { content: string })?.content;
