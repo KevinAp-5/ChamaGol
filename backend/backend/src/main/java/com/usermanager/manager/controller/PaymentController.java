@@ -45,41 +45,48 @@ public class PaymentController {
             @RequestParam Map<String, String> queryParams,
             @RequestBody Map<String, Object> payload) {
 
-        try {
-            // Extrair data.id dos query params
-            String dataId = queryParams.get("data.id");
+        log.info("Webhook received - RequestId: {}, Signature: {}", xRequestId, xSignature);
+        log.debug("Query params: {}", queryParams);
+        log.debug("Payload: {}", payload);
 
-            // Validar assinatura
+        try {
+            String dataId = queryParams.get("data.id");
+            log.info("Processing webhook for dataId: {}", dataId);
+
             if (!validateSignature(xSignature, xRequestId, dataId, MERCADO_PAGO_SECRET)) {
+                log.error("Invalid signature for request ID: {}", xRequestId);
                 return ResponseEntity.status(401).body("Assinatura inválida");
             }
 
-            // Processar payload (exemplo: extrair id do pagamento)
             Map<String, Object> data = (Map<String, Object>) payload.get("data");
             if (data != null) {
                 String paymentId = String.valueOf(data.get("id"));
+                log.info("Processing payment ID: {}", paymentId);
 
                 PaymentClient client = new PaymentClient();
                 Payment payment_status = client.get(Long.valueOf(paymentId));
-                log.info("Pagamento recebido: " + paymentId);
-                log.info("status do pagamento " + payment_status.getStatus());
-
+                log.info("Payment {} status: {}", paymentId, payment_status.getStatus());
+                log.debug("Full payment details: {}", payment_status);
+            } else {
+                log.warn("Received webhook with null data");
             }
 
             return ResponseEntity.ok("Notificação recebida");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error processing webhook", e);
             return ResponseEntity.status(500).body("Erro no processamento");
         }
     }
 
     private boolean validateSignature(String xSignature, String xRequestId, String dataId, String secret) {
+        log.debug("Validating signature - RequestId: {}, DataId: {}", xRequestId, dataId);
+        
         try {
-            // Exemplo: xSignature = "ts=1742505638683,v1=abcdef123456..."
             String[] parts = xSignature.split(",");
             String ts = null;
             String v1 = null;
+            
             for (String part : parts) {
                 String[] kv = part.split("=");
                 if (kv.length == 2) {
@@ -90,16 +97,17 @@ public class PaymentController {
                 }
             }
 
-            if (ts == null || v1 == null)
+            if (ts == null || v1 == null) {
+                log.error("Missing timestamp or signature components");
                 return false;
+            }
 
-            // Montar string para assinatura: "id:{dataId};request-id:{xRequestId};ts:{ts};"
             String message = String.format("id:%s;request-id:%s;ts:%s;", dataId, xRequestId, ts);
+            log.debug("Generated message for signature: {}", message);
 
-            // Calcular HMAC SHA256 com a chave secreta
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(secret.getBytes(),
-                    "HmacSHA256");
+            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
+                    secret.getBytes(), "HmacSHA256");
             mac.init(secretKey);
             byte[] hashBytes = mac.doFinal(message.getBytes());
             StringBuilder hashHex = new StringBuilder();
@@ -107,38 +115,39 @@ public class PaymentController {
                 hashHex.append(String.format("%02x", b));
             }
 
-            // Comparar hash calculado com v1 do header
-            return hashHex.toString().equals(v1);
+            boolean isValid = hashHex.toString().equals(v1);
+            log.info("Signature validation result: {}", isValid);
+            return isValid;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error validating signature", e);
             return false;
         }
     }
 
     @PostMapping("/create")
     public ResponseEntity<String> createPayment() throws MPException {
+        log.info("Initiating payment creation");
         PreferenceClient client = new PreferenceClient();
 
-        // Configura itens do pagamento
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
                 .title("Assinatura teste")
                 .quantity(1)
                 .unitPrice(new BigDecimal("00.01"))
                 .build());
+        log.debug("Payment items configured: {}", items);
 
-        // Configura métodos de pagamento
         List<PreferencePaymentTypeRequest> excludedPaymentTypes = new ArrayList<>();
-
         excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("ticket").build());
         excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("atm").build());
+        
         PreferencePaymentMethodsRequest paymentMethods = PreferencePaymentMethodsRequest.builder()
-                .excludedPaymentTypes(excludedPaymentTypes) // Remove os meios de pagamentos indesejados
-                .installments(1) // Pagamento à vista (sem parcelamento)
+                .excludedPaymentTypes(excludedPaymentTypes)
+                .installments(1)
                 .build();
+        log.debug("Payment methods configured: {}", paymentMethods);
 
-        // Configura preferência
         PreferenceRequest request = PreferenceRequest.builder()
                 .items(items)
                 .paymentMethods(paymentMethods)
@@ -153,23 +162,24 @@ public class PaymentController {
                 .notificationUrl("https://chamagol-9gfb.onrender.com/api/payment/webhook")
                 .autoReturn("approved")
                 .build();
+        log.debug("Preference request configured: {}", request);
 
-        // Cria preferência
         try {
             Preference preference = client.create(request);
-            log.info("Preferência criada: {}", preference.getId());
+            log.info("Payment preference created successfully. ID: {}", preference.getId());
             return ResponseEntity.ok(preference.getId());
         } catch (MPApiException apiEx) {
-            log.error("Erro na API MP: {}", apiEx.getApiResponse().getContent());
+            log.error("MercadoPago API error: {}", apiEx.getApiResponse().getContent(), apiEx);
             return ResponseEntity.status(500).body("Erro no gateway de pagamento");
         } catch (MPException ex) {
-            log.error("Erro geral MP: {}", ex.getMessage());
+            log.error("MercadoPago general error", ex);
             return ResponseEntity.status(500).body("Erro no processamento do pagamento");
         }
     }
 
     @GetMapping("/success")
     public String success(Model model) {
+        log.info("Payment success callback received");
         model.addAttribute("status", "success");
         model.addAttribute("title", "Pagamento Aprovado");
         model.addAttribute("message", "Seu pagamento foi processado com sucesso. Obrigado pela compra!");
@@ -179,6 +189,7 @@ public class PaymentController {
 
     @GetMapping("/failure")
     public String failure(Model model) {
+        log.info("Payment failure callback received");
         model.addAttribute("status", "failure");
         model.addAttribute("title", "Pagamento Recusado");
         model.addAttribute("message", "Houve um problema ao processar seu pagamento. Por favor, tente novamente.");
@@ -188,6 +199,7 @@ public class PaymentController {
 
     @GetMapping("/pending")
     public String pending(Model model) {
+        log.info("Payment pending callback received");
         model.addAttribute("status", "pending");
         model.addAttribute("title", "Pagamento Pendente");
         model.addAttribute("message", "Seu pagamento está pendente. Assim que for confirmado, você será notificado.");
