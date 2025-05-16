@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PaymentController {
     @Value("${mercadopago.webhook.secret.token}")
-    private static String MERCADO_PAGO_SECRET;
+    private String mercadoPagoSecret;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
@@ -53,7 +53,7 @@ public class PaymentController {
             String dataId = queryParams.get("data.id");
             log.info("Processing webhook for dataId: {}", dataId);
 
-            if (!validateSignature(xSignature, xRequestId, dataId, MERCADO_PAGO_SECRET)) {
+            if (!validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
                 log.error("Invalid signature for request ID: {}", xRequestId);
                 return ResponseEntity.status(401).body("Assinatura inválida");
             }

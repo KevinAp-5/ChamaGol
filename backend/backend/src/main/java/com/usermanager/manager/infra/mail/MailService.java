@@ -9,7 +9,7 @@ import com.usermanager.manager.model.email.MailProvider;
 public class MailService {
 
     @Value("${api.url}")
-    private static String API_PREFIX;
+    private String API_PREFIX;
     public final MailProvider mailProvider;
 
     public MailService(MailProvider mailProvider) {
