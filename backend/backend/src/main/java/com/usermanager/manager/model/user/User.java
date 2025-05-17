@@ -78,6 +78,9 @@ public class User implements UserDetails {
     @Column(name = "updated_at", nullable = true)
     private ZonedDateTime updatedAt;
 
+    @Column(name = "last_login")
+    private ZonedDateTime lastLogin;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

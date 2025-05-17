@@ -113,6 +113,9 @@ public class AuthService implements UserDetailsService {
             throw new BadCredentialsException("Bad credentials: verify login or password.");
         }
 
+        user.setLastLogin(ZonedDateTime.now());
+        userService.save(user);
+
         Authentication auth = authenticationManager.authenticate(usernamePassword);
         log.info("user {} sucessfully authenticated", data.login());
         String acessToken =  tokenProvider.generateToken((User) auth.getPrincipal());
