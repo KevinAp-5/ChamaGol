@@ -1,6 +1,6 @@
 package com.usermanager.manager.infra.service;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -119,7 +119,7 @@ public class WebhookService {
                 }
 
                 event.setStatus(EventStatus.PROCESSED);
-                event.setProcessedAt(LocalDateTime.now());
+                event.setProcessedAt(ZonedDateTime.now());
             } catch (Exception e) {
                 log.error("Error processing webhook event id {}: {}", event.getId(), e.getMessage(), e);
                 event.setRetryCount(event.getRetryCount() + 1);

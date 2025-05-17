@@ -1,7 +1,7 @@
 package com.usermanager.manager.controller;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -104,10 +104,11 @@ public class PaymentController {
             log.info("erro ao mappear payloadjson");
         }
 
-        WebhookEvent event = new WebhookEvent();
-        event.setPayloadJson(payloadJson);
-        event.setStatus(EventStatus.PENDING);
-        event.setReceivedAt(LocalDateTime.now());
+        WebhookEvent event = WebhookEvent.builder()
+            .payloadJson(payloadJson)
+            .status(EventStatus.PENDING)
+            .receivedAt(ZonedDateTime.now())
+            .build();
         return webhookService.saveWebhookEvent(event);
     }
 
