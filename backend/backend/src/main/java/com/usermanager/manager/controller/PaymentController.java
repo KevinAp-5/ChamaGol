@@ -51,49 +51,63 @@ public class PaymentController {
         this.webhookService = webhookService;
         this.preferenceClient = preferenceClient;
     }
-
-    @PostMapping("/webhook")
+ @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
-            @RequestHeader("x-signature") String xSignature,
-            @RequestHeader("x-request-id") String xRequestId,
+            @RequestHeader(value = "x-signature", required = false) String xSignature,
+            @RequestHeader(value = "x-request-id", required = false) String xRequestId,
             @RequestParam Map<String, String> queryParams,
             @RequestBody Map<String, Object> payload) {
 
-        log.info("Webhook received - RequestId: {}, Signature: {}", xRequestId, xSignature);
-        log.debug("Query params: {}", queryParams);
-        log.debug("Payload: {}", payload);
+        log.info("Webhook recebido - RequestId: {}, Signature: {}", xRequestId, xSignature);
+        log.info("Query params: {}", queryParams);
+        log.info("Payload: {}", payload);
+        log.debug("Secret configurado: {}", mercadoPagoSecret.substring(0, 3) + "..." + 
+                (mercadoPagoSecret.length() > 6 ? mercadoPagoSecret.substring(mercadoPagoSecret.length() - 3) : ""));
 
         try {
-            // 1. Extraia o data.id dos query params (como manda a documentação)
+            // 1. Extrair o data.id dos query params conforme a documentação
             String dataId = queryParams.get("data.id");
-            if (dataId == null) {
-                // Fallback: tente pegar do body (caso de testes manuais ou cenários não padrão)
-                Map<String, Object> data = (Map<String, Object>) payload.get("data");
-                if (data != null) {
-                    dataId = String.valueOf(data.get("id"));
+            
+            // Caso não esteja nos query params, tentar extrair do body como fallback
+            if (dataId == null && payload.containsKey("data")) {
+                Object dataObj = payload.get("data");
+                if (dataObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> data = (Map<String, Object>) dataObj;
+                    if (data.containsKey("id")) {
+                        dataId = String.valueOf(data.get("id"));
+                    }
                 }
             }
-            log.info("Processing webhook for dataId: {}", dataId);
+            log.info("Processando webhook para dataId: {}", dataId);
 
-            // 2. Valide a assinatura conforme a documentação oficial
-            if (!validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
-                log.error("Invalid signature for request ID: {}", xRequestId);
-                return ResponseEntity.status(401).body("Assinatura inválida");
+            // 2. Validar a assinatura conforme documentação oficial (se a assinatura estiver presente)
+            if (xSignature != null && !xSignature.trim().isEmpty()) {
+                if (!webhookService.validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
+                    log.error("Assinatura inválida para request ID: {}", xRequestId);
+                    return ResponseEntity.status(401).body("Assinatura inválida");
+                }
+            } else {
+                log.warn("Webhook recebido sem assinatura. Pulando validação de segurança.");
+                // Em ambiente de produção, considere rejeitar webhooks sem assinatura
             }
 
-            // 3. Salve o evento (persistência assíncrona recomendada)
-            var webhookEvent = createWebhookEvent(payload);
-            log.info("Webhook entity saved: {}", webhookEvent);
+            // 3. Salvar o evento 
+            WebhookEvent webhookEvent = createWebhookEvent(payload);
+            log.info("Evento de webhook salvo: {}", webhookEvent);
 
-            // 4. Retorne 200 para evitar múltiplas tentativas de notificação
-            return ResponseEntity.ok("Notificação recebida");
+            // 4. Retornar 200 para evitar múltiplas tentativas de reenvio pelo Mercado Pago
+            return ResponseEntity.ok("Notificação recebida com sucesso");
 
         } catch (Exception e) {
-            log.error("Error processing webhook", e);
+            log.error("Erro ao processar webhook", e);
             return ResponseEntity.status(500).body("Erro no processamento");
         }
     }
 
+    /**
+     * Cria e salva um evento de webhook a partir do payload recebido
+     */
     @Transactional
     private WebhookEvent createWebhookEvent(Object payload) {
         ObjectMapper mapper = new ObjectMapper();
@@ -101,60 +115,17 @@ public class PaymentController {
         try {
             payloadJson = mapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            log.info("erro ao mappear payloadjson");
+            log.warn("Erro ao converter payload para JSON", e);
         }
 
         WebhookEvent event = WebhookEvent.builder()
             .payloadJson(payloadJson)
             .status(EventStatus.PENDING)
             .receivedAt(ZonedDateTime.now())
+            .retryCount(0)
             .build();
+            
         return webhookService.saveWebhookEvent(event);
-    }
-
-    private boolean validateSignature(String xSignature, String xRequestId, String dataId, String secret) {
-        log.debug("Validating signature - RequestId: {}, DataId: {}", xRequestId, dataId);
-
-        try {
-            String[] parts = xSignature.split(",");
-            String ts = null, v1 = null;
-            for (String part : parts) {
-                String[] kv = part.split("=");
-                if (kv.length == 2) {
-                    if (kv[0].trim().equals("ts"))
-                        ts = kv[1].trim();
-                    else if (kv[0].trim().equals("v1"))
-                        v1 = kv[1].trim();
-                }
-            }
-
-            if (ts == null || v1 == null) {
-                log.error("Missing timestamp or signature components");
-                return false;
-            }
-
-            // Template: id:[data.id_url];request-id:[x-request-id_header];ts:[ts_header];
-            String message = String.format("id:%s;request-id:%s;ts:%s;", dataId, xRequestId, ts);
-            log.debug("Generated message for signature: {}", message);
-
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(secret.getBytes(),
-                    "HmacSHA256");
-            mac.init(secretKey);
-            byte[] hashBytes = mac.doFinal(message.getBytes());
-            StringBuilder hashHex = new StringBuilder();
-            for (byte b : hashBytes) {
-                hashHex.append(String.format("%02x", b));
-            }
-
-            boolean isValid = hashHex.toString().equals(v1);
-            log.info("Signature validation result: {}", isValid);
-            return isValid;
-
-        } catch (Exception e) {
-            log.error("Error validating signature", e);
-            return false;
-        }
     }
 
     @PostMapping("/create")

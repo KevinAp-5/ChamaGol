@@ -1,5 +1,6 @@
 package com.usermanager.manager.infra.service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -137,4 +138,94 @@ public class WebhookService {
     public WebhookEvent saveWebhookEvent(WebhookEvent webhookEvent) {
         return webhookRepository.save(webhookEvent);
     }
+
+
+    /**
+     * Valida a assinatura de um webhook do Mercado Pago conforme a documentação oficial.
+     * 
+     * @param xSignature O valor do header x-signature da requisição
+     * @param xRequestId O valor do header x-request-id da requisição
+     * @param dataId O ID do recurso recebido no parâmetro de consulta data.id
+     * @param secret A chave secreta fornecida pelo Mercado Pago
+     * @return true se a assinatura for válida, false caso contrário
+     */
+    public boolean validateSignature(String xSignature, String xRequestId, String dataId, String secret) {
+        log.debug("Validando assinatura - RequestId: {}, DataId: {}", xRequestId, dataId);
+
+        try {
+            // 1. Extrair o timestamp (ts) e a assinatura (v1) do header x-signature
+            String[] parts = xSignature.split(",");
+            String ts = null;
+            String hash = null;
+            
+            for (String part : parts) {
+                String[] keyValue = part.split("=", 2);
+                if (keyValue.length == 2) {
+                    String key = keyValue[0].trim();
+                    String value = keyValue[1].trim();
+                    
+                    if (key.equals("ts")) {
+                        ts = value;
+                    } else if (key.equals("v1")) {
+                        hash = value;
+                    }
+                }
+            }
+
+            if (ts == null || hash == null) {
+                log.error("Componentes da assinatura (ts ou v1) não encontrados no header");
+                return false;
+            }
+
+            // 2. Construir o template conforme a documentação
+            StringBuilder manifest = new StringBuilder();
+            
+            // Adicionar id somente se dataId não for nulo ou vazio
+            if (dataId != null && !dataId.isEmpty()) {
+                manifest.append("id:").append(dataId).append(";");
+            }
+            
+            // Adicionar request-id somente se xRequestId não for nulo ou vazio
+            if (xRequestId != null && !xRequestId.isEmpty()) {
+                manifest.append("request-id:").append(xRequestId).append(";");
+            }
+            
+            // Adicionar ts somente se ts não for nulo ou vazio
+            if (ts != null && !ts.isEmpty()) {
+                manifest.append("ts:").append(ts).append(";");
+            }
+            
+            String message = manifest.toString();
+            log.debug("Template gerado para validação: {}", message);
+
+            // 3. Calcular o HMAC SHA-256 usando a chave secreta
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
+                secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(secretKey);
+            byte[] hashBytes = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+            
+            // 4. Converter o resultado para hexadecimal
+            StringBuilder calculatedHash = new StringBuilder();
+            for (byte b : hashBytes) {
+                calculatedHash.append(String.format("%02x", b));
+            }
+            
+            // 5. Verificar se a assinatura calculada corresponde à recebida
+            boolean isValid = calculatedHash.toString().equals(hash);
+            
+            if (isValid) {
+                log.info("Assinatura válida para RequestId: {}", xRequestId);
+            } else {
+                log.warn("Assinatura inválida - Calculada: {}, Recebida: {}", calculatedHash, hash);
+            }
+            
+            return isValid;
+
+        } catch (Exception e) {
+            log.error("Erro ao validar assinatura", e);
+            return false;
+        }
+    }
+
 }
