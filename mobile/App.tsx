@@ -31,9 +31,24 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  const linking = {
+    prefixes: ['seuapp://', 'https://seudominio.com'],
+    config: {
+      screens: {
+        Home: 'home',
+        Payment: 'payment',
+        PaymentSuccess: 'payment/success',
+        PaymentFailure: 'payment/failure',
+        PaymentPending: 'payment/pending',
+        // Adicione outras rotas conforme necessário
+      },
+    },
+
+  };
   return (
     <>
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
+      <DeepLinkListener/>
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -48,7 +63,6 @@ export default function App() {
         <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
-    <DeepLinkListener></DeepLinkListener>
     </>
   ); 
 }
