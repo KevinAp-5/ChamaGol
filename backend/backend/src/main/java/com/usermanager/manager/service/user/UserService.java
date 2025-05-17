@@ -68,6 +68,10 @@ public class  UserService {
                 () -> new UserNotFoundException("with ID: " + id));
     }
 
+    public Optional<User> findByIdOptional(@Positive @NotNull Long id) {
+        return userRepository.findById(id);
+    }
+
     @Transactional
     public boolean deleteUserById(@Positive @NotNull Long id) {
         User userToDelete = userRepository.findById(id).orElse(null);

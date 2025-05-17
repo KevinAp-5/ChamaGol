@@ -183,7 +183,7 @@ public class WebhookService {
 
     private User findUser(Long userId) throws WebhookProcessingException {
         try {
-            Optional<User> userOptional = Optional.ofNullable(userService.findById(userId));
+            Optional<User> userOptional = userService.findByIdOptional(userId);
             return userOptional.orElseThrow(() -> new WebhookProcessingException("User not found with ID: " + userId));
         } catch (Exception e) {
             if (e instanceof WebhookProcessingException) {
