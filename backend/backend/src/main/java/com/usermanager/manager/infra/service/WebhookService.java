@@ -62,6 +62,10 @@ public class WebhookService {
 
         log.info("Found {} pending webhook events to process", pendingEvents.size());
 
+        if (pendingEvents.size() == 0) {
+            return;
+        }
+
         for (WebhookEvent event : pendingEvents) {
             try {
                 processEvent(event);
