@@ -37,7 +37,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 const FIRE_GIF = require("../assets/fire.gif");
 
 export default function TimelineScreen({ route }: Props) {
-  // Mudar o armazenamento dessa variável com asyncStorage.
   const [ userSubscription, setUserSubscription ] = useState<String | null>(null); // "PRO" ou "FREE"
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -64,7 +63,6 @@ export default function TimelineScreen({ route }: Props) {
 
   // Primeiro, recupera o token e configura o estado
   // TODO: validar se o token é valido antes do handshake do websocket
-  // TODO: não precisa implementar por agora o refresh dos tokens
   useEffect(() => {
     const getToken = async () => {
       try {

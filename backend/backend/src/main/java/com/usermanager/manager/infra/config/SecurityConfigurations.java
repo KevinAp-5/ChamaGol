@@ -1,5 +1,6 @@
 package com.usermanager.manager.infra.config;
 
+import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,8 +35,9 @@ public class SecurityConfigurations {
                 .cors(cors -> cors.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // .headers(headers -> headers
-                //         .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'; "))
-                //         .frameOptions(frame -> frame.sameOrigin()))
+                // .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self';
+                // script-src 'self'; "))
+                // .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
@@ -44,7 +46,9 @@ public class SecurityConfigurations {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                       
+
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/css/**").permitAll()
                         .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
