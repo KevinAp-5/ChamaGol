@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
@@ -30,7 +31,6 @@ import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.preference.Preference;
-import com.mercadopago.resources.user.User;
 import com.usermanager.manager.infra.service.WebhookService;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
@@ -45,9 +45,11 @@ public class PaymentController {
     private String mercadoPagoSecret;
 
     private final WebhookService webhookService;
+    private PreferenceClient preferenceClient;
 
-    public PaymentController(WebhookService webhookService) {
+    public PaymentController(WebhookService webhookService, PreferenceClient preferenceClient) {
         this.webhookService = webhookService;
+        this.preferenceClient = preferenceClient;
     }
 
     @PostMapping("/webhook")
@@ -71,14 +73,8 @@ public class PaymentController {
             }
 
              // Salvar o payload JSON como String (pode usar ObjectMapper para converter)
-            ObjectMapper mapper = new ObjectMapper();
-            String payloadJson = mapper.writeValueAsString(payload);
-
-            WebhookEvent event = new WebhookEvent();
-            event.setPayloadJson(payloadJson);
-            event.setStatus(EventStatus.PENDING);
-            event.setReceivedAt(LocalDateTime.now());
-            webhookService.saveWebhookEvent(event); 
+            var webhookEvent = createWebhookEvent(payload);
+            log.info("webhook entitty saved: {}", webhookEvent);
 
             return ResponseEntity.ok("Notificação recebida");
 
@@ -88,6 +84,22 @@ public class PaymentController {
         }
     }
 
+    @Transactional
+    private WebhookEvent createWebhookEvent(Object payload) {
+        ObjectMapper mapper = new ObjectMapper();
+        String payloadJson = "";
+            try {
+                payloadJson = mapper.writeValueAsString(payload);
+            } catch (JsonProcessingException e) {
+                log.info("erro ao mappear payloadjson");
+            }
+
+        WebhookEvent event = new WebhookEvent();
+        event.setPayloadJson(payloadJson);
+        event.setStatus(EventStatus.PENDING);
+        event.setReceivedAt(LocalDateTime.now());
+        return webhookService.saveWebhookEvent(event); 
+    }
     private boolean validateSignature(String xSignature, String xRequestId, String dataId, String secret) {
         log.debug("Validating signature - RequestId: {}, DataId: {}", xRequestId, dataId);
         
@@ -135,13 +147,13 @@ public class PaymentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@AuthenticationPrincipal User user) throws MPException {
+    public ResponseEntity<String> createPayment(@AuthenticationPrincipal com.usermanager.manager.model.user.User user) throws MPException {
         if (user == null) {
             return ResponseEntity.status(401).body("unauthorized");
         }
     
         log.info("Initiating payment creation");
-        PreferenceClient client = new PreferenceClient();
+        PreferenceClient client = this.preferenceClient;
 
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
