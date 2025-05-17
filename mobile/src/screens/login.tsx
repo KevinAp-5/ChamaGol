@@ -23,6 +23,7 @@ import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -99,7 +100,6 @@ export default function LoginScreen({ navigation }: Props) {
         if (refreshToken) {
           await SecureStore.setItemAsync('refreshToken', refreshToken);
         }
-        
         // Use a brief timeout to show loading state before navigation
         setTimeout(() => {
           navigation.navigate("Home");
@@ -120,6 +120,20 @@ export default function LoginScreen({ navigation }: Props) {
     return emailRegex.test(email);
   };
   
+  const getUserInfo = async() => {
+    try {
+      const response = await api.get("/auth/user/info");
+      if (response.status == 200 && response.data) {
+          await AsyncStorage.setItem("username", response.data.username);
+          await AsyncStorage.setItem("lastLogin", response.data.lastLogin);
+          console.log("informações salvas.")
+      }
+    } catch (error) {
+      console.log("erro ao recuperar user login info" + error?.response?.data?.message);
+    }
+  }
+  getUserInfo();
+
   return (
     <CustomAlertProvider>
       <SafeAreaView style={{ flex: 1 }}>
