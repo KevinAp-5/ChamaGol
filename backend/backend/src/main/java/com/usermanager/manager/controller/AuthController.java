@@ -173,9 +173,6 @@ public class AuthController {
 
     @GetMapping("token/validate")
     public ResponseEntity<String> validateToken(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(401).body("invalid");
-        }
         return ResponseEntity.ok("valid");        
     }
     
