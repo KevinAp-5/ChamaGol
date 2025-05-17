@@ -299,7 +299,7 @@ export default function HomeScreen({ navigation }: Props) {
               <TouchableOpacity
                 style={[styles.card, shadows.medium, { backgroundColor: colors.background }]}
                 activeOpacity={0.8}
-                onPress={() => handleCardPress(cardAnimations[0], 'Chat')}
+                onPress={() => handleCardPress(cardAnimations[0], 'Timeline')}
               >
                 <LinearGradient
                   colors={[colors.secondary, colors.highlight]}
