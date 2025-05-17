@@ -1,6 +1,7 @@
 {
   "expo": {
     "scheme": "chamagol",
+    "assets": ["./assets/fonts/"],
     "name": "ChamaGol",
     "slug": "ChamaGol",
     "version": "1.0.0",
