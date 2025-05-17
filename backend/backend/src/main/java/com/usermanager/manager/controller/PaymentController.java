@@ -64,20 +64,28 @@ public class PaymentController {
         log.debug("Payload: {}", payload);
 
         try {
-            // Corrija aqui: pegue o dataId do payload, não dos queryParams
-            Map<String, Object> data = (Map<String, Object>) payload.get("data");
-            String dataId = data != null ? String.valueOf(data.get("id")) : null;
+            // 1. Extraia o data.id dos query params (como manda a documentação)
+            String dataId = queryParams.get("data.id");
+            if (dataId == null) {
+                // Fallback: tente pegar do body (caso de testes manuais ou cenários não padrão)
+                Map<String, Object> data = (Map<String, Object>) payload.get("data");
+                if (data != null) {
+                    dataId = String.valueOf(data.get("id"));
+                }
+            }
             log.info("Processing webhook for dataId: {}", dataId);
 
+            // 2. Valide a assinatura conforme a documentação oficial
             if (!validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
                 log.error("Invalid signature for request ID: {}", xRequestId);
                 return ResponseEntity.status(401).body("Assinatura inválida");
             }
 
-            // Salvar o payload JSON como String (pode usar ObjectMapper para converter)
+            // 3. Salve o evento (persistência assíncrona recomendada)
             var webhookEvent = createWebhookEvent(payload);
-            log.info("webhook entitty saved: {}", webhookEvent);
+            log.info("Webhook entity saved: {}", webhookEvent);
 
+            // 4. Retorne 200 para evitar múltiplas tentativas de notificação
             return ResponseEntity.ok("Notificação recebida");
 
         } catch (Exception e) {
@@ -108,9 +116,7 @@ public class PaymentController {
 
         try {
             String[] parts = xSignature.split(",");
-            String ts = null;
-            String v1 = null;
-
+            String ts = null, v1 = null;
             for (String part : parts) {
                 String[] kv = part.split("=");
                 if (kv.length == 2) {
@@ -126,12 +132,13 @@ public class PaymentController {
                 return false;
             }
 
+            // Template: id:[data.id_url];request-id:[x-request-id_header];ts:[ts_header];
             String message = String.format("id:%s;request-id:%s;ts:%s;", dataId, xRequestId, ts);
             log.debug("Generated message for signature: {}", message);
 
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
-                    secret.getBytes(), "HmacSHA256");
+            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(secret.getBytes(),
+                    "HmacSHA256");
             mac.init(secretKey);
             byte[] hashBytes = mac.doFinal(message.getBytes());
             StringBuilder hashHex = new StringBuilder();
@@ -185,9 +192,9 @@ public class PaymentController {
                         .build())
                 .externalReference(String.valueOf(user.getId()))
                 .backUrls(PreferenceBackUrlsRequest.builder()
-                        .success("https://chamagol-9gfb.onrender.com/api/payment/success")
-                        .failure("https://chamagol-9gfb.onrender.com/api/payment/failure")
-                        .pending("https://chamagol-9gfb.onrender.com/api/payment/pending")
+                        .success("chamagol://payment/success")
+                        .failure("chamagol://payment/failure")
+                        .pending("chamagol://payment/pending")
                         .build())
                 .notificationUrl("https://chamagol-9gfb.onrender.com/api/payment/webhook")
                 .autoReturn("approved")
