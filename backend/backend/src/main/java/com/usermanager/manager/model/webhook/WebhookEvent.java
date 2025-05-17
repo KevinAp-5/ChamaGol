@@ -12,11 +12,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Table(name = "webhook_events")
-@Entity
+@Entity(name = "WebhookEvent")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class WebhookEvent {
 
     @Id 
