@@ -12,6 +12,7 @@ import PasswordResetEmailConfirmed from './src/screens/passwordResetEmailConfirm
 import SplashScreen from './src/screens/splash';
 import RequestPasswordReset from './src/screens/requestPasswordReset';
 import ProSubscriptionScreen from './src/screens/subscription';
+import DeepLinkListener from './src/components/DeepLinkListener';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -31,8 +32,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
+    <>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="ProSubscription" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -46,5 +48,7 @@ export default function App() {
         <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+    <DeepLinkListener></DeepLinkListener>
+    </>
   ); 
 }

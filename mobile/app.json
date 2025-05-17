@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "chamagol",
     "name": "ChamaGol",
     "slug": "ChamaGol",
     "version": "1.0.0",
@@ -25,7 +26,20 @@
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.kevenap5.ChamaGol"
+      "package": "com.kevenap5.ChamaGol",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "chamagol",
+              "host": "payment",
+              "pathPrefix": "/success"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
