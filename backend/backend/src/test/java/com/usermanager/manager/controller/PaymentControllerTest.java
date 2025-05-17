@@ -8,7 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +61,7 @@ class PaymentControllerTest {
         event.setId(1L);
         event.setStatus(EventStatus.PENDING);
         event.setPayloadJson(new ObjectMapper().writeValueAsString(payload));
-        event.setReceivedAt(LocalDateTime.now());
+        event.setReceivedAt(ZonedDateTime.now());
 
         when(webhookService.saveWebhookEvent(any(WebhookEvent.class))).thenReturn(event);
 
