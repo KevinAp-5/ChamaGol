@@ -64,7 +64,9 @@ public class PaymentController {
         log.debug("Payload: {}", payload);
 
         try {
-            String dataId = queryParams.get("data.id");
+            // Corrija aqui: pegue o dataId do payload, não dos queryParams
+            Map<String, Object> data = (Map<String, Object>) payload.get("data");
+            String dataId = data != null ? String.valueOf(data.get("id")) : null;
             log.info("Processing webhook for dataId: {}", dataId);
 
             if (!validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
@@ -72,7 +74,7 @@ public class PaymentController {
                 return ResponseEntity.status(401).body("Assinatura inválida");
             }
 
-             // Salvar o payload JSON como String (pode usar ObjectMapper para converter)
+            // Salvar o payload JSON como String (pode usar ObjectMapper para converter)
             var webhookEvent = createWebhookEvent(payload);
             log.info("webhook entitty saved: {}", webhookEvent);
 
@@ -88,26 +90,27 @@ public class PaymentController {
     private WebhookEvent createWebhookEvent(Object payload) {
         ObjectMapper mapper = new ObjectMapper();
         String payloadJson = "";
-            try {
-                payloadJson = mapper.writeValueAsString(payload);
-            } catch (JsonProcessingException e) {
-                log.info("erro ao mappear payloadjson");
-            }
+        try {
+            payloadJson = mapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            log.info("erro ao mappear payloadjson");
+        }
 
         WebhookEvent event = new WebhookEvent();
         event.setPayloadJson(payloadJson);
         event.setStatus(EventStatus.PENDING);
         event.setReceivedAt(LocalDateTime.now());
-        return webhookService.saveWebhookEvent(event); 
+        return webhookService.saveWebhookEvent(event);
     }
+
     private boolean validateSignature(String xSignature, String xRequestId, String dataId, String secret) {
         log.debug("Validating signature - RequestId: {}, DataId: {}", xRequestId, dataId);
-        
+
         try {
             String[] parts = xSignature.split(",");
             String ts = null;
             String v1 = null;
-            
+
             for (String part : parts) {
                 String[] kv = part.split("=");
                 if (kv.length == 2) {
@@ -147,11 +150,12 @@ public class PaymentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@AuthenticationPrincipal com.usermanager.manager.model.user.User user) throws MPException {
+    public ResponseEntity<String> createPayment(@AuthenticationPrincipal com.usermanager.manager.model.user.User user)
+            throws MPException {
         if (user == null) {
             return ResponseEntity.status(401).body("unauthorized");
         }
-    
+
         log.info("Initiating payment creation");
         PreferenceClient client = this.preferenceClient;
 
@@ -166,7 +170,7 @@ public class PaymentController {
         List<PreferencePaymentTypeRequest> excludedPaymentTypes = new ArrayList<>();
         excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("ticket").build());
         excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("atm").build());
-        
+
         PreferencePaymentMethodsRequest paymentMethods = PreferencePaymentMethodsRequest.builder()
                 .excludedPaymentTypes(excludedPaymentTypes)
                 .installments(1)
