@@ -27,6 +27,7 @@ import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
 import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.ProfileDTO;
+import com.usermanager.manager.dto.user.UserLoginInfo;
 import com.usermanager.manager.enums.ClientType;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.model.user.User;
@@ -173,13 +174,22 @@ public class AuthController {
 
     @GetMapping("token/validate")
     public ResponseEntity<String> validateToken(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok("valid");        
+        return ResponseEntity.ok("valid");
     }
-    
+
     @GetMapping("me")
     @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(), user.getSubscription().getValue()));
+        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(),
+                user.getSubscription().getValue()));
+    }
+
+    @GetMapping("user/info")
+    @ResponseBody
+    public ResponseEntity<UserLoginInfo> getUserLoginInfo(@AuthenticationPrincipal User user) {
+        String username = capitalize(user.getName().split(" ")[0]);
+        return ResponseEntity.ok(
+                new UserLoginInfo(username, user.getLastLogin()));
     }
 
     @GetMapping("cron")
@@ -196,6 +206,13 @@ public class AuthController {
         cookie.setAttribute("SameSite", "Strict");
         cookie.setMaxAge(COOKIE_MAX_AGE);
         return cookie;
+    }
+
+    private static String capitalize(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
     private UUID convertStringToUUID(String token) {
