@@ -140,9 +140,13 @@ public class PaymentController {
 
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
-                .title("Assinatura teste")
+                .id("subscriptionPro-" + user.getId())
+                .pictureUrl("https://freeimage.host/i/34hk2ku")
+                .title("PRO - ChamaGol")
+                .description("Assinatura PRO chamagol - período mensal")
                 .quantity(1)
-                .unitPrice(new BigDecimal("00.01"))
+                .unitPrice(new BigDecimal("10.0"))
+                .currencyId("BRL")
                 .build());
         log.debug("Payment items configured: {}", items);
 
@@ -160,7 +164,8 @@ public class PaymentController {
                 .items(items)
                 .paymentMethods(paymentMethods)
                 .payer(PreferencePayerRequest.builder()
-                        .email("comprador@teste.com")
+                        .email(user.getLogin())
+                        .name(user.getName())
                         .build())
                 .externalReference(String.valueOf(user.getId()))
                 .backUrls(PreferenceBackUrlsRequest.builder()
