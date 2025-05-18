@@ -35,6 +35,7 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState("");
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [login, setLogin] = useState(false);
  
   //TODO: MUDAR PARA LOGO DE LETRA BRANCA
   // Animation values
@@ -95,6 +96,7 @@ export default function LoginScreen({ navigation }: Props) {
       if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
         const accessToken = response.data.token || response.data.accessToken;
         const refreshToken = response.data.refreshToken;
+        setLogin(true);
 
         await SecureStore.setItemAsync('accessToken', accessToken);
         if (refreshToken) {
@@ -121,6 +123,7 @@ export default function LoginScreen({ navigation }: Props) {
   };
   
   const getUserInfo = async() => {
+    if (!login) return;
     try {
       const response = await api.get("/auth/user/info");
       if (response.status == 200 && response.data) {
