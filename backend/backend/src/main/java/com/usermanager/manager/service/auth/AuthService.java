@@ -1,6 +1,7 @@
 package com.usermanager.manager.service.auth;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.context.annotation.Lazy;
@@ -76,7 +77,9 @@ public class AuthService implements UserDetailsService {
     public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
         log.info("register attempt: {}", dto.login());
 
-        if (userService.existsByLogin(dto.login())) {
+        // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já é uma conta
+        Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
+        if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() == null) {
             throw new UserExistsException(dto.login());
         }
 
@@ -84,8 +87,10 @@ public class AuthService implements UserDetailsService {
             throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
         }
 
+        User user = userOptional.get();
+
         String encryptedPassword = passwordEncoder.encode(dto.password());
-        User user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
+        user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
 
         VerificationToken verificationToken = verificationService.generateVerificationToken(user,
                 TokenType.EMAIL_VALIDATION);
@@ -101,7 +106,7 @@ public class AuthService implements UserDetailsService {
         log.info("login attempt by {}", data.login());
 
         var user = userService.findUserByLogin(data.login());
-        
+
         if (!user.isEnabled()) {
             log.info("user {} not enabled. unable to login", data.login());
             throw new UserNotEnabledException("Please activate the email " + user.getLogin());
