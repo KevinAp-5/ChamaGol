@@ -114,9 +114,9 @@ export default function RegisterScreen({ navigation }: Props) {
         "auth/register",
         { name, login: email, password }
       );
-      
+
       if (response.status === 201 || response.status === 200) {
-        navigation.navigate("PasswordResetEmailConfirmed", { email });
+        navigation.navigate("EmailVerification", { email });
       } else {
         showCustomAlert((response.data as { message: string })?.message || "Erro ao registrar.", "Erro");
       }
