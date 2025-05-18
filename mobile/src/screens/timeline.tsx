@@ -489,54 +489,43 @@ export default function TimelineScreen({ navigation }: Props) {
     );
   };
 
-  const renderHeader = () => (
-    <LinearGradient
-      colors={[colors.primary, colors.highlight]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.headerGradient}
-    >
-      <View style={styles.headerContent}>
-        <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-          Timeline
-        </Text>
-        <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-          Sinais em tempo real
-        </Text>
-      </View>
-    </LinearGradient>
-  );
-
   return (
-    <CustomAlertProvider>
-      <SafeAreaView 
-        style={{ flex: 1, backgroundColor: colors.primary }}
-        edges={['top']}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      
+      {/* Header (não contido na SafeAreaView para melhor design) */}
+      <View style={{ backgroundColor: colors.primary }}>
+        <LinearGradient
+          colors={[colors.primary, colors.highlight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.headerGradient}
+        >
+          <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
+            <View style={styles.headerContent}>
+              <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
+                Timeline
+              </Text>
+              <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
+                Sinais em tempo real
+              </Text>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
+      
+      {/* Conteúdo principal */}
+      <Animated.View 
+        style={[
+          styles.content,
+          { 
+            backgroundColor: colors.background,
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}
       >
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-        
-        <Animated.View 
-          style={[
-            styles.headerContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          {renderHeader()}
-        </Animated.View>
-        
-        <Animated.View 
-          style={[
-            styles.content,
-            { 
-              backgroundColor: colors.background,
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
+        <CustomAlertProvider>
           {messages.length === 0 ? (
             renderEmptyState()
           ) : (
@@ -548,7 +537,8 @@ export default function TimelineScreen({ navigation }: Props) {
                 renderItem={renderItem}
                 contentContainerStyle={{
                   flexGrow: 1,
-                  paddingVertical: spacing.md,
+                  paddingTop: spacing.lg,
+                  paddingBottom: spacing.xl,
                   paddingHorizontal: spacing.sm,
                 }}
                 onContentSizeChange={() =>
@@ -567,26 +557,21 @@ export default function TimelineScreen({ navigation }: Props) {
               {newMessageNotification}
             </>
           )}
-        </Animated.View>
-      </SafeAreaView>
-    </CustomAlertProvider>
+        </CustomAlertProvider>
+      </Animated.View>
+    </View>
   );
 }
 
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    width: '100%',
-    zIndex: 10,
-  },
   headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 60, // Aumentado para criar espaço para o conteúdo sobrepor
+    zIndex: 1,
   },
   headerContent: {
+    paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
@@ -601,11 +586,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: -20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 10,
+    marginTop: -30, // Negativo para sobrepor ao header e criar efeito arredondado
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     overflow: 'hidden',
+    zIndex: 2,
   },
   messageContainer: {
     width: width - 32,
