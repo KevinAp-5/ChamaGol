@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class  UserService {
+public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -112,6 +112,10 @@ public class  UserService {
 
     public Optional<UserDetails> findUserByLoginOptional(@NotBlank String login) {
         return userRepository.findByLogin(login);
+    }
+
+    public Optional<User> findUserEntityByLoginOptional(@NotBlank String login) {
+        return userRepository.findUserByLogin(login);
     }
 
     public boolean existsByLogin(@NotBlank String login) {
