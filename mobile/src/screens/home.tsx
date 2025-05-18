@@ -95,7 +95,7 @@ export default function HomeScreen({ navigation }: Props) {
         if (storedUsername) {
           setUsername(storedUsername);
         }
-        
+
         const lastLoginDate = await AsyncStorage.getItem('lastLogin');
         if (lastLoginDate) {
           setLastLogin(lastLoginDate);
@@ -395,7 +395,7 @@ export default function HomeScreen({ navigation }: Props) {
               </TouchableOpacity>
             </Animated.View>
             
-            {(!subscription || subscription === 'free') && (
+            {(!subscription || subscription === 'FREE') && (
               <Animated.View 
                 style={[
                   styles.cardWrapper,

@@ -13,6 +13,7 @@ import RequestPasswordReset from './src/screens/requestPasswordReset';
 import SplashScreen from './src/screens/splash';
 import ProSubscriptionScreen from './src/screens/subscription';
 import TimelineScreen from './src/screens/timeline';
+import EmailVerificationScreen from './src/screens/EmailVerification';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   PasswordResetEmailConfirmed: undefined;
   RequestPassword: undefined;
   ProSubscription: undefined;
+  EmailVerification: Object;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -61,6 +63,7 @@ export default function App() {
         <Stack.Screen name="PasswordResetEmailConfirmed" component={PasswordResetEmailConfirmed} />
         <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
         <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
+        <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
     </>
