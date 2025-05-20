@@ -1,8 +1,10 @@
 package com.usermanager.manager.service.auth;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,14 @@ public class RefreshTokenService {
         this.tokenProvider = tokenProvider;
     }
 
+
+    @Scheduled(cron = "@midnight")
+    public void deleteAllActivatedAndExpired() {
+        Instant date = Instant.now().minusSeconds(7 * 24 * 60 * 60);
+        refreshTokenRepository.deleteAllUsedAndExpired(date);
+        log.info("RefreshTokenService cron job delete all used and Expired.");
+
+    }
     @Transactional
     public String createRefreshToken(User user) {
         // refreshTokenRepository.deleteByUser(user);
