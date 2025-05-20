@@ -290,7 +290,7 @@ class VerificationTokenServiceTest {
         @DisplayName("Should return valid token when found by user")
         void findVerificationByUser_ValidUser_ReturnsToken() {
             // Arrange
-            when(verificationRepository.findByUserResetPassword(testUser)).thenReturn(Optional.of(validToken));
+            when(verificationRepository.findByUserMostRecent(testUser)).thenReturn(Optional.of(validToken));
 
             // Act
             VerificationToken result = verificationTokenService.findVerificationByUser(testUser);
@@ -301,14 +301,14 @@ class VerificationTokenServiceTest {
             assertEquals(testUser, result.getUser());
 
             // Verify
-            verify(verificationRepository).findByUserResetPassword(testUser);
+            verify(verificationRepository).findByUserMostRecent(testUser);
         }
 
         @Test
         @DisplayName("Should throw TokenNotFoundException when token not found for user")
         void findVerificationByUser_TokenNotFound_ThrowsException() {
             // Arrange
-            when(verificationRepository.findByUserResetPassword(testUser)).thenReturn(Optional.empty());
+            when(verificationRepository.findByUserMostRecent(testUser)).thenReturn(Optional.empty());
 
             // Act & Assert
             TokenNotFoundException exception = assertThrows(TokenNotFoundException.class,
@@ -317,14 +317,14 @@ class VerificationTokenServiceTest {
             assertEquals("Verification token not found", exception.getMessage());
 
             // Verify
-            verify(verificationRepository).findByUserResetPassword(testUser);
+            verify(verificationRepository).findByUserMostRecent(testUser);
         }
 
         @Test
         @DisplayName("Should throw TokenInvalidException when user token is expired")
         void findVerificationByUser_ExpiredToken_ThrowsException() {
             // Arrange
-            when(verificationRepository.findByUserResetPassword(testUser)).thenReturn(Optional.of(expiredToken));
+            when(verificationRepository.findByUserMostRecent(testUser)).thenReturn(Optional.of(expiredToken));
 
             // Act & Assert
             TokenInvalidException exception = assertThrows(TokenInvalidException.class,
@@ -333,7 +333,7 @@ class VerificationTokenServiceTest {
             assertEquals("Token is expired, please try again.", exception.getMessage());
 
             // Verify
-            verify(verificationRepository).findByUserResetPassword(testUser);
+            verify(verificationRepository).findByUserMostRecent(testUser);
         }
     }
 
