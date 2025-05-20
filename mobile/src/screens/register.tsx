@@ -25,6 +25,7 @@ import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { fetchTerm } from "../components/termOfUse";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Register">;
 
@@ -116,7 +117,8 @@ export default function RegisterScreen({ navigation }: Props) {
       );
 
       if (response.status === 201 || response.status === 200) {
-        navigation.navigate("EmailVerification", { email });
+        await AsyncStorage.setItem("registerEmail", email);
+        navigation.navigate("EmailVerification");
       } else {
         showCustomAlert((response.data as { message: string })?.message || "Erro ao registrar.", "Erro");
       }
