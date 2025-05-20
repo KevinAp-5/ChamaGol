@@ -87,7 +87,7 @@ public class AuthService implements UserDetailsService {
             throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
         }
 
-        User user = userOptional.get();
+        User user = userOptional.orElse(null);
 
         String encryptedPassword = passwordEncoder.encode(dto.password());
         user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
