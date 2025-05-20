@@ -20,7 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity(name = "refresh_token")
+@Entity(name = "RefreshToken")
 @Table(name = "refresh_token")
 @AllArgsConstructor
 @NoArgsConstructor
