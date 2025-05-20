@@ -8,7 +8,7 @@ import com.usermanager.manager.model.email.MailProvider;
 @Service
 public class MailService {
 
-    @Value("${api.url}")
+    @Value("${api.url:https://chamagol-9gfb.onrender.com/api/auth/}")
     private String API_PREFIX;
     public final MailProvider mailProvider;
 

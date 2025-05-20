@@ -89,7 +89,7 @@ public class TokenService implements TokenProvider{
     }
 
     private Instant genExpirationDate() {
-        return LocalDateTime.now().plusMinutes(2).toInstant(ZoneOffset.of("-03:00"));
+        return LocalDateTime.now().plusMinutes(45).toInstant(ZoneOffset.of("-03:00"));
     }
 
     private Instant genExpirationDate(long minutesAmount) {
