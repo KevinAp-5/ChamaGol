@@ -41,7 +41,7 @@ export const TermModal: React.FC<TermModalProps> = ({ visible, onAccepted }) => 
   const fetchTerm = async () => {
     setLoadingTerm(true);
     try {
-      const response = await api("GET", "terms/latest");
+      const response = await api.get("terms/latest");
       if (response.status === 200 && response.data?.content) {
         setTermContent(response.data.content);
         setShowTerm(true);
