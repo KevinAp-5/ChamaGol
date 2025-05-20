@@ -18,7 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../config/Api";
 import { showCustomAlert } from "../components/CustomAlert";
 
-const RESEND_TIMEOUT = 10; // segundos
+const RESEND_TIMEOUT = 60; // segundos
 
 const EmailVerificationScreen = ({ navigation }: any) => {
   const { colors, fonts } = useTheme();
@@ -79,15 +79,14 @@ const EmailVerificationScreen = ({ navigation }: any) => {
   }, [timer, canResend]);
 
   useEffect(() => {
-    if (!emailSent) return;
     let pollingActive = true;
     let attempts = 0;
-    const maxAttempts = 25;
+    const maxAttempts = 100;
 
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     const waitForEmailConfirmation = async (email: string) => {
-      await delay(5000); // Espera 5 segundos antes de começar a verificar
+      await delay(10000); // Espera 5 segundos antes de começar a verificar
       while (pollingActive && attempts < maxAttempts) {
         try {
           const response = await api.post("/auth/email/confirmed", { email });
@@ -102,7 +101,7 @@ const EmailVerificationScreen = ({ navigation }: any) => {
         } catch (error) {
           // Ignora e tenta novamente
         }
-        await delay(5000);
+        await delay(6000);
         attempts++;
       }
     };
