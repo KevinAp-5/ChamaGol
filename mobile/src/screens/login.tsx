@@ -37,7 +37,6 @@ export default function LoginScreen({ navigation }: Props) {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [login, setLogin] = useState(false);
  
-  //TODO: MUDAR PARA LOGO DE LETRA BRANCA
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -123,7 +122,7 @@ export default function LoginScreen({ navigation }: Props) {
   };
   
   const getUserInfo = async() => {
-    if (!login) return;
+    if (login != true) return;
     try {
       const response = await api.get("/auth/user/info");
       if (response.status == 200 && response.data) {

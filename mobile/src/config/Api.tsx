@@ -40,6 +40,7 @@ const CLIENT_TYPE = 'MOBILE';
 const PUBLIC_ENDPOINTS = [
   'auth/login',
   'auth/register',
+  'auth/activate',
   'auth/password/reset',
   'auth/password/forgot'
 ];

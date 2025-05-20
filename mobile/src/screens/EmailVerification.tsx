@@ -133,7 +133,6 @@ const EmailVerificationScreen = ({ navigation }: any) => {
   }
 
   const handleResend = () => {
-    // TODO: Chame sua API para reenviar o e-mail de confirmação]
     fetchApi();
     setTimer(RESEND_TIMEOUT);
     setCanResend(false);

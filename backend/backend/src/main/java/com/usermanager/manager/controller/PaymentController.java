@@ -151,7 +151,7 @@ public class PaymentController {
                 .title("PRO - ChamaGol")
                 .description("Assinatura PRO chamagol - período mensal")
                 .quantity(1)
-                .unitPrice(new BigDecimal("10.0"))
+                .unitPrice(new BigDecimal("00.01"))
                 .currencyId("BRL")
                 .build());
         log.debug("Payment items configured: {}", items);
