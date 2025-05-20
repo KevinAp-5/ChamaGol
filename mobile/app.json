@@ -1,7 +1,9 @@
 {
   "expo": {
     "scheme": "chamagol",
-    "assets": ["./assets/fonts/"],
+    "assets": [
+      "./assets/fonts/"
+    ],
     "name": "ChamaGol",
     "slug": "ChamaGol",
     "version": "1.0.0",
@@ -37,7 +39,10 @@
               "scheme": "chamagol"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -46,10 +51,8 @@
     },
     "extra": {
       "eas": {
-        "projectId": "9f845834-cde4-48a4-92c0-fb3aa6bca837"
+        "projectId": "2a5d08e5-afdc-4785-befc-b54adb5a9941"
       }
     }
-    
   }
-  
 }
