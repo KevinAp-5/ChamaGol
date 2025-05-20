@@ -13,11 +13,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../theme/theme";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../config/Api";
+import { showCustomAlert } from "../components/CustomAlert";
 
-const RESEND_TIMEOUT = 60; // segundos
+const RESEND_TIMEOUT = 10; // segundos
 
 const EmailVerificationScreen = ({ navigation }: any) => {
   const { colors, fonts } = useTheme();
+  const [email, setEmail] = useState<String | null>(null);
 
   // Animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -27,6 +32,24 @@ const EmailVerificationScreen = ({ navigation }: any) => {
   // Timer para reenvio
   const [timer, setTimer] = useState(RESEND_TIMEOUT);
   const [canResend, setCanResend] = useState(false);
+
+  const [emailSent, setEmailSent] = useState(false);
+
+  useEffect(() => {
+    const getUserEmail = async() => {
+      try {
+        const email = await AsyncStorage.getItem("registerEmail");
+        if (email) {
+          setEmail(email);
+          return;
+        }
+        console.log("Erro: email não se encontra presente");
+      } catch (error) {
+        console.log("Erro: não foi possível recuperar email do usuário para realizar o resend do email.");
+      }
+    }
+    getUserEmail();
+  }, []);
 
   useEffect(() => {
     // Animação de entrada
@@ -55,8 +78,63 @@ const EmailVerificationScreen = ({ navigation }: any) => {
     }
   }, [timer, canResend]);
 
+  useEffect(() => {
+    if (!emailSent) return;
+    let pollingActive = true;
+    let attempts = 0;
+    const maxAttempts = 25;
+
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const waitForEmailConfirmation = async (email: string) => {
+      await delay(5000); // Espera 5 segundos antes de começar a verificar
+      while (pollingActive && attempts < maxAttempts) {
+        try {
+          const response = await api.post("/auth/email/confirmed", { email });
+          if (
+            response.status === 200 &&
+            typeof response.data?.message === "string" &&
+            response.data.message.trim().toLowerCase() === "email activated."
+          ) {
+            navigation.navigate("EmailConfirmationSuccess");
+            return;
+          }
+        } catch (error) {
+          // Ignora e tenta novamente
+        }
+        await delay(5000);
+        attempts++;
+      }
+    };
+
+    if (email) {
+      waitForEmailConfirmation(email as string);
+    }
+
+    return () => {
+      pollingActive = false;
+    };
+  }, [email, navigation]);
+
+  const fetchApi = async() => {
+    if (!email) return
+    try {
+      const response = await api.post("/auth/activate", { email });
+      if (response.status != 200) {
+        showCustomAlert("Erro ao reenviar e-mail, tente novamente.", "Erro");
+        setEmailSent(true);
+        return;
+      }
+      showCustomAlert("Email enviado com sucesso! Verifique a caixa de entrada", "Sucesso!");
+
+    } catch (error) {
+        showCustomAlert("Erro ao reenviar e-mail", "Erro");
+    }
+  }
+
   const handleResend = () => {
-    // TODO: Chame sua API para reenviar o e-mail de confirmação
+    // TODO: Chame sua API para reenviar o e-mail de confirmação]
+    fetchApi();
     setTimer(RESEND_TIMEOUT);
     setCanResend(false);
     // Feedback visual opcional
