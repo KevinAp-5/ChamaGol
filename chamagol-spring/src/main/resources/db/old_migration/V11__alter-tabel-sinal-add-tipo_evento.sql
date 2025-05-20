@@ -1,1 +1,0 @@
-ALTER TABLE sinal ADD COLUMN tipo_evento varchar(60) NOT NULL DEFAULT 'DICA';

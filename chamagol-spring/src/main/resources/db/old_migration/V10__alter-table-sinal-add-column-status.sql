@@ -1,3 +1,0 @@
-ALTER TABLE sinal ADD status VARCHAR(10);
-UPDATE sinal SET status = 'ACTIVE';
-ALTER TABLE sinal ALTER COLUMN status VARCHAR(10) NOT NULL;

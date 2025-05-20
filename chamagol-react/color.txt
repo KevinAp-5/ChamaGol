@@ -1,7 +1,0 @@
-#6D9773  -> Verde claro
-
-#0C3B2E  -> Verde escuro
-
-#B46617  -> Marrom
-
-#FFBA00  -> Amarelo

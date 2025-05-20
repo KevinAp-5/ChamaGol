@@ -1,9 +1,0 @@
-CREATE TABLE sinal (
-    id BIGSERIAL NOT NULL PRIMARY KEY,
-    campeonato VARCHAR(255) NOT NULL,
-    nome_times VARCHAR(24) NOT NULL,
-    tempo_partida VARCHAR(24) NOT NULL,
-    placar VARCHAR(24) NOT NULL,
-    acao_sinal VARCHAR(24) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
