@@ -588,8 +588,16 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         </ScrollView>
       </LinearGradient>
-
-      <Footer />
+      <View style={styles.footer}>
+        <Text
+          style={[
+            styles.footerText,
+            { color: colors.muted, fontFamily: fonts.regular },
+          ]}
+        >
+          © 2025 CHAMAGOL • Todos os direitos reservados
+        </Text>
+      </View>
 
       <TermModal
         visible={showTermModal}
@@ -732,5 +740,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     marginRight: 5,
+  },
+  footer: {
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
+  },
+  footerText: {
+    fontSize: 12,
+    textAlign: "center",
   },
 });
