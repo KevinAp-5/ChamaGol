@@ -51,7 +51,8 @@ public class PaymentController {
         this.webhookService = webhookService;
         this.preferenceClient = preferenceClient;
     }
- @PostMapping("/webhook")
+
+    @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
             @RequestHeader(value = "x-signature", required = false) String xSignature,
             @RequestHeader(value = "x-request-id", required = false) String xRequestId,
@@ -61,13 +62,13 @@ public class PaymentController {
         log.info("Webhook recebido - RequestId: {}, Signature: {}", xRequestId, xSignature);
         log.info("Query params: {}", queryParams);
         log.info("Payload: {}", payload);
-        log.debug("Secret configurado: {}", mercadoPagoSecret.substring(0, 3) + "..." + 
+        log.debug("Secret configurado: {}", mercadoPagoSecret.substring(0, 3) + "..." +
                 (mercadoPagoSecret.length() > 6 ? mercadoPagoSecret.substring(mercadoPagoSecret.length() - 3) : ""));
 
         try {
             // 1. Extrair o data.id dos query params conforme a documentação
             String dataId = queryParams.get("data.id");
-            
+
             // Caso não esteja nos query params, tentar extrair do body como fallback
             if (dataId == null && payload.containsKey("data")) {
                 Object dataObj = payload.get("data");
@@ -76,23 +77,28 @@ public class PaymentController {
                     Map<String, Object> data = (Map<String, Object>) dataObj;
                     if (data.containsKey("id")) {
                         dataId = String.valueOf(data.get("id"));
+                    } else {
+                        log.error("data.id não encontrado na requisição. RequestId: {}", xRequestId);
+                        return ResponseEntity.badRequest().body("data.id obrigatório");
                     }
                 }
             }
             log.info("Processando webhook para dataId: {}", dataId);
 
-            // 2. Validar a assinatura conforme documentação oficial (se a assinatura estiver presente)
-            if (xSignature != null && !xSignature.trim().isEmpty()) {
-                if (!webhookService.validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
-                    log.error("Assinatura inválida para request ID: {}", xRequestId);
-                    return ResponseEntity.status(401).body("Assinatura inválida");
-                }
-            } else {
-                log.warn("Webhook recebido sem assinatura. Pulando validação de segurança.");
-                // Em ambiente de produção, considere rejeitar webhooks sem assinatura
+            // 2. Validar a assinatura conforme documentação oficial (se a assinatura
+            // estiver presente)
+
+            if (xSignature == null || xSignature.trim().isEmpty()) {
+                log.error("assinatura em branco, rejeitando. {}", xRequestId);
+                return ResponseEntity.status(401).body("Assinatura em branco, rejeitando");
             }
 
-            // 3. Salvar o evento 
+            if (!webhookService.validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
+                log.error("Assinatura inválida para request ID: {}", xRequestId);
+                return ResponseEntity.status(401).body("Assinatura inválida");
+            }
+
+            // 3. Salvar o evento
             WebhookEvent webhookEvent = createWebhookEvent(payload);
             log.info("Evento de webhook salvo: {}", webhookEvent);
 
@@ -119,12 +125,12 @@ public class PaymentController {
         }
 
         WebhookEvent event = WebhookEvent.builder()
-            .payloadJson(payloadJson)
-            .status(EventStatus.PENDING)
-            .receivedAt(ZonedDateTime.now())
-            .retryCount(0)
-            .build();
-            
+                .payloadJson(payloadJson)
+                .status(EventStatus.PENDING)
+                .receivedAt(ZonedDateTime.now())
+                .retryCount(0)
+                .build();
+
         return webhookService.saveWebhookEvent(event);
     }
 
