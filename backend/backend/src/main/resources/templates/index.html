@@ -12,7 +12,7 @@
         <img th:src="${confirmed} ? '/images/checkicon.png' : '/images/xicon.png'" class="icon" alt="Status Icon"/>
         <div th:if="${confirmed}">
             <div class="success">E-mail confirmado com sucesso!</div>
-            <div class="message">Agora você pode voltar ao aplicativo e fazer login normalmente.</div>
+            <div class="message">Agora você pode voltar ao aplicativo.</div>
         </div>
         <div th:if="${!confirmed}">
             <div class="error">Não foi possível confirmar o e-mail.</div>
