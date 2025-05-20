@@ -78,7 +78,7 @@ public class VerificationTokenService {
     }
 
     public VerificationToken findVerificationByUser(@NotNull @Valid User user) {
-        var verificationToken = verificationRepository.findByUserResetPassword(user)
+        var verificationToken = verificationRepository.findByUserMostRecent(user)
                 .orElseThrow(() -> new TokenNotFoundException("Verification token not found"));
         if (verificationToken.getExpirationDate().isBefore(ZonedDateTime.now().toInstant())) {
             throw new TokenInvalidException("Token is expired, please try again.");
