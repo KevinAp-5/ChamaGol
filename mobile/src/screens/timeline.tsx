@@ -491,7 +491,7 @@ export default function TimelineScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       
       {/* Header (não contido na SafeAreaView para melhor design) */}
