@@ -31,11 +31,10 @@
       "intentFilters": [
         {
           "action": "VIEW",
+          "autoVerify": true,
           "data": [
             {
-              "scheme": "chamagol",
-              "host": "payment",
-              "pathPrefix": "/success"
+              "scheme": "chamagol"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
