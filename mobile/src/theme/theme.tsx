@@ -15,6 +15,7 @@ export const theme = {
     shadow: 'rgba(0, 0, 0, 0.1)', // Cor para sombras
     divider: '#E0E0E0', // Cor para divisores
     overlay: 'rgba(0, 0, 0, 0.7)', // Cor para overlays
+    white: "#FFF",
   },
   fonts: {
     regular: 'Montserrat-Regular',
