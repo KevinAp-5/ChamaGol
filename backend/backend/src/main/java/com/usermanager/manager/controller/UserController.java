@@ -18,7 +18,6 @@ import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.dto.user.SubscriptionDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
-import com.usermanager.manager.exception.user.UserNotFoundException;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.user.UserService;
 
@@ -74,9 +73,6 @@ public class UserController {
     @GetMapping("subscription")
     @ResponseBody
     public ResponseEntity<SubscriptionDTO> getUserSignature(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            throw new UserNotFoundException("");
-        }
         log.info("user {}", user);
         return ResponseEntity.ok(new SubscriptionDTO(user.getSubscription().getValue()));
     }
