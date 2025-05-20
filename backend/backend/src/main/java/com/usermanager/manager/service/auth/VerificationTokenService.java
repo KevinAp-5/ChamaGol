@@ -1,8 +1,10 @@
 package com.usermanager.manager.service.auth;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,14 @@ public class VerificationTokenService {
     public VerificationTokenService(VerificationTokenRepository tokenRepository, UserRepository userRepository) {
         this.verificationRepository = tokenRepository;
         this.userRepository = userRepository;
+    }
+
+    @Scheduled(cron = "@midnight")
+    @Transactional
+    public void cleanUsedTokens() {
+        Instant date = Instant.now().minusSeconds(86400);
+            verificationRepository.deleteAllActivatedAndExpired(date);
+        log.info("VerificationToken database cleaning.");
     }
 
     @Transactional
