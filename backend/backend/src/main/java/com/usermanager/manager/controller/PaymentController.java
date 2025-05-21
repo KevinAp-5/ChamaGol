@@ -49,14 +49,16 @@ public class PaymentController {
     private String mercadoPagoSecret;
 
     private final WebhookService webhookService;
-    private PreferenceClient preferenceClient;
     private final UserService userService;
+    private PreferenceClient preferenceClient;
 
-    public PaymentController(WebhookService webhookService, PreferenceClient preferenceClient, UserService userService) {
+    public PaymentController(WebhookService webhookService, UserService userService,
+            PreferenceClient preferenceClient) {
         this.webhookService = webhookService;
-        this.preferenceClient = preferenceClient;
         this.userService = userService;
+        this.preferenceClient = preferenceClient;
     }
+
 
     @GetMapping("/status")
     public ResponseEntity<ResponseMessage> getUserSubscriptionStatus(@AuthenticationPrincipal User user) {

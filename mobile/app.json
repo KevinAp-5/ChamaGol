@@ -1,20 +1,25 @@
 {
   "expo": {
+    "expo.doctor": {
+      "reactNativeDirectoryCheck": {
+        "listUnknownPackages": false
+      }
+    },
     "scheme": "chamagol",
-    "assets": [
-      "./assets/fonts/"
-    ],
     "name": "ChamaGol",
     "slug": "ChamaGol",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/icon.png",
+    "icon": "./src/assets/apk_icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./src/assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFF",
+    "expo-splash-screen": {
+      "backgroundColor": "#FFFFFF",
+      "image": "./assets/images/splash-icon.png",
+      "dark": {
+        "image": "./assets/images/splash-icon-dark.png",
+        "backgroundColor": "#000000"
+      },
       "imageWidth": 200
     },
     "ios": {
@@ -26,7 +31,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "foregroundImage": "./src/assets/apk_icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.kevenap5.ChamaGol",
@@ -39,10 +44,7 @@
               "scheme": "chamagol"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
@@ -53,6 +55,7 @@
       "eas": {
         "projectId": "2a5d08e5-afdc-4785-befc-b54adb5a9941"
       }
-    }
+    },
+    "plugins": ["expo-build-properties"]
   }
 }

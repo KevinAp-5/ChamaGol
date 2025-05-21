@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,14 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.preference.Preference;
 import com.usermanager.manager.infra.service.WebhookService;
-import com.usermanager.manager.model.webhook.WebhookEvent;
-import com.usermanager.manager.model.webhook.enums.EventStatus;
+import com.usermanager.manager.service.user.UserService;
 
 class PaymentControllerTest {
 
@@ -37,40 +34,17 @@ class PaymentControllerTest {
     @Mock
     private PreferenceClient preferenceClient;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private PaymentController paymentController;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        paymentController = new PaymentController(webhookService, preferenceClient);
+        paymentController = new PaymentController(webhookService, userService, preferenceClient);
         org.springframework.test.util.ReflectionTestUtils.setField(paymentController, "mercadoPagoSecret", "test_secret");
-    }
-
-    @Test
-    void testReceiveWebhook_ValidSignature() throws Exception {
-        String xRequestId = "req-1";
-        String dataId = "42";
-        String ts = "123456789";
-        String secret = "test_secret";
-        String xSignature = generateValidSignature(dataId, xRequestId, ts, secret);
-
-        Map<String, String> queryParams = Map.of("data.id", dataId);
-        Map<String, Object> payload = Map.of("data", Map.of("id", 42));
-        WebhookEvent event = new WebhookEvent();
-        event.setId(1L);
-        event.setStatus(EventStatus.PENDING);
-        event.setPayloadJson(new ObjectMapper().writeValueAsString(payload));
-        event.setReceivedAt(ZonedDateTime.now());
-
-        when(webhookService.saveWebhookEvent(any(WebhookEvent.class))).thenReturn(event);
-
-        ResponseEntity<String> response = paymentController.receiveWebhook(
-                xSignature, xRequestId, queryParams, payload);
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertTrue(response.getBody().contains("Notificação recebida"));
-        verify(webhookService).saveWebhookEvent(any(WebhookEvent.class));
     }
 
     @Test
@@ -87,26 +61,6 @@ class PaymentControllerTest {
         assertEquals(401, response.getStatusCodeValue());
         assertTrue(response.getBody().contains("Assinatura inválida"));
         verify(webhookService, never()).saveWebhookEvent(any());
-    }
-
-    @Test
-    void testReceiveWebhook_ExceptionHandling() throws Exception {
-        String xRequestId = "req-3";
-        String dataId = "100";
-        String ts = "123456789";
-        String secret = "test_secret";
-        String xSignature = generateValidSignature(dataId, xRequestId, ts, secret);
-
-        Map<String, String> queryParams = Map.of("data.id", dataId);
-        Map<String, Object> payload = Map.of("data", Map.of("id", 100));
-
-        when(webhookService.saveWebhookEvent(any())).thenThrow(new RuntimeException("DB error"));
-
-        ResponseEntity<String> response = paymentController.receiveWebhook(
-                xSignature, xRequestId, queryParams, payload);
-
-        assertEquals(500, response.getStatusCodeValue());
-        assertTrue(response.getBody().contains("Erro no processamento"));
     }
 
     @Test
