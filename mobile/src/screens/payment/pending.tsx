@@ -18,6 +18,7 @@ import { api } from "../../config/Api";
 import { useTheme } from "../../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../../components/CustomAlert";
 import Logo from "../../components/logo"; // Importando o componente Logo
+import Footer from "../../components/footer";
 
 const PaymentPendingScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -248,6 +249,7 @@ const PaymentPendingScreen = () => {
               </View>
             </View>
           </Animated.View>
+        <Footer></Footer>
         </LinearGradient>
       </SafeAreaView>
     </CustomAlertProvider>
