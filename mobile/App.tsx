@@ -71,7 +71,7 @@ export default function App() {
       <NavigationContainer linking={linking}>
         <DeepLinkListener />
         <Stack.Navigator
-          initialRouteName="PaymentFailure"
+          initialRouteName="Splash"
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
