@@ -1,115 +1,281 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  StatusBar,
+  Image
+} from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../../App';
+import { useTheme } from '../../theme/theme';
+import Logo from "../../components/logo";
+import Footer from '../../components/footer';
 
 const PaymentFailureScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  
+  // Animation values
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+  const pulseAnim = useState(new Animated.Value(1))[0];
+  const buttonScale = useState(new Animated.Value(1))[0];
+  
+  useEffect(() => {
+    // Run entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true
+      })
+    ]).start();
+    
+    // Run pulse animation for error icon
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 800,
+          useNativeDriver: true
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true
+        })
+      ])
+    ).start();
+  }, []);
+  
+  const handlePressIn = () => {
+    Animated.timing(buttonScale, {
+      toValue: 0.95,
+      duration: 100,
+      useNativeDriver: true
+    }).start();
+  };
+  
+  const handlePressOut = () => {
+    Animated.timing(buttonScale, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true
+    }).start();
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.contentContainer}>
-        <View style={[styles.statusIcon, styles.failureIcon]}>
-          <Text style={styles.iconText}>✕</Text>
-        </View>
-        <Text style={styles.title}>Falha no pagamento</Text>
-        <Text style={styles.description}>
-          Infelizmente, o seu pagamento não pôde ser processado.
-          Por favor, verifique seus dados e tente novamente.
-        </Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('ProSubscription')}
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <LinearGradient
+        colors={[colors.primary, '#222222']}
+        style={styles.gradientBackground}
+      >
+        <Animated.View
+          style={[
+            styles.container,
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
         >
-          <Text style={styles.buttonText}>Tentar novamente</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Text style={styles.secondaryButtonText}>Voltar para Home</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          {/* Logo do ChamaGol no topo */}
+          <View style={styles.logoContainer}>
+            <Logo source={require("../../assets/logo_white_label.png")} />
+            <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
+              CHAMAGOL
+            </Text>
+          </View>
+
+          <View 
+            style={[
+              styles.contentContainer, 
+              { 
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                ...shadows.medium
+              }
+            ]}
+          >
+            <Animated.View 
+              style={[
+                styles.iconContainer,
+                { transform: [{ scale: pulseAnim }] }
+              ]}
+            >
+              <LinearGradient
+                colors={[colors.error, colors.highlight]}
+                style={[
+                  styles.statusIcon,
+                  { borderRadius: borderRadius.round }
+                ]}
+              >
+                <MaterialCommunityIcons name="close" size={40} color={colors.white} />
+              </LinearGradient>
+            </Animated.View>
+            
+            <Text style={[
+              styles.title, 
+              { 
+                color: colors.primary,
+                fontFamily: fonts.bold,
+                marginBottom: spacing.md
+              }
+            ]}>
+              Falha no pagamento
+            </Text>
+            
+            <Text style={[
+              styles.description,
+              {
+                color: colors.muted,
+                fontFamily: fonts.regular,
+                marginBottom: spacing.xl
+              }
+            ]}>
+              Infelizmente, o seu pagamento não pôde ser processado.
+              Por favor, verifique seus dados e tente novamente.
+            </Text>
+            
+            <Animated.View 
+              style={{ 
+                width: '100%', 
+                transform: [{ scale: buttonScale }]
+              }}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  { 
+                    backgroundColor: colors.secondary,
+                    borderRadius: borderRadius.lg,
+                    marginBottom: spacing.md
+                  }
+                ]}
+                onPress={() => navigation.navigate('ProSubscription')}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.8}
+              >
+                <Text style={[
+                  styles.buttonText,
+                  {
+                    color: colors.white,
+                    fontFamily: fonts.bold
+                  }
+                ]}>
+                  TENTAR NOVAMENTE
+                </Text>
+                <MaterialCommunityIcons name="refresh" size={20} color={colors.white} />
+              </TouchableOpacity>
+            </Animated.View>
+            
+            <TouchableOpacity
+              style={[
+                styles.secondaryButton,
+                {
+                  borderRadius: borderRadius.lg
+                }
+              ]}
+              onPress={() => navigation.navigate('Home')}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.secondaryButtonText,
+                {
+                  color: colors.accent,
+                  fontFamily: fonts.semibold
+                }
+              ]}>
+                VOLTAR PARA HOME
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      <Footer></Footer>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
+const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
-  container: {
+  gradientBackground: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  contentContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 24,
+  container: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: width - 40,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  statusIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
+  contentContainer: {
+    width: '100%',
+    padding: 24,
     alignItems: 'center',
+  },
+  iconContainer: {
     marginBottom: 24,
   },
-  failureIcon: {
-    backgroundColor: '#F44336',
-  },
-  iconText: {
-    fontSize: 40,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  statusIcon: {
+    width: 85,
+    height: 85,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333333',
     textAlign: 'center',
   },
   description: {
     fontSize: 16,
-    color: '#666666',
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    lineHeight: 24,
   },
-  button: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    width: '100%',
+  primaryButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    padding: 16,
+    width: '100%',
   },
   buttonText: {
-    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    marginRight: 8,
   },
   secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    width: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
+    width: '100%',
   },
   secondaryButtonText: {
-    color: '#2196F3',
     fontSize: 16,
-    fontWeight: 'bold',
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  appTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    marginTop: 8,
+    letterSpacing: 1,
   },
 });
 
