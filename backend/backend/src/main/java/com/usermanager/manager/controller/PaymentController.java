@@ -31,9 +31,13 @@ import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.preference.Preference;
+import com.usermanager.manager.dto.common.ResponseMessage;
+import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.infra.service.WebhookService;
+import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
+import com.usermanager.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,10 +50,22 @@ public class PaymentController {
 
     private final WebhookService webhookService;
     private PreferenceClient preferenceClient;
+    private final UserService userService;
 
-    public PaymentController(WebhookService webhookService, PreferenceClient preferenceClient) {
+    public PaymentController(WebhookService webhookService, PreferenceClient preferenceClient, UserService userService) {
         this.webhookService = webhookService;
         this.preferenceClient = preferenceClient;
+        this.userService = userService;
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<ResponseMessage> getUserSubscriptionStatus(@AuthenticationPrincipal User user) {
+        var userResponse = userService.findById(user.getId());
+        Subscription userSubscription = userResponse.getSubscription();
+        if (userSubscription == Subscription.PRO) {
+            return ResponseEntity.ok(new ResponseMessage("PRO"));
+        }
+        return ResponseEntity.ok(new ResponseMessage(userSubscription.getValue()));
     }
 
     @PostMapping("/webhook")
