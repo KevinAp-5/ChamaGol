@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import React from "react";
+import React, { useEffect } from "react";
 import DeepLinkListener from "./src/components/DeepLinkListener";
 import AboutScreen from "./src/screens/about";
 import ForgotPasswordScreen from "./src/screens/forgotPassword";
@@ -18,6 +18,8 @@ import EmailConfirmationSuccessScreen from "./src/screens/EmailConfirmationSucce
 import PaymentSuccessScreen from "./src/screens/payment/success";
 import PaymentFailureScreen from "./src/screens/payment/failure";
 import PaymentPendingScreen from "./src/screens/payment/pending";
+import messaging, { registerDeviceForRemoteMessages } from "@react-native-firebase/messaging";
+import { Alert } from "react-native";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -32,14 +34,37 @@ export type RootStackParamList = {
   RequestPassword: undefined;
   ProSubscription: undefined;
   EmailVerification: Object;
-  PaymentSuccess: undefined; 
-  PaymentFailure: undefined; 
-  PaymentPending: undefined; 
+  PaymentSuccess: undefined;
+  PaymentFailure: undefined;
+  PaymentPending: undefined;
 };
 
 const Stack = createStackNavigator();
 
 export default function App() {
+  useEffect(() => {
+    messaging().subscribeToTopic("all_users");
+  }, []);
+  async function requestUserPermission() {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log("Permissão concedida para notificações!");
+    }
+  }
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      Alert.alert("Nova Notificação!", remoteMessage.notification.body);
+      console.log("putdata info: " + remoteMessage.data);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const linking = {
     prefixes: ["chamagol://", "https://chamagol-9gfb.onrender.com", "exp://"],
     config: {
