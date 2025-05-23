@@ -14,8 +14,8 @@
     <groupId>com.usermanager</groupId>
     <artifactId>manager</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>manager</name>
-    <description>Sistema de gerenciamento de usuários</description>
+    <name>chamagol</name>
+    <description>Backend chamagol</description>
 
     <properties>
         <java.version>21</java.version>
@@ -135,6 +135,11 @@
             <version>2.1.7</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>
