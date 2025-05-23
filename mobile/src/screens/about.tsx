@@ -191,6 +191,7 @@ export default function AboutScreen() {
           <TouchableOpacity
             style={[styles.contactButton, { backgroundColor: colors.secondary }]}
             activeOpacity={0.8}
+            // onPress={""}  // adicionar contato para o chamagol;
           >
             <MaterialCommunityIcons 
               name="email-outline" 

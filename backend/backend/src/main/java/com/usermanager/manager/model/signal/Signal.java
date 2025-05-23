@@ -54,5 +54,4 @@ public class Signal {
     @Builder.Default
     private TipoEvento tipoEvento = TipoEvento.DICA;
 
-    // TODO: implementar a regra de negócios para não mostrar os sinais PRO para usuários free
 }

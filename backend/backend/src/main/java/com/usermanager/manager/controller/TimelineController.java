@@ -35,6 +35,7 @@ public class TimelineController {
         return message;
     }
 
+    // TODO: antes de mostrar os sinais dos topicos, criar botão que vai fazer o fetch dos sinais anteriores.
     @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {
         long id = counter.getAndIncrement();

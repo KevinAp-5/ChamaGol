@@ -10,7 +10,8 @@ export default function DeepLinkListener({ navigation }: DeepLinkListenerProps) 
   const handleDeepLink = (event: { url: string }) => {
     const url = event.url;
     console.log('Deep link recebido:', url);
-    
+   
+    // TODO: remover os alerts
     // Parse da URL para extrair path e parâmetros
     const { path, queryParams } = Linking.parse(url);
     console.log('Path:', path, 'Params:', queryParams);
