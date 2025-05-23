@@ -30,6 +30,7 @@ import com.usermanager.manager.dto.user.ProfileDTO;
 import com.usermanager.manager.dto.user.UserLoginInfo;
 import com.usermanager.manager.enums.ClientType;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
+import com.usermanager.manager.infra.service.NotificationService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.auth.AuthService;
 
@@ -46,11 +47,22 @@ public class AuthController {
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
     private final AuthService authService;
+    private final NotificationService notificationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, NotificationService notificationService) {
         this.authService = authService;
+        this.notificationService = notificationService;
     }
 
+    // public AuthController(AuthService authService) {
+    //     this.authService = authService;
+    // }
+
+    @PostMapping("notification")
+    public ResponseEntity<ResponseMessage> sendNotification() {
+        notificationService.sendNotificationToAllUsers("Teste", "Olá");
+        return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
+    }
     @PostMapping("register")
     @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(@RequestBody @Valid CreateUserDTO dto) {
