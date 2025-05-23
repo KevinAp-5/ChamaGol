@@ -30,6 +30,7 @@
       }
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/apk_icon.png",
         "backgroundColor": "#ffffff"
@@ -56,6 +57,8 @@
         "projectId": "2a5d08e5-afdc-4785-befc-b54adb5a9941"
       }
     },
-    "plugins": ["expo-build-properties"]
+    "plugins": ["expo-build-properties", "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/crashlytics", "@react-native-firebase/perf"]
   }
 }
