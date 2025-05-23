@@ -23,6 +23,7 @@
       "imageWidth": 200
     },
     "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.kevenap5.ChamaGol",
       "infoPlist": {
@@ -57,8 +58,18 @@
         "projectId": "2a5d08e5-afdc-4785-befc-b54adb5a9941"
       }
     },
-    "plugins": ["expo-build-properties", "@react-native-firebase/app",
+    "plugins": [
+      "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "@react-native-firebase/crashlytics", "@react-native-firebase/perf"]
+      "@react-native-firebase/crashlytics",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ]
   }
 }
