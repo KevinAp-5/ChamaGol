@@ -94,7 +94,7 @@ const PaymentPendingScreen = () => {
     setIsLoading(true);
     
     try {
-      const response = await api.get("/status");
+      const response = await api.get("/payment/status");
       
       if (response.status === 200) {
         const subscriptionStatus = response.data?.message;
