@@ -13,5 +13,15 @@
     "name": "openroute.security.token.secret",
     "type": "java.lang.String",
     "description": "secret token for openroute IA models"
+  },
+  {
+    "name": "firebase.file.path",
+    "type": "java.lang.String",
+    "description": "Path for the secret file of firebase"
+  },
+  {
+    "name": "mercadopago.webhook.secret.token",
+    "type": "java.lang.String",
+    "description": "mercado pago webhook secret token"
   }
 ]}
