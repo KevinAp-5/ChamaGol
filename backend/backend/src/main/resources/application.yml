@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: prod
+    active: dev
 openroute:
   security:
     token:
@@ -11,3 +11,6 @@ mercadopago:
       token: ${MERCADO_PAGO_WEBHOOK_SECRET}
   access:
     token: ${MERCADO_PAGO_ACCESS_TOKEN}
+firebase:
+  file:
+    path: ${GOOGLE_APPLICATION_CREDENTIALS}
