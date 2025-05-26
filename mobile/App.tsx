@@ -100,7 +100,7 @@ export default function App() {
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ gestureEnabled: false}}/>
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Timeline" component={TimelineScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
