@@ -51,7 +51,10 @@
     "react-native-webview": "^13.13.5",
     "rettiwt-api": "^4.2.0",
     "sockjs-client": "^1.6.1",
-    "expo-system-ui": "~5.0.7"
+    "expo-system-ui": "~5.0.7",
+    "expo-notifications": "~0.31.2",
+    "expo-device": "~7.1.4",
+    "expo-constants": "~17.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
