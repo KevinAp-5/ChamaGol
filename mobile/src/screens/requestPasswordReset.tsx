@@ -2,15 +2,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState, useEffect } from "react";
 import {
-  KeyboardAvoidingView,
-  ScrollView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Platform,
   Animated,
   Dimensions,
   ActivityIndicator
@@ -214,161 +211,156 @@ export default function RequestPasswordReset({ navigation }: Props) {
           colors={[colors.primary, '#222222']}
           style={styles.gradientBackground}
         >
-          <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-          >
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+          <View style={styles.container}>
+            <Animated.View 
+              style={[
+                styles.logoContainer, 
+                { 
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }]
+                }
+              ]}
             >
-              <Animated.View 
-                style={[
-                  styles.logoContainer, 
-                  { 
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }]
-                  }
-                ]}
-              >
-                <Logo source={require("../assets/logo_white_label.png")} />
-                <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
-                  CHAMAGOL
-                </Text>
-                <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
-                  Seu universo esportivo
-                </Text>
-              </Animated.View>
+              <Logo source={require("../assets/logo_white_label.png")} />
+              <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
+                CHAMAGOL
+              </Text>
+              <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
+                Seu universo esportivo
+              </Text>
+            </Animated.View>
+            
+            <Animated.View 
+              style={[
+                styles.formContainer, 
+                { 
+                  backgroundColor: colors.background,
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }]
+                }
+              ]}
+            >
+              <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
+                Recuperação de Senha
+              </Text>
+              
+              <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
+                Insira seu e-mail para receber um link de recuperação de senha.
+              </Text>
+              
+              <View style={[
+                styles.inputContainer,
+                isEmailFocused && styles.inputContainerFocused,
+                { borderColor: isEmailFocused ? colors.secondary : colors.muted }
+              ]}>
+                <MaterialCommunityIcons 
+                  name="email-outline" 
+                  size={20} 
+                  color={isEmailFocused ? colors.secondary : colors.muted} 
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  placeholder="E-mail"
+                  placeholderTextColor={colors.muted}
+                  value={email}
+                  onChangeText={setEmail}
+                  style={[
+                    styles.input,
+                    { color: colors.primary, fontFamily: fonts.regular }
+                  ]}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  onFocus={() => setIsEmailFocused(true)}
+                  onBlur={() => setIsEmailFocused(false)}
+                  editable={true}
+                  selectTextOnFocus={true}
+                />
+              </View>
               
               <Animated.View 
                 style={[
-                  styles.formContainer, 
                   { 
-                    backgroundColor: colors.background,
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }]
+                    width: '100%',
+                    transform: [
+                      { scale: canResend ? pulseAnim : buttonScale }
+                    ] 
                   }
                 ]}
               >
-                <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
-                  Recuperação de Senha
-                </Text>
-                
-                <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
-                  Insira seu e-mail para receber um link de recuperação de senha.
-                </Text>
-                
-                <View style={[
-                  styles.inputContainer,
-                  isEmailFocused && styles.inputContainerFocused,
-                  { borderColor: isEmailFocused ? colors.secondary : colors.muted }
-                ]}>
-                  <MaterialCommunityIcons 
-                    name="email-outline" 
-                    size={20} 
-                    color={isEmailFocused ? colors.secondary : colors.muted} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="E-mail"
-                    placeholderTextColor={colors.muted}
-                    value={email}
-                    onChangeText={setEmail}
-                    style={[
-                      styles.input,
-                      { color: colors.primary, fontFamily: fonts.regular }
-                    ]}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    onFocus={() => setIsEmailFocused(true)}
-                    onBlur={() => setIsEmailFocused(false)}
-                  />
-                </View>
-                
-                <Animated.View 
-                  style={[
-                    { 
-                      width: '100%',
-                      transform: [
-                        { scale: canResend ? pulseAnim : buttonScale }
-                      ] 
-                    }
-                  ]}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.button,
-                      { backgroundColor: canResend || !loading ? colors.secondary : colors.muted }
-                    ]}
-                    onPress={handlePasswordRecovery}
-                    disabled={loading && !canResend}
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    activeOpacity={0.8}
-                  >
-                    {loading && !canResend ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <>
-                        <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
-                          {canResend ? "REENVIAR E-MAIL" : "CONFIRMAR"}
-                        </Text>
-                        <MaterialCommunityIcons 
-                          name={canResend ? "email-send" : "lock-reset"} 
-                          size={20} 
-                          color="#FFF" 
-                        />
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
-                
-                {loading && counter > 0 && (
-                  <View style={styles.statusContainer}>
-                    <MaterialCommunityIcons 
-                      name="timer-sand" 
-                      size={20} 
-                      color={colors.muted} 
-                    />
-                    <Text style={[styles.statusText, { color: colors.muted, fontFamily: fonts.regular }]}>
-                      Aguardando confirmação... ({counter}s)
-                    </Text>
-                  </View>
-                )}
-                
-                {canResend && (
-                  <View style={styles.statusContainer}>
-                    <MaterialCommunityIcons 
-                      name="email-alert" 
-                      size={20} 
-                      color={colors.secondary} 
-                    />
-                    <Text style={[styles.statusText, { color: colors.secondary, fontFamily: fonts.regular }]}>
-                      Não recebeu o e-mail? Você pode reenviar agora.
-                    </Text>
-                  </View>
-                )}
-                
                 <TouchableOpacity
-                  style={styles.backToLoginButton}
-                  onPress={() => navigation.navigate("Login")}
+                  style={[
+                    styles.button,
+                    { backgroundColor: canResend || !loading ? colors.secondary : colors.muted }
+                  ]}
+                  onPress={handlePasswordRecovery}
+                  disabled={loading && !canResend}
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
+                  activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons 
-                    name="keyboard-backspace" 
-                    size={20} 
-                    color={colors.accent} 
-                  />
-                  <Text style={[styles.backToLoginText, { color: colors.accent, fontFamily: fonts.medium }]}>
-                    Voltar para o login
-                  </Text>
+                  {loading && !canResend ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
+                        {canResend ? "REENVIAR E-MAIL" : "CONFIRMAR"}
+                      </Text>
+                      <MaterialCommunityIcons 
+                        name={canResend ? "email-send" : "lock-reset"} 
+                        size={20} 
+                        color="#FFF" 
+                      />
+                    </>
+                  )}
                 </TouchableOpacity>
               </Animated.View>
-            </ScrollView>
+              
+              {loading && counter > 0 && (
+                <View style={styles.statusContainer}>
+                  <MaterialCommunityIcons 
+                    name="timer-sand" 
+                    size={20} 
+                    color={colors.muted} 
+                  />
+                  <Text style={[styles.statusText, { color: colors.muted, fontFamily: fonts.regular }]}>
+                    Aguardando confirmação... ({counter}s)
+                  </Text>
+                </View>
+              )}
+              
+              {canResend && (
+                <View style={styles.statusContainer}>
+                  <MaterialCommunityIcons 
+                    name="email-alert" 
+                    size={20} 
+                    color={colors.secondary} 
+                  />
+                  <Text style={[styles.statusText, { color: colors.secondary, fontFamily: fonts.regular }]}>
+                    Não recebeu o e-mail? Você pode reenviar agora.
+                  </Text>
+                </View>
+              )}
+              
+              <TouchableOpacity
+                style={styles.backToLoginButton}
+                onPress={() => navigation.navigate("Login")}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons 
+                  name="keyboard-backspace" 
+                  size={20} 
+                  color={colors.accent} 
+                />
+                <Text style={[styles.backToLoginText, { color: colors.accent, fontFamily: fonts.medium }]}>
+                  Voltar para o login
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
             
             <Footer />
-          </KeyboardAvoidingView>
+          </View>
         </LinearGradient>
       </SafeAreaView>
     </CustomAlertProvider>
@@ -383,9 +375,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "space-between",
-  },
-  scrollContent: {
-    flexGrow: 1,
     alignItems: "center",
     padding: 16,
   },
@@ -426,7 +415,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 24,
-    paddingHorizontal: 16,
+    lineHeight: 22,
   },
   inputContainer: {
     flexDirection: "row",
@@ -436,6 +425,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     backgroundColor: "#FFFFFF",
     width: "100%",
+    overflow: "hidden",
   },
   inputContainerFocused: {
     shadowColor: "#000",
@@ -451,6 +441,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     fontSize: 16,
+    paddingRight: 12,
   },
   button: {
     flexDirection: "row",
@@ -459,7 +450,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     width: "100%",
-    height: 56,
+    minHeight: 56,
   },
   buttonText: {
     fontSize: 16,
@@ -469,13 +460,17 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 16,
     paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   statusText: {
     fontSize: 14,
     marginLeft: 8,
     textAlign: "center",
+    flex: 1,
+    flexWrap: "wrap",
   },
   backToLoginButton: {
     flexDirection: "row",
