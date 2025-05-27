@@ -7,7 +7,6 @@ export default function Footer() {
         <View style={{alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderTopWidth: 1,
     }}>
         <Text style={{ fontSize: 12, textAlign: "center",  color: colors.muted,}}>
             © 2025 CHAMAGOL. All Rights Reserved.
