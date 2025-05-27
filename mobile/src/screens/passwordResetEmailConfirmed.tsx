@@ -2,14 +2,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  ScrollView,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Platform,
   Animated,
   Dimensions,
 } from "react-native";
@@ -98,124 +95,125 @@ export default function PasswordResetEmailConfirmed({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      
       <LinearGradient
-        colors={['#000000', '#B71C1C']}
+        colors={[colors.primary, colors.highlight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
       >
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        {/* Header com Logo */}
+        <Animated.View 
+          style={[
+            styles.headerContainer,
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+          <Logo source={require("../assets/logo_white_label.png")} />
+          <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.extraBold }]}>
+            CHAMAGOL
+          </Text>
+          <Text style={[styles.tagline, { color: colors.white, fontFamily: fonts.regular }]}>
+            Seu universo esportivo
+          </Text>
+        </Animated.View>
+
+        {/* Conteúdo Principal */}
+        <View style={styles.mainContent}>
+          <Animated.View 
+            style={[
+              styles.contentContainer, 
+              { 
+                backgroundColor: colors.background,
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+                ...styles.cardShadow
+              }
+            ]}
           >
-            <View style={styles.logoContainer}>
-              <Logo source={require("../assets/logo_white_label.png")} />
-              <Text style={[styles.appTitle, { color: "#E53935", fontFamily: fonts.extraBold }]}>
-                CHAMAGOL
-              </Text>
-              <Text style={[styles.tagline, { color: '#FFFFFF', fontFamily: fonts.regular }]}>
-                Seu universo esportivo
-              </Text>
-            </View>
+            <Animated.View style={[
+              styles.successIconContainer,
+              {
+                transform: [
+                  { scale: checkmarkScale },
+                  { scale: pulseAnim }
+                ],
+                backgroundColor: colors.success,
+                ...styles.iconShadow
+              }
+            ]}>
+              <MaterialCommunityIcons name="check" size={64} color={colors.white} />
+            </Animated.View>
             
-            <Animated.View 
-              style={[
-                styles.contentContainer, 
-                { 
-                  backgroundColor: '#FFFFFF',
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }],
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 12,
-                  elevation: 8,
-                }
-              ]}
-            >
-              <Animated.View style={[
-                styles.successIconContainer,
-                {
-                  transform: [
-                    { scale: checkmarkScale },
-                    { scale: pulseAnim }
-                  ],
-                  backgroundColor: '#34C759',
-                }
-              ]}>
-                <MaterialCommunityIcons name="check" size={64} color="#FFFFFF" />
-              </Animated.View>
-              
-              <Text style={[styles.title, { color: '#000000', fontFamily: fonts.bold }]}>
-                E-mail Confirmado!
-              </Text>
-              
-              <View style={styles.divider} />
-              
-              <Text style={[styles.message, { color: '#757575', fontFamily: fonts.regular }]}>
-                Seu e-mail foi confirmado com sucesso. Agora você pode prosseguir e redefinir sua senha para recuperar o acesso à sua conta.
-              </Text>
-              
-              <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%', marginTop: 32 }}>
+            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
+              E-mail Confirmado!
+            </Text>
+            
+            <View style={[styles.divider, { backgroundColor: colors.secondary }]} />
+            
+            <Text style={[styles.message, { color: colors.muted, fontFamily: fonts.regular }]}>
+              Seu e-mail foi confirmado com sucesso. Agora você pode prosseguir e redefinir sua senha para recuperar o acesso à sua conta.
+            </Text>
+            
+            <View style={styles.buttonContainer}>
+              <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
                 <TouchableOpacity
-                  style={[styles.button, { backgroundColor: '#E53935' }]}
+                  style={[styles.primaryButton, { backgroundColor: colors.secondary }]}
                   onPress={handleGoToForgotPassword}
                   onPressIn={handlePressIn}
                   onPressOut={handlePressOut}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.buttonText, { color: '#FFFFFF', fontFamily: fonts.bold }]}>
+                  <Text style={[styles.primaryButtonText, { color: colors.white, fontFamily: fonts.bold }]}>
                     REDEFINIR SENHA
                   </Text>
-                  <MaterialCommunityIcons name="lock-reset" size={20} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="lock-reset" size={20} color={colors.white} />
                 </TouchableOpacity>
               </Animated.View>
               
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => navigation.navigate("Login")}
+                activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name="arrow-left" size={18} color="#E53935" style={styles.backIcon} />
-                <Text style={[styles.backButtonText, { color: '#E53935', fontFamily: fonts.medium }]}>
+                <MaterialCommunityIcons name="arrow-left" size={18} color={colors.secondary} />
+                <Text style={[styles.backButtonText, { color: colors.secondary, fontFamily: fonts.medium }]}>
                   Voltar para o login
                 </Text>
               </TouchableOpacity>
-            </Animated.View>
-          </ScrollView>
-          
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* Footer fixo */}
+        <View style={styles.footerContainer}>
           <Footer />
-        </KeyboardAvoidingView>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   gradientBackground: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  scrollContent: {
-    flexGrow: 1,
+  headerContainer: {
     alignItems: "center",
-    paddingVertical: 24,
+    paddingTop: 20,
     paddingHorizontal: 16,
-  },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 40,
+    minHeight: 120,
+    justifyContent: "center",
   },
   appTitle: {
     fontSize: 28,
@@ -227,19 +225,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.9,
   },
+  mainContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
   contentContainer: {
     width: width - 32,
-    borderRadius: 16, // xl border radius do design system
+    maxWidth: 400,
+    borderRadius: 24,
     padding: 32,
     alignItems: "center",
+  },
+  cardShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
   successIconContainer: {
     width: 120,
     height: 120,
-    borderRadius: 9999, // round border radius do design system
+    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
+  },
+  iconShadow: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -252,41 +267,48 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   divider: {
-    width: '50%',
+    width: 60,
     height: 3,
-    backgroundColor: '#E53935',
     marginBottom: 24,
-    borderRadius: 4,
+    borderRadius: 2,
   },
   message: {
     fontSize: 16,
     textAlign: "center",
     lineHeight: 24,
+    marginBottom: 8,
   },
-  button: {
+  buttonContainer: {
+    width: '100%',
+    marginTop: 24,
+  },
+  primaryButton: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
     height: 56,
-    borderRadius: 12, // lg border radius do design system
+    borderRadius: 12,
     marginBottom: 16,
   },
-  buttonText: {
+  primaryButtonText: {
     fontSize: 16,
     marginRight: 8,
   },
   backButton: {
-    marginTop: 16,
-    padding: 12,
+    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-  },
-  backIcon: {
-    marginRight: 4,
+    alignSelf: "center",
   },
   backButtonText: {
     fontSize: 14,
+    marginLeft: 4,
+  },
+  footerContainer: {
+    paddingBottom: 0,
   },
 });
