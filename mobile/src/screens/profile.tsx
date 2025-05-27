@@ -9,12 +9,16 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  ScrollView
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../theme/theme";
 import { api } from "../config/Api";
+import {
+  CustomAlertProvider,
+  showCustomAlert,
+} from "../components/CustomAlert";
 
 export default function ProfileScreen({ navigation }: any) {
   const { colors, fonts } = useTheme();
@@ -28,7 +32,10 @@ export default function ProfileScreen({ navigation }: any) {
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const cardScale = useState(new Animated.Value(0.95))[0];
-  const buttonScale = useState(new Animated.Value(1))[0];
+  
+  // Animações individuais para cada botão
+  const changePasswordButtonScale = useState(new Animated.Value(1))[0];
+  const logoutButtonScale = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
     // Run entrance animations
@@ -36,18 +43,18 @@ export default function ProfileScreen({ navigation }: any) {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 600,
-        useNativeDriver: true
+        useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 600,
-        useNativeDriver: true
+        useNativeDriver: true,
       }),
       Animated.timing(cardScale, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true
-      })
+        useNativeDriver: true,
+      }),
     ]).start();
 
     const fetchProfile = async () => {
@@ -67,62 +74,74 @@ export default function ProfileScreen({ navigation }: any) {
           setCreated(formatted);
         }
       } catch (error) {
-        Alert.alert(
-          "Erro de conexão", 
+        showCustomAlert(
           "Não foi possível carregar o perfil. Verifique sua conexão e tente novamente.",
-          [{ text: "OK" }]
+          "Erro de conexão"
         );
       } finally {
         setLoading(false);
       }
     };
+
     fetchProfile();
   }, []);
 
-  const handleButtonPressIn = () => {
-    Animated.timing(buttonScale, {
+  // Funções de animação para o botão de modificar senha
+  const handleChangePasswordPressIn = () => {
+    Animated.timing(changePasswordButtonScale, {
       toValue: 0.95,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
-  const handleButtonPressOut = () => {
-    Animated.timing(buttonScale, {
+  const handleChangePasswordPressOut = () => {
+    Animated.timing(changePasswordButtonScale, {
       toValue: 1,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Funções de animação para o botão de logout
+  const handleLogoutPressIn = () => {
+    Animated.timing(logoutButtonScale, {
+      toValue: 0.95,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleLogoutPressOut = () => {
+    Animated.timing(logoutButtonScale, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
     }).start();
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Sair da conta", 
-      "Você tem certeza que deseja sair?", 
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Sair",
-          style: "destructive",
-          onPress: () => {
-            // Animação de saída antes de navegar
-            Animated.parallel([
-              Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true
-              }),
-              Animated.timing(slideAnim, {
-                toValue: 50,
-                duration: 300,
-                useNativeDriver: true
-              })
-            ]).start(() => {
-              navigation.navigate("Login");
-            });
-          },
-        },
-      ]
+    showCustomAlert(
+      "Você tem certeza que deseja sair?",
+      "Sair da conta",
+      () => {
+        // Animação de saída antes de navegar
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 50,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          navigation.navigate("Login");
+        });
+      },
+      "Sair"
     );
   };
 
@@ -139,162 +158,267 @@ export default function ProfileScreen({ navigation }: any) {
           end={{ x: 1, y: 0 }}
           style={styles.proBadge}
         >
-          <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>PRO</Text>
+          <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>
+            PRO
+          </Text>
         </LinearGradient>
       );
     } else {
       return (
         <View style={[styles.freeBadge, { backgroundColor: colors.muted }]}>
-          <Text style={[styles.freeBadgeText, { fontFamily: fonts.medium }]}>GRATUITO</Text>
+          <Text style={[styles.freeBadgeText, { fontFamily: fonts.medium }]}>
+            GRATUITO
+          </Text>
         </View>
       );
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <LinearGradient
-        colors={["#000000", "#B71C1C"]}
-        style={styles.gradientHeader}
+    <CustomAlertProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <LinearGradient
+          colors={["#000000", "#B71C1C"]}
+          style={styles.gradientHeader}
         >
-        <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-          MEU PERFIL
-        </Text>
-        <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-          Gerencie suas informações
-        </Text>
-      </LinearGradient>
+          <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
+            MEU PERFIL
+          </Text>
+          <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
+            Gerencie suas informações
+          </Text>
+        </LinearGradient>
 
-      <ScrollView 
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [
-                { translateY: slideAnim },
-                { scale: cardScale }
-              ]
-            }
-          ]}
+        <ScrollView
+          style={[styles.container, { backgroundColor: colors.background }]}
+          contentContainerStyle={styles.contentContainer}
         >
-          <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={["#E53935", "#FF5722"]}
-                style={styles.avatarGradient}
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }, { scale: cardScale }],
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.profileHeader,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <View style={styles.avatarContainer}>
+                <LinearGradient
+                  colors={["#E53935", "#FF5722"]}
+                  style={styles.avatarGradient}
+                >
+                  <Text
+                    style={[styles.avatarText, { fontFamily: fonts.extraBold }]}
+                  >
+                    {username ? username.charAt(0).toUpperCase() : "?"}
+                  </Text>
+                </LinearGradient>
+              </View>
+              <Text
+                style={[
+                  styles.profileName,
+                  { color: colors.primary, fontFamily: fonts.bold },
+                ]}
               >
-                <Text style={[styles.avatarText, { fontFamily: fonts.extraBold }]}>
-                  {username ? username.charAt(0).toUpperCase() : "?"}
-                </Text>
-              </LinearGradient>
+                {username || "Carregando..."}
+              </Text>
+              {getSubscriptionBadge()}
             </View>
-            <Text style={[styles.profileName, { color: colors.primary, fontFamily: fonts.bold }]}>
-              {username || "Carregando..."}
-            </Text>
-            {getSubscriptionBadge()}
-          </View>
 
-          <View style={[styles.infoCard, { backgroundColor: colors.background }]}>
-            <View style={styles.infoSection}>
-              <View style={styles.infoHeaderRow}>
-                <MaterialCommunityIcons name="card-account-details-outline" size={22} color={colors.secondary} />
-                <Text style={[styles.infoTitle, { color: colors.secondary, fontFamily: fonts.semibold }]}>
-                  Informações da Conta
-                </Text>
-              </View>
-              <View style={styles.divider} />
-              
-              <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="email-outline" size={20} color={colors.muted} />
-                <View style={styles.infoTextContainer}>
-                  <Text style={[styles.infoLabel, { color: colors.muted, fontFamily: fonts.medium }]}>
-                    E-mail
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.primary, fontFamily: fonts.regular }]}>
-                    {email || "Carregando..."}
+            <View
+              style={[styles.infoCard, { backgroundColor: colors.background }]}
+            >
+              <View style={styles.infoSection}>
+                <View style={styles.infoHeaderRow}>
+                  <MaterialCommunityIcons
+                    name="card-account-details-outline"
+                    size={22}
+                    color={colors.secondary}
+                  />
+                  <Text
+                    style={[
+                      styles.infoTitle,
+                      { color: colors.secondary, fontFamily: fonts.semibold },
+                    ]}
+                  >
+                    Informações da Conta
                   </Text>
                 </View>
-              </View>
+                <View style={styles.divider} />
 
-              <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="calendar-outline" size={20} color={colors.muted} />
-                <View style={styles.infoTextContainer}>
-                  <Text style={[styles.infoLabel, { color: colors.muted, fontFamily: fonts.medium }]}>
-                    Data de Registro
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.primary, fontFamily: fonts.regular }]}>
-                    {created || "Carregando..."}
-                  </Text>
+                <View style={styles.infoRow}>
+                  <MaterialCommunityIcons
+                    name="email-outline"
+                    size={20}
+                    color={colors.muted}
+                  />
+                  <View style={styles.infoTextContainer}>
+                    <Text
+                      style={[
+                        styles.infoLabel,
+                        { color: colors.muted, fontFamily: fonts.medium },
+                      ]}
+                    >
+                      E-mail
+                    </Text>
+                    <Text
+                      style={[
+                        styles.infoValue,
+                        { color: colors.primary, fontFamily: fonts.regular },
+                      ]}
+                    >
+                      {email || "Carregando..."}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.infoRow}>
-                <MaterialCommunityIcons 
-                  name={subscription === "PRO" ? "trophy-outline" : "account-outline"} 
-                  size={20} 
-                  color={colors.muted} 
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={[styles.infoLabel, { color: colors.muted, fontFamily: fonts.medium }]}>
-                    Tipo de Conta
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.primary, fontFamily: fonts.regular }]}>
-                    {subscription === "PRO" ? "Assinante PRO" : "Conta Gratuita"}
-                  </Text>
+                <View style={styles.infoRow}>
+                  <MaterialCommunityIcons
+                    name="calendar-outline"
+                    size={20}
+                    color={colors.muted}
+                  />
+                  <View style={styles.infoTextContainer}>
+                    <Text
+                      style={[
+                        styles.infoLabel,
+                        { color: colors.muted, fontFamily: fonts.medium },
+                      ]}
+                    >
+                      Data de Registro
+                    </Text>
+                    <Text
+                      style={[
+                        styles.infoValue,
+                        { color: colors.primary, fontFamily: fonts.regular },
+                      ]}
+                    >
+                      {created || "Carregando..."}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <MaterialCommunityIcons
+                    name={
+                      subscription === "PRO"
+                        ? "trophy-outline"
+                        : "account-outline"
+                    }
+                    size={20}
+                    color={colors.muted}
+                  />
+                  <View style={styles.infoTextContainer}>
+                    <Text
+                      style={[
+                        styles.infoLabel,
+                        { color: colors.muted, fontFamily: fonts.medium },
+                      ]}
+                    >
+                      Tipo de Conta
+                    </Text>
+                    <Text
+                      style={[
+                        styles.infoValue,
+                        { color: colors.primary, fontFamily: fonts.regular },
+                      ]}
+                    >
+                      {subscription === "PRO"
+                        ? "Assinante PRO"
+                        : "Conta Gratuita"}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.buttonGroup}>
-            <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: colors.secondary }]}
-                onPress={handleChangePassword}
-                onPressIn={handleButtonPressIn}
-                onPressOut={handleButtonPressOut}
-                activeOpacity={0.8}
+            <View style={styles.buttonGroup}>
+              {/* Botão de Modificar Senha */}
+              <Animated.View
+                style={{ transform: [{ scale: changePasswordButtonScale }], width: "100%" }}
               >
-                <MaterialCommunityIcons name="lock-reset" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, { color: '#FFFFFF', fontFamily: fonts.bold }]}>
-                  MODIFICAR SENHA
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-            
-            <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%', marginTop: 16 }}>
-              <TouchableOpacity
-                style={[styles.outlineButton, { borderColor: colors.error }]}
-                onPress={handleLogout}
-                onPressIn={handleButtonPressIn}
-                onPressOut={handleButtonPressOut}
-                activeOpacity={0.8}
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: colors.secondary }]}
+                  onPress={handleChangePassword}
+                  onPressIn={handleChangePasswordPressIn}
+                  onPressOut={handleChangePasswordPressOut}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons
+                    name="lock-reset"
+                    size={20}
+                    color="#FFFFFF"
+                    style={styles.buttonIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      { color: "#FFFFFF", fontFamily: fonts.bold },
+                    ]}
+                  >
+                    MODIFICAR SENHA
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* Botão de Logout */}
+              <Animated.View
+                style={{
+                  transform: [{ scale: logoutButtonScale }],
+                  width: "100%",
+                  marginTop: 16,
+                }}
               >
-                <MaterialCommunityIcons name="logout" size={20} color={colors.error} style={styles.buttonIcon} />
-                <Text style={[styles.outlineButtonText, { color: colors.error, fontFamily: fonts.bold }]}>
-                  SAIR DA CONTA
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-        </Animated.View>
-      </ScrollView>
-      
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: colors.muted, fontFamily: fonts.regular }]}>
-          © 2025 CHAMAGOL • Todos os direitos reservados
-        </Text>
-      </View>
-    </SafeAreaView>
+                <TouchableOpacity
+                  style={[styles.outlineButton, { borderColor: colors.error }]}
+                  onPress={handleLogout}
+                  onPressIn={handleLogoutPressIn}
+                  onPressOut={handleLogoutPressOut}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons
+                    name="logout"
+                    size={20}
+                    color={colors.error}
+                    style={styles.buttonIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.outlineButtonText,
+                      { color: colors.error, fontFamily: fonts.bold },
+                    ]}
+                  >
+                    SAIR DA CONTA
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </Animated.View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Text
+            style={[
+              styles.footerText,
+              { color: colors.muted, fontFamily: fonts.regular },
+            ]}
+          >
+            © 2025 CHAMAGOL • Todos os direitos reservados
+          </Text>
+        </View>
+      </SafeAreaView>
+    </CustomAlertProvider>
   );
 }
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const styles = StyleSheet.create({
   gradientHeader: {
     paddingTop: 20,
@@ -306,7 +430,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-
   },
   headerTitle: {
     fontSize: 24,
@@ -322,15 +445,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderTopRightRadius: 24,
     borderTopLeftRadius: 24,
-    marginTop: -18
+    marginTop: -18,
   },
   contentContainer: {
     padding: 16,
-
   },
   content: {
     flex: 1,
-
   },
   profileHeader: {
     alignItems: "center",
@@ -465,5 +586,5 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     textAlign: "center",
-  }
+  },
 });
