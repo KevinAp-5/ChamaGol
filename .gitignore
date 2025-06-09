@@ -39,3 +39,5 @@ ChamaGol.code-workspace
 pass.env
 android
 ios
+mobile/google-services.json
+mobile/chamagol-*.json
