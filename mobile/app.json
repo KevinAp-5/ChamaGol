@@ -46,7 +46,10 @@
               "scheme": "chamagol"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -70,6 +73,7 @@
           }
         }
       ]
-    ]
+    ],
+    "owner": "kevenap-5"
   }
 }
