@@ -17,11 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 import { useTheme } from '../../theme/theme';
-
-type RootStackParamList = {
-  Home: undefined;
-  PROBenefits: undefined;
-};
+import { RootStackParamList } from '../../../App';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PaymentSuccessScreen = () => {
   const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
@@ -79,12 +76,17 @@ const PaymentSuccessScreen = () => {
     }).start();
   };
 
+  const setSubscriptionPro = async () => {
+   await AsyncStorage.setItem("subscription", "PRO");
+  }
+
   const handleSupport = () => {
     Linking.openURL('https://chamagol.com/suporte');
   };
 
   const handleExploreFeatures = () => {
-    navigation.navigate('PROBenefits');
+    setSubscriptionPro
+    navigation.navigate("Timeline");
   };
 
   const currentYear = new Date().getFullYear();
