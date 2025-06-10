@@ -1,6 +1,9 @@
 package com.usermanager.manager.infra.security.filter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,6 +17,8 @@ import com.usermanager.manager.exception.authentication.TokenInvalid;
 import com.usermanager.manager.model.security.TokenProvider;
 import com.usermanager.manager.repository.UserRepository;
 
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +31,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private TokenProvider tokenProvider;
     private UserRepository userRepository;
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     public SecurityFilter(TokenProvider tokenProvider, UserRepository userRepository) {
         this.tokenProvider = tokenProvider;
@@ -36,6 +42,10 @@ public class SecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        
+
+        String ip = request.getRemoteAddr();
+        Bucket bucket = resolveBucket(ip);
         try {
             var token = this.recoverToken(request);
             if (token != null) {
@@ -43,7 +53,13 @@ public class SecurityFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
-            filterChain.doFilter(request, response);
+            if (bucket.tryConsume(1)) {
+                filterChain.doFilter(request, response);
+            }
+            else {
+                response.setStatus(429);
+                response.getWriter().write("Too many requests. Tente novamente mais tarde.");;
+            }
 
         } catch (TokenInvalid e) {
             SecurityContextHolder.clearContext();
@@ -76,5 +92,20 @@ public class SecurityFilter extends OncePerRequestFilter {
                 user,
                 null,
                 user.getAuthorities());
+    }
+
+    private Bucket createNewBucket() {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(30)
+                .refillGreedy(10L, Duration.ofMinutes(1))
+                .build();
+
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    private Bucket resolveBucket(String ip) {
+        return buckets.computeIfAbsent(ip, k -> createNewBucket());
     }
 }
