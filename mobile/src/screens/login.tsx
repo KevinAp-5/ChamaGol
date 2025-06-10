@@ -23,7 +23,7 @@ import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -35,15 +35,28 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState("");
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [login, setLogin] = useState(false);
- 
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const buttonScale = useState(new Animated.Value(1))[0];
-  
+
   useEffect(() => {
-    // Run entrance animations
+    // Resetar flags ao abrir a tela de login
+    const resetFlags = async () => {
+      try {
+        await Promise.all([
+          AsyncStorage.setItem("subscriptionFlag", "0"),
+          AsyncStorage.setItem("termFlag", "0")
+        ]);
+        console.log("Flags resetadas no login");
+      } catch (error) {
+        console.log("Erro ao resetar flags:", error);
+      }
+    };
+    resetFlags();
+
+    // Animações de entrada
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -57,7 +70,7 @@ export default function LoginScreen({ navigation }: Props) {
       })
     ]).start();
   }, []);
-  
+
   const handlePressIn = () => {
     Animated.timing(buttonScale, {
       toValue: 0.95,
@@ -95,16 +108,20 @@ export default function LoginScreen({ navigation }: Props) {
       if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
         const accessToken = response.data.token || response.data.accessToken;
         const refreshToken = response.data.refreshToken;
-        setLogin(true);
 
         await SecureStore.setItemAsync('accessToken', accessToken);
         if (refreshToken) {
           await SecureStore.setItemAsync('refreshToken', refreshToken);
         }
-        
-        // Get user info after successful login
-        await getUserInfo();
-        
+
+        // Resetar flags para permitir nova busca na próxima sessão
+        await Promise.all([
+          AsyncStorage.setItem("subscriptionFlag", "0"),
+          AsyncStorage.setItem("termFlag", "0")
+        ]);
+
+        console.log("Login realizado, flags resetadas");
+
         // Use a brief timeout to show loading state before navigation
         setTimeout(() => {
           navigation.navigate("Home");
