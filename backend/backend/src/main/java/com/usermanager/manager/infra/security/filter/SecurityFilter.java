@@ -45,6 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         
 
         String ip = request.getRemoteAddr();
+        log.info("new request with ip: {}", ip);
         Bucket bucket = resolveBucket(ip);
         try {
             var token = this.recoverToken(request);
@@ -97,7 +98,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     private Bucket createNewBucket() {
         Bandwidth limit = Bandwidth.builder()
                 .capacity(30)
-                .refillGreedy(10L, Duration.ofMinutes(1))
+                .refillGreedy(1, Duration.ofMinutes(6))
                 .build();
 
         return Bucket.builder()
