@@ -54,15 +54,12 @@ public class AuthController {
         this.notificationService = notificationService;
     }
 
-    // public AuthController(AuthService authService) {
-    //     this.authService = authService;
-    // }
-
     @PostMapping("notification")
     public ResponseEntity<ResponseMessage> sendNotification() {
         notificationService.sendNotificationToAllUsers("Teste", "Olá");
         return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
     }
+
     @PostMapping("register")
     @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(@RequestBody @Valid CreateUserDTO dto) {
