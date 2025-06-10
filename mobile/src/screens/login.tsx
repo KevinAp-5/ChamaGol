@@ -13,7 +13,7 @@ import {
   Platform,
   Animated,
   Dimensions,
-  Image
+  ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -101,6 +101,10 @@ export default function LoginScreen({ navigation }: Props) {
         if (refreshToken) {
           await SecureStore.setItemAsync('refreshToken', refreshToken);
         }
+        
+        // Get user info after successful login
+        await getUserInfo();
+        
         // Use a brief timeout to show loading state before navigation
         setTimeout(() => {
           navigation.navigate("Home");
@@ -122,7 +126,6 @@ export default function LoginScreen({ navigation }: Props) {
   };
   
   const getUserInfo = async() => {
-    if (login != true) return;
     try {
       const response = await api.get("/auth/user/info");
       if (response.status == 200 && response.data) {
@@ -130,11 +133,10 @@ export default function LoginScreen({ navigation }: Props) {
           await AsyncStorage.setItem("lastLogin", response.data.lastLogin);
           console.log("informações salvas.")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("erro ao recuperar user login info" + error?.response?.data?.message);
     }
   }
-  getUserInfo();
 
   return (
     <CustomAlertProvider>
@@ -149,185 +151,195 @@ export default function LoginScreen({ navigation }: Props) {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
           >
-            <Animated.View 
-              style={[
-                styles.logoContainer, 
-                { 
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }]
-                }
-              ]}
+            <ScrollView 
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
             >
-              <Logo source={require("../assets/logo_white_label.png")} />
-              <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
-                CHAMAGOL
-              </Text>
-              <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
-                Seu universo esportivo
-              </Text>
-            </Animated.View>
-            
-            <Animated.View 
-              style={[
-                styles.formContainer, 
-                { 
-                  backgroundColor: colors.background,
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }]
-                }
-              ]}
-            >
-              <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
-                Bem-vindo de volta!
-              </Text>
-              
-              <View style={styles.inputGroup}>
-                <View style={[
-                  styles.inputContainer,
-                  isEmailFocused && styles.inputContainerFocused,
-                  { borderColor: isEmailFocused ? colors.secondary : colors.muted }
-                ]}>
-                  <MaterialCommunityIcons 
-                    name="email-outline" 
-                    size={20} 
-                    color={isEmailFocused ? colors.secondary : colors.muted} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="E-mail"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    value={email}
-                    onChangeText={setEmail}
-                    onFocus={() => setIsEmailFocused(true)}
-                    onBlur={() => setIsEmailFocused(false)}
-                    style={[
-                      styles.input,
-                      { color: colors.primary, fontFamily: fonts.regular }
-                    ]}
-                  />
-                </View>
-                
-                <View style={[
-                  styles.inputContainer,
-                  isPasswordFocused && styles.inputContainerFocused,
-                  { borderColor: isPasswordFocused ? colors.secondary : colors.muted }
-                ]}>
-                  <MaterialCommunityIcons 
-                    name="lock-outline" 
-                    size={20} 
-                    color={isPasswordFocused ? colors.secondary : colors.muted} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Senha"
-                    placeholderTextColor={colors.muted}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    value={password}
-                    onChangeText={setPassword}
-                    onFocus={() => setIsPasswordFocused(true)}
-                    onBlur={() => setIsPasswordFocused(false)}
-                    style={[
-                      styles.input,
-                      { color: colors.primary, fontFamily: fonts.regular }
-                    ]}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.passwordToggle}
-                  >
-                    <MaterialCommunityIcons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={22}
-                      color={colors.muted}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              <TouchableOpacity
-                onPress={() => navigation.navigate("RequestPassword")}
-                style={styles.forgotPasswordButton}
+              <Animated.View 
+                style={[
+                  styles.logoContainer, 
+                  { 
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }]
+                  }
+                ]}
               >
-                <Text
-                  style={[styles.forgotPasswordText, { color: colors.secondary, fontFamily: fonts.regular }]}
-                >
-                  Esqueceu sua senha?
+                <Logo source={require("../assets/logo_white_label.png")} />
+                <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
+                  CHAMAGOL
                 </Text>
-              </TouchableOpacity>
+                <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
+                  Seu universo esportivo
+                </Text>
+              </Animated.View>
               
-              <View style={styles.actionButtons}>
-                <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
-                  <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: colors.secondary }]}
-                    onPress={handleLogin}
-                    disabled={loading}
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    activeOpacity={0.8}
-                  >
-                    {loading ? (
-                      <View style={styles.loadingIndicator}>
-                        <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
-                      </View>
-                    ) : (
-                      <>
-                        <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
-                          ENTRAR
-                        </Text>
-                        <MaterialCommunityIcons name="login" size={20} color="#FFF" />
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
+              <Animated.View 
+                style={[
+                  styles.formContainer, 
+                  { 
+                    backgroundColor: colors.background,
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }]
+                  }
+                ]}
+              >
+                <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
+                  Bem-vindo de volta!
+                </Text>
                 
-                <View style={styles.divider}>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.muted }]} />
-                  <Text style={[styles.dividerText, { color: colors.muted, fontFamily: fonts.regular }]}>
-                    ou
-                  </Text>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.muted }]} />
+                <View style={styles.inputGroup}>
+                  <View style={[
+                    styles.inputContainer,
+                    isEmailFocused && styles.inputContainerFocused,
+                    { borderColor: isEmailFocused ? colors.secondary : colors.muted }
+                  ]}>
+                    <MaterialCommunityIcons 
+                      name="email-outline" 
+                      size={20} 
+                      color={isEmailFocused ? colors.secondary : colors.muted} 
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="E-mail"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      value={email}
+                      onChangeText={setEmail}
+                      onFocus={() => setIsEmailFocused(true)}
+                      onBlur={() => setIsEmailFocused(false)}
+                      style={[
+                        styles.input,
+                        { color: colors.primary, fontFamily: fonts.regular }
+                      ]}
+                    />
+                  </View>
+                  
+                  <View style={[
+                    styles.inputContainer,
+                    isPasswordFocused && styles.inputContainerFocused,
+                    { borderColor: isPasswordFocused ? colors.secondary : colors.muted }
+                  ]}>
+                    <MaterialCommunityIcons 
+                      name="lock-outline" 
+                      size={20} 
+                      color={isPasswordFocused ? colors.secondary : colors.muted} 
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      placeholder="Senha"
+                      placeholderTextColor={colors.muted}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      value={password}
+                      onChangeText={setPassword}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
+                      style={[
+                        styles.input,
+                        { color: colors.primary, fontFamily: fonts.regular }
+                      ]}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.passwordToggle}
+                    >
+                      <MaterialCommunityIcons
+                        name={showPassword ? "eye-off" : "eye"}
+                        size={22}
+                        color={colors.muted}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 
                 <TouchableOpacity
-                  style={[styles.registerButton, { borderColor: colors.accent }]}
-                  onPress={() => navigation.navigate("Register")}
-                  activeOpacity={0.7}
+                  onPress={() => navigation.navigate("RequestPassword")}
+                  style={styles.forgotPasswordButton}
                 >
                   <Text
-                    style={[styles.registerButtonText, { color: colors.accent, fontFamily: fonts.bold }]}
+                    style={[styles.forgotPasswordText, { color: colors.secondary, fontFamily: fonts.regular }]}
                   >
-                    CRIAR CONTA
+                    Esqueceu sua senha?
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </Animated.View>
+                
+                <View style={styles.actionButtons}>
+                  <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
+                    <TouchableOpacity
+                      style={[styles.loginButton, { backgroundColor: colors.secondary }]}
+                      onPress={handleLogin}
+                      disabled={loading}
+                      onPressIn={handlePressIn}
+                      onPressOut={handlePressOut}
+                      activeOpacity={0.8}
+                    >
+                      {loading ? (
+                        <View style={styles.loadingIndicator}>
+                          <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
+                        </View>
+                      ) : (
+                        <>
+                          <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
+                            ENTRAR
+                          </Text>
+                          <MaterialCommunityIcons name="login" size={20} color="#FFF" />
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                  
+                  <View style={styles.divider}>
+                    <View style={[styles.dividerLine, { backgroundColor: colors.muted }]} />
+                    <Text style={[styles.dividerText, { color: colors.muted, fontFamily: fonts.regular }]}>
+                      ou
+                    </Text>
+                    <View style={[styles.dividerLine, { backgroundColor: colors.muted }]} />
+                  </View>
+                  
+                  <TouchableOpacity
+                    style={[styles.registerButton, { borderColor: colors.accent }]}
+                    onPress={() => navigation.navigate("Register")}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[styles.registerButtonText, { color: colors.accent, fontFamily: fonts.bold }]}
+                    >
+                      CRIAR CONTA
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </ScrollView>
             
-            <Footer />
           </KeyboardAvoidingView>
+            <Footer />
         </LinearGradient>
       </SafeAreaView>
     </CustomAlertProvider>
   );
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    minHeight: height - 100, // Ensure minimum height for proper layout
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 24,
   },
   appTitle: {
     fontSize: 28,
@@ -342,8 +354,10 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: width - 32,
+    maxWidth: 400,
     borderRadius: 24,
     padding: 24,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -389,13 +403,14 @@ const styles = StyleSheet.create({
   forgotPasswordButton: {
     alignSelf: "flex-end",
     paddingVertical: 8,
+    marginBottom: 8,
   },
   forgotPasswordText: {
     fontSize: 14,
     fontWeight: "500",
   },
   actionButtons: {
-    marginTop: 24,
+    marginTop: 16,
     alignItems: "center",
     width: "100%",
   },
@@ -406,6 +421,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
+    width: "100%",
   },
   buttonText: {
     fontSize: 16,
