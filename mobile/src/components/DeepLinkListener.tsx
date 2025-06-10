@@ -11,26 +11,22 @@ export default function DeepLinkListener({ navigation }: DeepLinkListenerProps) 
     const url = event.url;
     console.log('Deep link recebido:', url);
    
-    // TODO: remover os alerts
     // Parse da URL para extrair path e parâmetros
     const { path, queryParams } = Linking.parse(url);
     console.log('Path:', path, 'Params:', queryParams);
     
     // Tratamento das URLs de retorno de pagamento
     if (url.includes('payment/success')) {
-      Alert.alert('Pagamento aprovado', 'Obrigado pela sua assinatura!');
       // Opcionalmente: navegar para uma tela de sucesso
       if (navigation) {
         navigation.navigate('PaymentSuccess', { ...queryParams });
       }
     } else if (url.includes('payment/failure')) {
-      Alert.alert('Pagamento falhou', 'Por favor, tente novamente.');
       // Opcionalmente: navegar para uma tela de falha
       if (navigation) {
         navigation.navigate('PaymentFailure', { ...queryParams });
       }
     } else if (url.includes('payment/pending')) {
-      Alert.alert('Pagamento pendente', 'Seu pagamento está em análise.');
       // Opcionalmente: navegar para uma tela de pendente
       if (navigation) {
         navigation.navigate('PaymentPending', { ...queryParams });
