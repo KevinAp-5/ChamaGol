@@ -37,6 +37,34 @@ export default function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastLogin, setLastLogin] = useState<string | null>(null);
 
+  // Mudança: usar boolean para flags
+  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
+  const [termLoaded, setTermLoaded] = useState(false);
+
+  useEffect(() => {
+    const setFlagsAndFetch = async () => {
+      try {
+        const subscriptionFlag = await AsyncStorage.getItem("subscriptionFlag");
+        const termFlag = await AsyncStorage.getItem("termFlag");
+        const subscriptionLoaded = subscriptionFlag === "1";
+        const termLoaded = termFlag === "1";
+        setSubscriptionLoaded(subscriptionLoaded);
+        setTermLoaded(termLoaded);
+
+        if (!subscriptionLoaded) {
+          await fetchSubscription();
+        }
+        if (!termLoaded) {
+          await checkTermAcceptance();
+        }
+      } catch (error) {
+        setSubscriptionLoaded(false);
+        setTermLoaded(false);
+      }
+    };
+    setFlagsAndFetch();
+  }, []);
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(50)).current;
@@ -115,7 +143,6 @@ export default function HomeScreen({ navigation }: Props) {
         if (storedUsername) {
           setUsername(storedUsername);
         }
-
         const lastLoginDate = await AsyncStorage.getItem("lastLogin");
         if (lastLoginDate) {
           setLastLogin(lastLoginDate);
@@ -130,18 +157,19 @@ export default function HomeScreen({ navigation }: Props) {
     };
 
     getUserInfo();
-    fetchSubscription();
-    checkTermAcceptance();
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchSubscription();
-      return () => {};
-    }, [])
-  );
-
   const fetchSubscription = async () => {
+    console.log(
+      "fetchSubscription chamado, subscriptionLoaded:",
+      subscriptionLoaded
+    );
+
+    if (subscriptionLoaded) {
+      console.log("Subscription já carregada, pulando requisição");
+      return;
+    }
+
     try {
       const token = await SecureStore.getItemAsync("accessToken");
       if (!token) {
@@ -149,6 +177,7 @@ export default function HomeScreen({ navigation }: Props) {
         return;
       }
 
+      console.log("Fazendo requisição de subscription...");
       const response = await api.get("users/subscription", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -160,8 +189,12 @@ export default function HomeScreen({ navigation }: Props) {
             response.data.userSubscription
           );
           setSubscription(response.data.userSubscription as SubscriptionType);
-          // await AsyncStorage.setItem("subscription", "PREMIUM");
-          // setSubscription("PREMIUM" as SubscriptionType);
+
+          // Definir flag como carregado
+          await AsyncStorage.setItem("subscriptionFlag", "1");
+          setSubscriptionLoaded(true);
+
+          console.log("Subscription carregada e flag definida");
         } catch (error) {
           console.log("Erro ao salvar dados no AsyncStorage");
         }
@@ -172,10 +205,18 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const checkTermAcceptance = async () => {
+    console.log("checkTermAcceptance chamado, termLoaded:", termLoaded);
+
+    if (termLoaded) {
+      console.log("Terms já carregados, pulando requisição");
+      return;
+    }
+
     try {
       const token = await SecureStore.getItemAsync("accessToken");
       if (!token) return;
 
+      console.log("Fazendo requisição de terms...");
       const response = await api.get("acceptance/has-accepted-latest", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -183,6 +224,13 @@ export default function HomeScreen({ navigation }: Props) {
       if (response.status === 200 && response.data === false) {
         setShowTermModal(true);
       }
+
+      // Definir flag como carregado independente do resultado
+      await AsyncStorage.setItem("termFlag", "1");
+      setTermLoaded(true);
+
+      console.log("Terms verificados e flag definida");
+
       if (response.status === 404) {
         showCustomAlert(
           "Erro ao validar usuário, faça login novamente",
