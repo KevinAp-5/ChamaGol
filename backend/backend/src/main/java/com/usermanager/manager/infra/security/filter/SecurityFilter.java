@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,7 +34,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     private UserRepository userRepository;
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-    public SecurityFilter(TokenProvider tokenProvider, UserRepository userRepository) {
+    public SecurityFilter(TokenProvider tokenProvider, @Lazy UserRepository userRepository) {
         this.tokenProvider = tokenProvider;
         this.userRepository = userRepository;
     }
