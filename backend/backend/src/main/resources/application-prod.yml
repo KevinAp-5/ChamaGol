@@ -2,7 +2,7 @@ spring:
   application:
     name: login
   datasource:
-    url: jdbc:postgresql://dpg-d0i0ssemcj7s739ja8ig-a.oregon-postgres.render.com/backend_764d
+    url: jdbc:postgresql://dpg-d18br0juibrs738e83ag-a.oregon-postgres.render.com/chamagol
     username: ${DB_USERNAME_TEST}
     password: ${DB_PASSWORD_TEST}
     hikari:
