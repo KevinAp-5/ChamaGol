@@ -26,63 +26,62 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserExistsException.class)
     public ResponseEntity<ResponseMessage> handleUserExistsException(UserExistsException ex) {
-        return ResponseEntity.status(409).body(new ResponseMessage("User already exists: " + ex.getMessage()));
+        return ResponseEntity.status(409).body(new ResponseMessage("Usuário já existe: " + ex.getMessage()));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleUserDoesNotExistsException(UserNotFoundException ex) {
-        return ResponseEntity.status(404).body(new ResponseMessage("User not found with login:  " + ex.getMessage()));
+        return ResponseEntity.status(404).body(new ResponseMessage("Usuário não encontrado com login: " + ex.getMessage()));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        return ResponseEntity.status(404).body(new ResponseMessage("Username not found " + ex.getMessage()));
+        return ResponseEntity.status(404).body(new ResponseMessage("Nome de usuário não encontrado: " + ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ResponseMessage> handleBadCredentialsException(BadCredentialsException ex) {
-        return ResponseEntity.status(401).body(new ResponseMessage(ex.getMessage()));
+        return ResponseEntity.status(401).body(new ResponseMessage("Credenciais inválidas: " + ex.getMessage()));
     }
 
     @ExceptionHandler(UserNotEnabledException.class)
     public ResponseEntity<ResponseMessage> handleUserNotEnabledException(UserNotEnabledException ex) {
-        return ResponseEntity.status(401).body(new ResponseMessage("Please activate the account. " + ex.getMessage()));
+        return ResponseEntity.status(401).body(new ResponseMessage("Por favor, ative a conta. " + ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseMessage> handleException(Exception ex) {
         log.error("", ex);
-        return ResponseEntity.status(500).body(new ResponseMessage("Error interno no servidor: " + ex.getMessage()));
+        return ResponseEntity.status(500).body(new ResponseMessage("Erro interno no servidor: " + ex.getMessage()));
     }
-
 
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleTokenNotFoundException(TokenNotFoundException ex) {
-        return ResponseEntity.status(404).body(new ResponseMessage("Token error: " + ex.getMessage()));
+        return ResponseEntity.status(404).body(new ResponseMessage("Erro de token: " + ex.getMessage()));
     }
 
     @ExceptionHandler(TokenInvalidException.class)
     public ResponseEntity<ResponseMessage> handleTokenInvalidException(TokenInvalidException ex) {
-        return ResponseEntity.status(401).body(new ResponseMessage("Token expired or invalid: " + ex.getMessage()));
+        return ResponseEntity.status(401).body(new ResponseMessage("Token expirado ou inválido: " + ex.getMessage()));
     }
 
     @ExceptionHandler(TokenInvalid.class)
     public ResponseEntity<ResponseMessage> handleTokenInvalid(TokenInvalid ex) {
-        return ResponseEntity.status(401).body(new ResponseMessage("Token expired or invalid: " + ex.getMessage()));
+        return ResponseEntity.status(401).body(new ResponseMessage("Token expirado ou inválido: " + ex.getMessage()));
     }
 
     @ExceptionHandler(PasswordFormatNotValidException.class)
     public ResponseEntity<ResponseMessage> handlePasswordFormatNotValid(PasswordFormatNotValidException ex) {
-        return ResponseEntity.status(400).body(new ResponseMessage("Password format not valid: " + ex.getMessage()));
+        return ResponseEntity.status(400).body(new ResponseMessage("Formato de senha inválido: " + ex.getMessage()));
     }
 
     @ExceptionHandler(TermExistsException.class)
     public ResponseEntity<ResponseMessage> handleTermExistsException(TermExistsException ex) {
-        return ResponseEntity.status(409).body(new ResponseMessage("Term already exists: " + ex.getMessage()));
+        return ResponseEntity.status(409).body(new ResponseMessage("Termo já existe: " + ex.getMessage()));
     }
 
     @ExceptionHandler(TermNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleTermNotFoundException(TermNotFoundException ex) {
-        return ResponseEntity.status(404).body(new ResponseMessage("No terms found: " + ex.getMessage()));
+        return ResponseEntity.status(404).body(new ResponseMessage("Nenhum termo encontrado: " + ex.getMessage()));
     }
 }
