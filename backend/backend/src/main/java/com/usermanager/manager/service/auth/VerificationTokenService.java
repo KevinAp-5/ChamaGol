@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
 import com.usermanager.manager.model.user.User;
@@ -66,6 +67,7 @@ public class VerificationTokenService {
 
         User user = verificationToken.getUser();
         user.setEnabled(true);
+        user.setStatus(Status.ACTIVE);
         userRepository.save(user);
 
         verificationToken.setActivationDate(ZonedDateTime.now().toInstant());
