@@ -79,7 +79,7 @@ public class AuthService implements UserDetailsService {
 
         // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já é uma conta
         Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
-        if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() == null) {
+        if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() == null && userOptional.get().getStatus() == Status.ACTIVE) {
             throw new UserExistsException(dto.login());
         }
 
@@ -158,7 +158,13 @@ public class AuthService implements UserDetailsService {
 
     @Transactional
     public boolean sendPasswordResetCode(@Valid UserEmailDTO data) {
-        var user = userService.findUserByLogin(data.email());
+        var userOptional = userService.findUserByLoginOptional(data.email());
+
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+
+        var user = (User) userOptional.get();
 
         if (!user.isEnabled()) {
             return false;
