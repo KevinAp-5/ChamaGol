@@ -1,6 +1,9 @@
 // ChatController.java
 package com.usermanager.manager.controller;
 
+import io.swagger.v3.oas.annotations.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,6 +20,7 @@ import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.enums.TipoEvento;
 import com.usermanager.manager.model.signal.Signal;
 
+@Tag(name = "Timeline", description = "Endpoints de timeline e mensagens em tempo real")
 @Controller
 @EnableScheduling
 public class TimelineController {
@@ -29,6 +33,7 @@ public class TimelineController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Enviar mensagem para o tópico de sinais (WebSocket)", description = "Envia uma mensagem para todos os clientes conectados via WebSocket.")
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public ChatMessage handleMessage(ChatMessage message) {
@@ -36,6 +41,7 @@ public class TimelineController {
     }
 
     // TODO: antes de mostrar os sinais dos topicos, criar botão que vai fazer o fetch dos sinais anteriores.
+    @Operation(summary = "Agendamento de envio de sinais automáticos", description = "Envia sinais automáticos a cada 7 segundos para o tópico de sinais.")
     @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {
         long id = counter.getAndIncrement();
