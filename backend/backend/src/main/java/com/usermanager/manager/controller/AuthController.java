@@ -126,9 +126,9 @@ public class AuthController {
         boolean response = authService.sendPasswordResetCode(data);
         if (!response)
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ResponseMessage("User is not enabled. please confirm the email."));
+                    .body(new ResponseMessage("Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
 
-        return ResponseEntity.ok(new ResponseMessage("Password reset link was sent to your e-mail."));
+        return ResponseEntity.ok(new ResponseMessage("Link para redefinição de senha enviado para seu e-mail."));
     }
 
     @Operation(summary = "Confirmar redefinição de senha", description = "Confirma a redefinição de senha do usuário.")
@@ -144,7 +144,7 @@ public class AuthController {
         @org.springframework.web.bind.annotation.RequestBody @Valid PasswordResetWithEmailDTO data
     ) {
         authService.passwordReset(data);
-        return ResponseEntity.ok().body(new ResponseMessage("Password changed successfully."));
+        return ResponseEntity.ok().body(new ResponseMessage("Senha alterada com sucesso."));
     }
 
     @Operation(summary = "Confirmar e-mail para redefinição de senha", description = "Confirma o e-mail do usuário para redefinição de senha (HTML).")
@@ -256,9 +256,9 @@ public class AuthController {
         boolean activationSent = authService.sendActivationCode(data.email());
         if (!activationSent)
             return ResponseEntity.status(409)
-                    .body(new ResponseMessage("User is already active with email: " + data.email()));
+                    .body(new ResponseMessage("Usuário já está ativo com o e-mail: " + data.email()));
 
-        return ResponseEntity.ok(new ResponseMessage("Activation link sent to " + data.email() + " successfully."));
+        return ResponseEntity.ok(new ResponseMessage("Link de ativação enviado para " + data.email() + " com sucesso."));
     }
 
     @Operation(summary = "Verificar se e-mail está confirmado", description = "Verifica se o e-mail do usuário foi confirmado.")
@@ -280,10 +280,10 @@ public class AuthController {
         var verificationToken = authService.findVerificationByUser(user);
         boolean validated = verificationToken.isActivated();
         if (validated) {
-            return ResponseEntity.ok(new ResponseMessage("email activated."));
+            return ResponseEntity.ok(new ResponseMessage("E-mail ativado."));
         }
 
-        return ResponseEntity.badRequest().body(new ResponseMessage("email not activated."));
+        return ResponseEntity.badRequest().body(new ResponseMessage("E-mail não ativado."));
     }
 
     @Operation(summary = "Validar token de acesso", description = "Valida o token de acesso do usuário autenticado.")
@@ -292,7 +292,7 @@ public class AuthController {
     public ResponseEntity<String> validateToken(
         @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
     ) {
-        return ResponseEntity.ok("valid");
+        return ResponseEntity.ok("válido");
     }
 
     @Operation(summary = "Obter informações do usuário autenticado")
@@ -324,7 +324,7 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<String> cronJob() {
         log.info("Application is running.");
-        return ResponseEntity.ok("Application is working.");
+        return ResponseEntity.ok("Aplicação está funcionando.");
     }
 
     private Cookie createCookie(String name, String value) {
@@ -347,7 +347,7 @@ public class AuthController {
         try {
             return UUID.fromString(token);
         } catch (IllegalArgumentException e) {
-            throw new TokenInvalidException("invalid token format.");
+            throw new TokenInvalidException("formato de token inválido.");
         }
     }
 }
