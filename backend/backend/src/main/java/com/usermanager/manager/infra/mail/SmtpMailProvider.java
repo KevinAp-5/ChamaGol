@@ -28,7 +28,7 @@ public class SmtpMailProvider implements MailProvider{
     @Override
     public CompletableFuture<Void> sendEmail(String recipient, String subject, String content) {
         MimeMessagePreparator messagePreparator = mimeMessage -> {
-            var messageHelper = new MimeMessageHelper(mimeMessage);
+            var messageHelper = new MimeMessageHelper(mimeMessage, "UTF-8");
             messageHelper.setTo(recipient);
             messageHelper.setFrom(sender);
             messageHelper.setSubject(subject);
