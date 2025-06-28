@@ -1,11 +1,5 @@
 package com.usermanager.manager.controller;
 
-import io.swagger.v3.oas.annotations.*;
-import io.swagger.v3.oas.annotations.media.*;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.*;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +16,13 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.term.TermOfUseService;
 import com.usermanager.manager.service.term.UserTermAcceptanceService;
 
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Tag(name = "Aceite de Termos", description = "Endpoints para aceite dos termos de uso")
@@ -51,11 +51,15 @@ public class UserTermAcceptanceController {
             required = true,
             content = @Content(schema = @Schema(implementation = AcceptanceRequest.class))
         )
-        @Valid AcceptanceRequest request
+        AcceptanceRequest request
     ) {
         TermOfUse latestTerm = termOfUseService.findLatest();
+        var isAdult = true;
+        if (!(request == null || request.isAdult() == null)) {
+            isAdult = request.isAdult();
+        }
 
-        UserTermAcceptance acceptance = acceptanceService.acceptTerm(user, latestTerm, request.isAdult());
+        UserTermAcceptance acceptance = acceptanceService.acceptTerm(user, latestTerm, isAdult);
 
         return ResponseEntity.ok(new TermAcceptedResponse(acceptance.getTermOfUse(), acceptance.getIsAdult(), acceptance.getAcceptedAt(), acceptance.getUser().getLogin()));
     }
