@@ -22,10 +22,12 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.merchantorder.MerchantOrder;
 import com.mercadopago.resources.payment.Payment;
 import com.usermanager.manager.enums.Subscription;
+import com.usermanager.manager.exception.webhook.WebhookProcessingException;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.repository.WebhookEventsRepository;
+import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,16 +44,18 @@ public class WebhookService {
     private final PaymentClient paymentClient;
     private final MerchantOrderClient merchantOrderClient;
     private final ObjectMapper objectMapper;
+    private final SubscriptionService subscriptionService;
 
     @Value("${mercadopago.webhook.secret:}")
     private String webhookSecret;
 
-    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService) {
+    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, SubscriptionService subscriptionService) {
         this.webhookRepository = webhookRepository;
         this.userService = userService;
         this.paymentClient = new PaymentClient();
         this.merchantOrderClient = new MerchantOrderClient();
         this.objectMapper = new ObjectMapper();
+        this.subscriptionService = subscriptionService;
     }
 
     @Scheduled(fixedRate = 30000)
@@ -200,11 +204,17 @@ public class WebhookService {
     private void updateUserSubscription(User user, String paymentStatus) {
         if (STATUS_APPROVED.equalsIgnoreCase(paymentStatus)) {
             user.setSubscription(Subscription.PRO);
+            createSubscriptionControl(user);
             userService.save(user);
             log.info("User subscription updated to PRO: {}", user.getLogin());
         } else {
             log.info("Payment not approved for user {}, status: {}", user.getLogin(), paymentStatus);
         }
+    }
+
+    @Transactional
+    private void createSubscriptionControl(User user) {
+        subscriptionService.createSubscriptionControl(user);
     }
 
     private void handleProcessingError(WebhookEvent event) {
@@ -333,16 +343,4 @@ public class WebhookService {
         return calculatedHash.toString();
     }
 
-    // Classe personalizada de exceção
-    private static class WebhookProcessingException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public WebhookProcessingException(String message) {
-            super(message);
-        }
-
-        public WebhookProcessingException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
 }
