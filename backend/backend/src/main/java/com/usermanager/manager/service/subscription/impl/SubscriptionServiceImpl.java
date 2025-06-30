@@ -2,17 +2,19 @@ package com.usermanager.manager.service.subscription.impl;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.firebase.database.annotations.NotNull;
 import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.model.subscription.SubscriptionControl;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.repository.SubscriptionRepository;
 import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
+
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
@@ -37,5 +39,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         List<User> users = expiredSubscription.stream().map(s -> s.getUserId()).toList();
         userService.saveAll(users);
         subscriptionRepository.deleteAll(expiredSubscription);
+    }
+
+    public ZonedDateTime getExpirationDate(@NotNull User user) {
+        Optional<SubscriptionControl> subscriptionControl = subscriptionRepository.findByUserId(user);
+        if (subscriptionControl.isPresent()) {
+            return subscriptionControl.get().getExpirationDate();
+        }
+        return null;
     }
 }
