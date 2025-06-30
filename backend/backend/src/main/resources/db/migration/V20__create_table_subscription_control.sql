@@ -1,0 +1,12 @@
+CREATE TABLE subscription_control (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    expiration_alert BOOLEAN DEFAULT FALSE,
+    purchase_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expiration_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_user_id
+        FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+);
