@@ -1,0 +1,1 @@
+CREATE INDEX idx_signals_tipo_evento ON signals (tipo_evento);
