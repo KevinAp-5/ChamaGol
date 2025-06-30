@@ -15,15 +15,14 @@
     "newArchEnabled": true,
     "expo-splash-screen": {
       "backgroundColor": "#FFFFFF",
-      "image": "./assets/images/splash-icon.png",
+      "image": "./src/assets/images/splash-icon.png",
       "dark": {
-        "image": "./assets/images/splash-icon-dark.png",
+        "image": "./src/assets/images/splash-icon-dark.png",
         "backgroundColor": "#000000"
       },
       "imageWidth": 200
     },
     "ios": {
-      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.kevenap5.ChamaGol",
       "infoPlist": {
@@ -31,7 +30,6 @@
       }
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/apk_icon.png",
         "backgroundColor": "#ffffff"
@@ -62,9 +60,6 @@
       }
     },
     "plugins": [
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
-      "@react-native-firebase/crashlytics",
       [
         "expo-build-properties",
         {
