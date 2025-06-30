@@ -116,7 +116,7 @@ export default function RegisterScreen({ navigation }: Props) {
         { name, login: email, password }
       );
 
-      if (response.status === 201 || response.status === 200) {
+      if (response.status === 200) {
         await AsyncStorage.setItem("registerEmail", email);
         navigation.navigate("EmailVerification");
       } else {
