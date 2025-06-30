@@ -96,11 +96,6 @@ public class UserService {
     }
 
     @Transactional
-    public void saveUser(@Valid User user) {
-        this.userRepository.save(user);
-    }
-
-    @Transactional
     public User save(@Valid User user) {
         return userRepository.save(user);
     }
