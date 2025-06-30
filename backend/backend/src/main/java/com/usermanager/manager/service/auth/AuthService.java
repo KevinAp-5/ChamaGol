@@ -23,6 +23,7 @@ import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
+import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.user.UserExistsException;
@@ -73,33 +74,41 @@ public class AuthService implements UserDetailsService {
 
     }
 
-    @Transactional
-    public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
-        log.info("register attempt: {}", dto.login());
+        @Transactional
+        public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
+            log.info("register attempt: {}", dto.login());
 
-        // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já é uma conta
-        Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
-        if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() == null && userOptional.get().getStatus() == Status.ACTIVE) {
-            throw new UserExistsException(dto.login());
+            // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já é uma conta
+            Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
+            if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() != null) {
+                throw new UserExistsException(dto.login());
+            }
+
+            if (dto.password().length() < 6) {
+                throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
+            }
+
+            User user;
+            if (userOptional.isPresent()) {
+                user = userOptional.get();
+                user.setName(dto.name());
+                user.setPassword(passwordEncoder.encode(dto.password()));
+                user.setUpdatedAt(ZonedDateTime.now());
+                user = userService.save(user); // use save para update
+            } else {
+                String encryptedPassword = passwordEncoder.encode(dto.password());
+                log.info("tentando registro para {}", dto.login());
+                user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
+            }
+
+            VerificationToken verificationToken = verificationService.generateVerificationToken(user,
+                    TokenType.EMAIL_VALIDATION);
+
+            mailService.sendVerificationMail(user.getLogin(), verificationToken.getUuid().toString());
+
+            log.info("register successfull {}", dto.login());
+            return new UserCreatedDTO(user);
         }
-
-        if (dto.password().length() < 6) {
-            throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
-        }
-
-        User user = userOptional.orElse(null);
-
-        String encryptedPassword = passwordEncoder.encode(dto.password());
-        user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
-
-        VerificationToken verificationToken = verificationService.generateVerificationToken(user,
-                TokenType.EMAIL_VALIDATION);
-
-        mailService.sendVerificationMail(user.getLogin(), verificationToken.getUuid().toString());
-
-        log.info("register successfull {}", dto.login());
-        return new UserCreatedDTO(user);
-    }
 
     @Transactional
     public TokensDTO login(@Valid AuthenticationDTO data) {
@@ -170,7 +179,7 @@ public class AuthService implements UserDetailsService {
             return false;
         }
 
-        userService.saveUser(user);
+        userService.save(user);
         var verificationToken = verificationService.generateVerificationToken(user, TokenType.RESET_PASSWORD);
         mailService.sendResetPasswordEmail(user.getLogin(), verificationToken.getUuid().toString());
         return true;
@@ -185,7 +194,7 @@ public class AuthService implements UserDetailsService {
         // Updates password and saves it
         user.setPassword(passwordEncoder.encode(data.newPassword()));
         user.setUpdatedAt(ZonedDateTime.now());
-        userService.saveUser(user);
+        userService.save(user);
         log.info("user {} has changed password", user.getLogin());
 
         // Updates verificationToken to set it as activated/enabled
@@ -207,7 +216,7 @@ public class AuthService implements UserDetailsService {
         // Enables user and saves it
         user.setEnabled(true);
         user.setStatus(Status.ACTIVE);
-        userService.saveUser(user);
+        userService.save(user);
 
         // Updates verificationToken to set it as activated/enabled
         verificationToken.setActivationDate(ZonedDateTime.now().toInstant());
@@ -220,12 +229,12 @@ public class AuthService implements UserDetailsService {
     public void passwordReset(@Valid PasswordResetWithEmailDTO data) {
         var user = userService.findUserByLogin(data.email());
         user.setEnabled(true);
-        userService.saveUser(user);
+        userService.save(user);
 
         var verificationToken = verificationService.findVerificationByUser(user);
         user.setPassword(passwordEncoder.encode(data.password()));
         user.setUpdatedAt(ZonedDateTime.now());
-        userService.saveUser(user);
+        userService.save(user);
         verificationToken.setActivationDate(ZonedDateTime.now().toInstant());
         verificationToken.setActivated(true);
         verificationService.saveVerificationToken(verificationToken);
