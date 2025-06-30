@@ -29,6 +29,7 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.repository.WebhookEventsRepository;
+import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 class WebhookServiceTest {
@@ -42,13 +43,16 @@ class WebhookServiceTest {
     @Mock
     private MerchantOrderClient merchantOrderClient;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     @InjectMocks
     private WebhookService webhookService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        webhookService = new WebhookService(webhookRepository, userService);
+        webhookService = new WebhookService(webhookRepository, userService, subscriptionService);
         // Injeta o mock do PaymentClient na instância real
         ReflectionTestUtils.setField(webhookService, "paymentClient", paymentClient);
     }
