@@ -90,11 +90,7 @@ const EmailVerificationScreen = ({ navigation }: any) => {
       while (pollingActive && attempts < maxAttempts) {
         try {
           const response = await api.post("/auth/email/confirmed", { email });
-          if (
-            response.status === 200 &&
-            typeof response.data?.message === "string" &&
-            response.data.message.trim().toLowerCase() === "email activated."
-          ) {
+          if (response.status === 200) {
             navigation.navigate("EmailConfirmationSuccess");
             return;
           }
