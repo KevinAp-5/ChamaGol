@@ -121,4 +121,8 @@ public class UserService {
     public boolean existsByLogin(@NotBlank String login) {
         return userRepository.existsByLogin(login);
     }
+
+    public void saveAll(@NotNull Iterable<User> users) {
+        userRepository.saveAll(users);
+    }
 }
