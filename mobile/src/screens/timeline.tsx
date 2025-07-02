@@ -42,6 +42,194 @@ type Message = {
 
 type Props = NativeStackScreenProps<RootStackParamList, "Timeline">;
 
+// Componente memoizado para cada mensagem
+const MessageCard = React.memo(function MessageCard({
+  item,
+  index,
+  userSubscription,
+  navigation,
+  colors,
+  fonts,
+  spacing,
+  borderRadius,
+  shadows,
+  messagesLength,
+}: any) {
+  const isActive = item.status === "ACTIVE";
+  const isPROSignal = item.tipoEvento === "PRO";
+  const isLast = index === messagesLength - 1;
+
+  // PRO bloqueado
+  if (isPROSignal && userSubscription !== "PRO") {
+    return (
+      <Animated.View
+        style={[
+          styles.messageContainer,
+          {
+            backgroundColor: colors.card,
+            borderLeftColor: colors.secondary,
+            borderLeftWidth: 5,
+            marginBottom: isLast ? spacing.xl : spacing.md,
+            ...shadows.medium,
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={['rgba(229, 57, 53, 0.05)', 'rgba(229, 57, 53, 0.1)']}
+          style={styles.proGradient}
+        />
+        <View style={styles.lockIconContainer}>
+          <MaterialCommunityIcons
+            name="lock"
+            size={32}
+            color={colors.secondary}
+          />
+        </View>
+        <Text
+          style={{
+            color: colors.secondary,
+            fontFamily: fonts.bold,
+            fontSize: 18,
+            marginBottom: spacing.sm,
+            textAlign: 'center',
+          }}
+        >
+          Sinal exclusivo para assinantes PRO!
+        </Text>
+        <Text
+          style={{
+            color: colors.muted,
+            fontFamily: fonts.regular,
+            fontSize: 14,
+            marginBottom: spacing.md,
+            textAlign: 'center',
+          }}
+        >
+          Desbloqueie acesso a sinais exclusivos e análises premium
+        </Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: colors.secondary,
+            borderRadius: borderRadius.md,
+            padding: spacing.md,
+            marginTop: spacing.sm,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+          }}
+          onPress={() => {
+            navigation.navigate("ProSubscription");
+          }}
+        >
+          <Text style={{ color: colors.card, fontFamily: fonts.bold, marginRight: spacing.sm }}>
+            ASSINAR AGORA
+          </Text>
+          <MaterialCommunityIcons name="star" size={18} color={colors.card} />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  // Mensagem normal
+  return (
+    <Animated.View
+      style={[
+        styles.messageContainer,
+        {
+          backgroundColor: colors.card,
+          borderLeftColor: isActive ? colors.secondary : colors.muted,
+          borderLeftWidth: 5,
+          marginBottom: isLast ? spacing.xl : spacing.md,
+          ...shadows.medium,
+        },
+        item.isNew && {
+          transform: [{ scale: 1.02 }],
+          shadowOpacity: 0.3,
+          shadowRadius: 15,
+          elevation: 8,
+        },
+      ]}
+    >
+      {isPROSignal && (
+        <View style={styles.proBadge}>
+          <LinearGradient
+            colors={[colors.secondary, colors.highlight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.proBadgeGradient}
+          >
+            <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>PRO</Text>
+          </LinearGradient>
+        </View>
+      )}
+
+      <View style={styles.header}>
+        <Text style={[styles.campeonato, { color: colors.accent, fontFamily: fonts.bold }]}>
+          {item.campeonato}
+        </Text>
+        <Text style={[styles.createdAt, { color: colors.muted, fontFamily: fonts.regular }]}>
+          {moment(item.createdAt).format("DD/MM HH:mm")}
+        </Text>
+      </View>
+
+      <View style={styles.rowWithIcon}>
+        <Text 
+          style={[
+            styles.nomeTimes, 
+            { 
+              color: colors.primary, 
+              fontFamily: fonts.semibold,
+              flex: 1 
+            }
+          ]}
+        >
+          {item.nomeTimes}
+        </Text>
+        {item.isNew && <FireGif />}
+      </View>
+
+      <View style={styles.matchInfo}>
+        <View style={styles.matchInfoItem}>
+          <MaterialCommunityIcons name="clock-outline" size={16} color={colors.muted} />
+          <Text style={[styles.tempoPartida, { color: colors.primary, fontFamily: fonts.medium }]}>
+            {item.tempoPartida}
+          </Text>
+        </View>
+        <View style={styles.matchInfoItem}>
+          <MaterialCommunityIcons name="scoreboard-outline" size={16} color={colors.muted} />
+          <Text style={[styles.placar, { color: colors.primary, fontFamily: fonts.medium }]}>
+            {item.placar}
+          </Text>
+        </View>
+      </View>
+
+      <View 
+        style={[
+          styles.acaoSinalContainer, 
+          { backgroundColor: isActive ? 'rgba(229, 57, 53, 0.1)' : 'rgba(117, 117, 117, 0.1)' }
+        ]}
+      >
+        <MaterialCommunityIcons 
+          name={isActive ? "lightning-bolt" : "information-outline"} 
+          size={20} 
+          color={isActive ? colors.secondary : colors.muted} 
+        />
+        <Text 
+          style={[
+            styles.acaoSinal, 
+            { 
+              color: isActive ? colors.secondary : colors.muted,
+              fontFamily: fonts.semibold
+            }
+          ]}
+        >
+          {item.acaoSinal}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+});
+
 export default function TimelineScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
   const [userSubscription, setUserSubscription] = useState<String | null>(null);
@@ -142,8 +330,8 @@ export default function TimelineScreen({ navigation }: Props) {
 
     setIsConnecting(true);
     
-    const socket = new SockJS(`https://chamagol-9gfb.onrender.com/ws/chat?token=${token}`);
-    // const socket = new SockJS(`http://192.168.1.7:8080/ws/chat?token=${token}`);
+    // const socket = new SockJS(`https://chamagol-9gfb.onrender.com/ws/chat?token=${token}`);
+    const socket = new SockJS(`http://192.168.1.10:8080/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -231,186 +419,35 @@ export default function TimelineScreen({ navigation }: Props) {
     }, 1500);
   };
 
-  const renderItem = ({ item, index }: { item: Message; index: number }) => {
-    const isActive = item.status === "ACTIVE";
-    const isPROSignal = item.tipoEvento === "PRO";
-    const isLast = index === messages.length - 1;
-    
-    // Handle PRO content for non-PRO users
-    if (isPROSignal && userSubscription !== "PRO") {
-      return (
-        <Animated.View
-          style={[
-            styles.messageContainer,
-            {
-              backgroundColor: colors.card,
-              borderLeftColor: colors.secondary,
-              borderLeftWidth: 5,
-              marginBottom: isLast ? spacing.xl : spacing.md,
-              ...shadows.medium,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={['rgba(229, 57, 53, 0.05)', 'rgba(229, 57, 53, 0.1)']}
-            style={styles.proGradient}
-          />
-          
-          <View style={styles.lockIconContainer}>
-            <MaterialCommunityIcons
-              name="lock"
-              size={32}
-              color={colors.secondary}
-            />
-          </View>
-          
-          <Text
-            style={{
-              color: colors.secondary,
-              fontFamily: fonts.bold,
-              fontSize: 18,
-              marginBottom: spacing.sm,
-              textAlign: 'center',
-            }}
-          >
-            Sinal exclusivo para assinantes PRO!
-          </Text>
-          
-          <Text
-            style={{
-              color: colors.muted,
-              fontFamily: fonts.regular,
-              fontSize: 14,
-              marginBottom: spacing.md,
-              textAlign: 'center',
-            }}
-          >
-            Desbloqueie acesso a sinais exclusivos e análises premium
-          </Text>
-          
-          <TouchableOpacity
-            style={{
-              backgroundColor: colors.secondary,
-              borderRadius: borderRadius.md,
-              padding: spacing.md,
-              marginTop: spacing.sm,
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}
-            onPress={() => {
-              navigation.navigate("ProSubscription");
-            }}
-          >
-            <Text style={{ color: colors.card, fontFamily: fonts.bold, marginRight: spacing.sm }}>
-              ASSINAR AGORA
-            </Text>
-            <MaterialCommunityIcons name="star" size={18} color={colors.card} />
-          </TouchableOpacity>
-        </Animated.View>
-      );
-    }
+  // Memoize renderItem para não recriar a função a cada render
+  const renderItem = React.useCallback(
+    ({ item, index }: { item: Message; index: number }) => (
+      <MessageCard
+        item={item}
+        index={index}
+        userSubscription={userSubscription}
+        navigation={navigation}
+        colors={colors}
+        fonts={fonts}
+        spacing={spacing}
+        borderRadius={borderRadius}
+        shadows={shadows}
+        messagesLength={messages.length}
+      />
+    ),
+    [userSubscription, navigation, colors, fonts, spacing, borderRadius, shadows, messages.length]
+  );
 
-    // Regular message card
-    return (
-      <Animated.View
-        style={[
-          styles.messageContainer,
-          {
-            backgroundColor: colors.card,
-            borderLeftColor: isActive ? colors.secondary : colors.muted,
-            borderLeftWidth: 5,
-            marginBottom: isLast ? spacing.xl : spacing.md,
-            ...shadows.medium,
-          },
-          item.isNew && {
-            transform: [{ scale: 1.02 }],
-            shadowOpacity: 0.3,
-            shadowRadius: 15,
-            elevation: 8,
-          },
-        ]}
-      >
-        {isPROSignal && (
-          <View style={styles.proBadge}>
-            <LinearGradient
-              colors={[colors.secondary, colors.highlight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.proBadgeGradient}
-            >
-              <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>PRO</Text>
-            </LinearGradient>
-          </View>
-        )}
-
-        <View style={styles.header}>
-          <Text style={[styles.campeonato, { color: colors.accent, fontFamily: fonts.bold }]}>
-            {item.campeonato}
-          </Text>
-          <Text style={[styles.createdAt, { color: colors.muted, fontFamily: fonts.regular }]}>
-            {moment(item.createdAt).format("DD/MM HH:mm")}
-          </Text>
-        </View>
-
-        <View style={styles.rowWithIcon}>
-          <Text 
-            style={[
-              styles.nomeTimes, 
-              { 
-                color: colors.primary, 
-                fontFamily: fonts.semibold,
-                flex: 1 
-              }
-            ]}
-          >
-            {item.nomeTimes}
-          </Text>
-          {item.isNew && <FireGif />}
-        </View>
-
-        <View style={styles.matchInfo}>
-          <View style={styles.matchInfoItem}>
-            <MaterialCommunityIcons name="clock-outline" size={16} color={colors.muted} />
-            <Text style={[styles.tempoPartida, { color: colors.primary, fontFamily: fonts.medium }]}>
-              {item.tempoPartida}
-            </Text>
-          </View>
-          
-          <View style={styles.matchInfoItem}>
-            <MaterialCommunityIcons name="scoreboard-outline" size={16} color={colors.muted} />
-            <Text style={[styles.placar, { color: colors.primary, fontFamily: fonts.medium }]}>
-              {item.placar}
-            </Text>
-          </View>
-        </View>
-
-        <View 
-          style={[
-            styles.acaoSinalContainer, 
-            { backgroundColor: isActive ? 'rgba(229, 57, 53, 0.1)' : 'rgba(117, 117, 117, 0.1)' }
-          ]}
-        >
-          <MaterialCommunityIcons 
-            name={isActive ? "lightning-bolt" : "information-outline"} 
-            size={20} 
-            color={isActive ? colors.secondary : colors.muted} 
-          />
-          <Text 
-            style={[
-              styles.acaoSinal, 
-              { 
-                color: isActive ? colors.secondary : colors.muted,
-                fontFamily: fonts.semibold
-              }
-            ]}
-          >
-            {item.acaoSinal}
-          </Text>
-        </View>
-      </Animated.View>
-    );
-  };
+  // Se os cards têm altura fixa, use getItemLayout:
+  const ITEM_HEIGHT = 180; // ajuste conforme o real
+  const getItemLayout = React.useCallback(
+    (_data: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
   // New message notification bubble
   const newMessageNotification = (
@@ -554,6 +591,11 @@ export default function TimelineScreen({ navigation }: Props) {
                     tintColor={colors.secondary}
                   />
                 }
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={7}
+                getItemLayout={getItemLayout}
+                removeClippedSubviews={true}
               />
               {newMessageNotification}
             </>
