@@ -1,11 +1,5 @@
 package com.usermanager.manager.controller;
 
-import io.swagger.v3.oas.annotations.*;
-import io.swagger.v3.oas.annotations.media.*;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.*;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -19,10 +13,18 @@ import com.usermanager.manager.dto.term.TermDTO;
 import com.usermanager.manager.model.term.TermOfUse;
 import com.usermanager.manager.service.term.TermOfUseService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @Tag(name = "Termos de Uso", description = "Endpoints para gerenciamento dos termos de uso")
 @RestController
+@Slf4j
 @RequestMapping("/api/terms")
 public class TermOfUseController {
 
@@ -58,8 +60,9 @@ public class TermOfUseController {
             required = true,
             content = @Content(schema = @Schema(implementation = CreateTermRequest.class))
         )
-        @Valid CreateTermRequest request
+        @org.springframework.web.bind.annotation.RequestBody @Valid CreateTermRequest request
     ) {
+        log.info("term attempt: {}", request);
         TermOfUse term = termOfUseService.createTerm(request.version(), request.content());
         return ResponseEntity.ok(new TermDTO(term));
     }
