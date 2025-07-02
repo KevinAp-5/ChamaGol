@@ -174,7 +174,7 @@ class UserServiceTest {
     @Test
     void saveUser_Success() {
         // Act
-        userService.saveUser(user);
+        userService.save(user);
 
         // Assert
         verify(userRepository).save(user);

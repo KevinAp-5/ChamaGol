@@ -283,7 +283,7 @@ class AuthServiceTest {
 
         // Verify password update
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService).saveUser(userCaptor.capture());
+        verify(userService).save(userCaptor.capture());
         assertEquals("newEncodedPassword", userCaptor.getValue().getPassword());
 
         // Verify token update
