@@ -26,6 +26,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [created, setCreated] = useState("");
   const [subscription, setSubscription] = useState<String | null>(null);
+  const [expirationDate, setExpirationDate] = useState<String | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Animation values
@@ -65,6 +66,20 @@ export default function ProfileScreen({ navigation }: any) {
           setUsername(response.data.name);
           setEmail(response.data.email);
           setSubscription(response.data.userSubscription);
+
+          if (response.data.expirationDate) {
+            const dateExpiration = new Date(response.data.expirationDate);
+            const formattedExpirationDate = `${dateExpiration.getDate().toString().padStart(2, "0")}/${(
+              dateExpiration.getMonth() + 1
+            )
+              .toString()
+              .padStart(2, "0")}/${dateExpiration.getFullYear()}`;
+            setExpirationDate(formattedExpirationDate);
+          } else {
+            setExpirationDate(null);
+          }
+
+          // Formatação da data de criação
           const date = new Date(response.data.createdAt);
           const formatted = `${date.getDate().toString().padStart(2, "0")}/${(
             date.getMonth() + 1
@@ -158,6 +173,12 @@ export default function ProfileScreen({ navigation }: any) {
           end={{ x: 1, y: 0 }}
           style={styles.proBadge}
         >
+          <MaterialCommunityIcons
+            name="crown"
+            size={16}
+            color="#FFFFFF"
+            style={{ marginRight: 4 }}
+          />
           <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>
             PRO
           </Text>
@@ -170,6 +191,52 @@ export default function ProfileScreen({ navigation }: any) {
             GRATUITO
           </Text>
         </View>
+      );
+    }
+  };
+
+  const getSubscriptionStatus = () => {
+    if (subscription === "PRO") {
+      return (
+        <View style={styles.subscriptionStatusContainer}>
+          <Text
+            style={[
+              styles.infoValue,
+              { color: colors.primary, fontFamily: fonts.regular },
+            ]}
+          >
+            Assinante PRO
+          </Text>
+          {expirationDate && (
+            <View style={styles.expirationContainer}>
+              <MaterialCommunityIcons
+                name="calendar-clock"
+                size={16}
+                color={colors.secondary}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={[
+                  styles.expirationText,
+                  { color: colors.secondary, fontFamily: fonts.medium },
+                ]}
+              >
+                Expira em: {expirationDate}
+              </Text>
+            </View>
+          )}
+        </View>
+      );
+    } else {
+      return (
+        <Text
+          style={[
+            styles.infoValue,
+            { color: colors.primary, fontFamily: fonts.regular },
+          ]}
+        >
+          Conta Gratuita
+        </Text>
       );
     }
   };
@@ -251,7 +318,7 @@ export default function ProfileScreen({ navigation }: any) {
                     Informações da Conta
                   </Text>
                 </View>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
                 <View style={styles.infoRow}>
                   <MaterialCommunityIcons
@@ -324,16 +391,7 @@ export default function ProfileScreen({ navigation }: any) {
                     >
                       Tipo de Conta
                     </Text>
-                    <Text
-                      style={[
-                        styles.infoValue,
-                        { color: colors.primary, fontFamily: fonts.regular },
-                      ]}
-                    >
-                      {subscription === "PRO"
-                        ? "Assinante PRO"
-                        : "Conta Gratuita"}
-                    </Text>
+                    {getSubscriptionStatus()}
                   </View>
                 </View>
               </View>
@@ -403,7 +461,7 @@ export default function ProfileScreen({ navigation }: any) {
           </Animated.View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: colors.divider }]}>
           <Text
             style={[
               styles.footerText,
@@ -482,10 +540,16 @@ const styles = StyleSheet.create({
   },
   proBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: "center",
-    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   proBadgeText: {
     color: "#FFFFFF",
@@ -493,8 +557,8 @@ const styles = StyleSheet.create({
   },
   freeBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -525,7 +589,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#E0E0E0",
     marginBottom: 16,
   },
   infoRow: {
@@ -543,6 +606,18 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
+  },
+  subscriptionStatusContainer: {
+    flex: 1,
+  },
+  expirationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 4,
+  },
+  expirationText: {
+    fontSize: 14,
   },
   buttonGroup: {
     marginVertical: 16,
@@ -581,7 +656,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
   },
   footerText: {
     fontSize: 12,
