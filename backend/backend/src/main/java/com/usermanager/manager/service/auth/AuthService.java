@@ -23,7 +23,6 @@ import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
-import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.user.UserExistsException;
@@ -34,6 +33,7 @@ import com.usermanager.manager.model.security.TokenProvider;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.verification.VerificationToken;
 import com.usermanager.manager.model.verification.enums.TokenType;
+import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 import jakarta.validation.Valid;
@@ -53,11 +53,12 @@ public class AuthService implements UserDetailsService {
     private final VerificationTokenService verificationService;
     private final MailService mailService;
     private final RefreshTokenService refreshTokenService;
+    private final SubscriptionService subscriptionService;
     private AuthenticationManager authenticationManager;
 
     public AuthService(UserService userService, @Lazy AuthenticationManager authenticationManager,
             TokenProvider tokenProvider, PasswordEncoder passwordEncoder,
-            VerificationTokenService verificationService, MailService mailService, RefreshTokenService refreshTokenService) {
+            VerificationTokenService verificationService, MailService mailService, RefreshTokenService refreshTokenService, SubscriptionService subscriptionService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
@@ -65,6 +66,7 @@ public class AuthService implements UserDetailsService {
         this.verificationService = verificationService;
         this.mailService = mailService;
         this.refreshTokenService = refreshTokenService;
+        this.subscriptionService = subscriptionService;
     }
 
     @Override
@@ -255,5 +257,9 @@ public class AuthService implements UserDetailsService {
 
     public VerificationToken findVerificationByUser(User user) {
         return verificationService.findVerificationByUser(user);
+    }
+
+    public ZonedDateTime getExpirationDate(User user) {
+        return subscriptionService.getExpirationDate(user);
     }
 }
