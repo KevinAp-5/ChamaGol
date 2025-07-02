@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -302,8 +303,9 @@ public class AuthController {
     public ResponseEntity<ProfileDTO> getUserInfo(
         @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
     ) {
+        ZonedDateTime expirationDate = authService.getExpirationDate(user);
         return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(),
-                user.getSubscription().getValue()));
+                user.getSubscription().getValue(), expirationDate));
     }
 
     @Operation(summary = "Obter informações de login do usuário autenticado")
