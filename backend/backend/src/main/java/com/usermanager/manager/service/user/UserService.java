@@ -3,17 +3,21 @@ package com.usermanager.manager.service.user;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
+import com.usermanager.manager.dto.user.ProUserDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
 import com.usermanager.manager.exception.user.UserNotFoundException;
 import com.usermanager.manager.mappers.UserMapper;
 import com.usermanager.manager.model.user.User;
+import com.usermanager.manager.repository.SubscriptionRepository;
 import com.usermanager.manager.repository.UserRepository;
 
 import jakarta.validation.Valid;
@@ -30,11 +34,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
+            SubscriptionRepository subscriptionControlRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.subscriptionRepository = subscriptionControlRepository;
     }
 
     @Transactional
@@ -119,5 +126,16 @@ public class UserService {
 
     public void saveAll(@NotNull Iterable<User> users) {
         userRepository.saveAll(users);
+    }
+
+    public Page<UserDTO> getUsersPage(int page, int size) {
+        return userRepository.findAll(PageRequest.of(page, size))
+                .map(x -> userMapper.userToUserDTO(x));
+    }
+
+    public List<ProUserDTO> getUsersProPage() {
+        return subscriptionRepository.findAll().stream()
+            .map(ProUserDTO::new)
+            .toList();
     }
 }
