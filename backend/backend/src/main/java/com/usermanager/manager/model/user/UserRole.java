@@ -1,8 +1,8 @@
 package com.usermanager.manager.model.user;
 
 public enum UserRole {
-    ADMIN("admin"),
-    USER("admin");
+    ROLE_ADMIN("ROLE_ADMIN"),
+    ROLE_USER("ROLE_USER");
 
     private String role;
 
