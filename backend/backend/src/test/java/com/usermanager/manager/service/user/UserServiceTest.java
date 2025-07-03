@@ -61,7 +61,7 @@ class UserServiceTest {
                 .name("Test User")
                 .login("test@example.com")
                 .password("encodedPassword")
-                .role(UserRole.USER)
+                .role(UserRole.ROLE_USER)
                 .enabled(true)
                 .build();
     }
@@ -91,7 +91,7 @@ class UserServiceTest {
     void getAllUsers_Success() {
         // Arrange
         when(userRepository.findAll()).thenReturn(List.of(user));
-        when(userMapper.userToUserDTO(any(User.class))).thenReturn(new UserDTO(1L, "Test User", "test@example.com", "password", UserRole.USER));
+        when(userMapper.userToUserDTO(any(User.class))).thenReturn(new UserDTO(1L, "Test User", "test@example.com", "password", UserRole.ROLE_USER));
 
         // Act
         List<UserDTO> result = userService.getAllUsers();
@@ -106,7 +106,7 @@ class UserServiceTest {
     void findUserById_Success() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userMapper.userToUserDTO(any(User.class))).thenReturn(new UserDTO(1L, "Test User", "test@example.com", "password", UserRole.USER));
+        when(userMapper.userToUserDTO(any(User.class))).thenReturn(new UserDTO(1L, "Test User", "test@example.com", "password", UserRole.ROLE_USER));
 
         // Act
         UserDTO result = userService.findUserById(1L);
