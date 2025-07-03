@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.usermanager.manager.dto.signal.SignalCreated;
 import com.usermanager.manager.dto.signal.SignalDTO;
 import com.usermanager.manager.mappers.SignalMapper;
 import com.usermanager.manager.model.signal.Signal;
@@ -24,10 +23,9 @@ public class SignalServiceImpl implements SignalService {
     }
 
     @Override
-    public SignalCreated createSignal(@Valid SignalDTO data) {
+    public Signal createSignal(@Valid SignalDTO data) {
         Signal signal = signalMapper.signalDTOToEntity(data);
-        signal = signalsRepository.save(signal);
-        return signalMapper.entityToSignalCreated(signal);
+        return signalsRepository.save(signal);
     }
 
     @Override
