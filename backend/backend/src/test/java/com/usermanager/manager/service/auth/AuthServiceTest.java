@@ -91,7 +91,7 @@ class AuthServiceTest {
                 .name("Test User")
                 .login(testEmail)
                 .password(encodedPassword)
-                .role(UserRole.USER)
+                .role(UserRole.ROLE_USER)
                 .enabled(true)
                 .build();
 
@@ -106,7 +106,7 @@ class AuthServiceTest {
                 .name("Test User")
                 .login(testEmail)
                 .password(encodedPassword)
-                .role(UserRole.USER)
+                .role(UserRole.ROLE_USER)
                 .enabled(false)
                 .build();
         VerificationToken verificationToken = new VerificationToken();
@@ -139,7 +139,7 @@ class AuthServiceTest {
                 .name("Test User")
                 .login(testEmail)
                 .password(encodedPassword)
-                .role(UserRole.USER)
+                .role(UserRole.ROLE_USER)
                 .enabled(true)
                 .lastLogin(null)
                 .build();
