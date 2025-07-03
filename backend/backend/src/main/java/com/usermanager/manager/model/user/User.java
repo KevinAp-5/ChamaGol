@@ -42,7 +42,7 @@ public class User implements UserDetails {
         this.name = name;
         this.login = login;
         this.password = password;
-        this.role = UserRole.USER;
+        this.role = UserRole.ROLE_USER;
         this.enabled = false;
         this.status = Status.INACTIVE;
         this.subscription = Subscription.FREE;
@@ -65,7 +65,7 @@ public class User implements UserDetails {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private UserRole role = UserRole.USER;
+    private UserRole role = UserRole.ROLE_USER;
 
     @Column(name = "is_enabled")
     @Builder.Default
@@ -95,9 +95,9 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> roleList = new ArrayList<>();
 
-        if (this.role == UserRole.ADMIN) {
+        if (this.role == UserRole.ROLE_ADMIN) {
             roleList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        } else if (this.role == UserRole.USER) {
+        } else if (this.role == UserRole.ROLE_USER) {
             roleList.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
 
