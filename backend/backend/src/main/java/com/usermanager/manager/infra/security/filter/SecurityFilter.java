@@ -98,8 +98,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private Bucket createNewBucket() {
         Bandwidth limit = Bandwidth.builder()
-                .capacity(30)
-                .refillGreedy(1, Duration.ofMinutes(6))
+                .capacity(60)
+                .refillGreedy(60, Duration.ofMinutes(1)) 
                 .build();
 
         return Bucket.builder()
