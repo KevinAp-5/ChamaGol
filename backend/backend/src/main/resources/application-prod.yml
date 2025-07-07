@@ -2,9 +2,9 @@ spring:
   application:
     name: login
   datasource:
-    url: jdbc:postgresql://dpg-d18br0juibrs738e83ag-a.oregon-postgres.render.com/chamagol
-    username: ${DB_USERNAME_TEST}
-    password: ${DB_PASSWORD_TEST}
+    url: jdbc:postgresql://localhost:5432/chamagol
+    username: ${db_user}
+    password: ${db_password}
     hikari:
       maximum-pool-size: 50 # Número máximo de conexões no pool
       minimum-idle: 10 # Número mínimo de conexões ociosas
@@ -15,7 +15,7 @@ spring:
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false # Desabilitado para produção
+    show-sql: true # Desabilitado para produção
   mail:
     host: smtp.gmail.com
     port: 587
@@ -31,6 +31,7 @@ server:
   error:
     include-stacktrace: never
   port: 8080
+  address: 0.0.0.0
   tomcat:
     threads:
       max: 50 # Ajustado para suportar maior carga em produção
