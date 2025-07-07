@@ -17,6 +17,8 @@ public class ManagerApplication {
 
 
 		// TODO: inserir um default term of uso assim que a aplicação rodar, caso estiver ausente no banco de dados
+
+		// TODO: adicionar um controller para gerenciar os preços do produto + adicionar uma regra de assinatura trimensal,etc...
 	}
 
 }
