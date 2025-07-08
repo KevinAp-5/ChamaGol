@@ -28,6 +28,7 @@ spring:
           starttls:
             enable: true
 server:
+  forward-headers-strategy: framework
   error:
     include-stacktrace: never
   port: 8080
