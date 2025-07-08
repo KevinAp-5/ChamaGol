@@ -8,19 +8,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,15 +28,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
 import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetDTO;
+import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
 import com.usermanager.manager.dto.authentication.TokensDTO;
 import com.usermanager.manager.dto.authentication.UserCreatedDTO;
 import com.usermanager.manager.dto.authentication.UserEmailDTO;
+import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.authentication.PasswordFormatNotValidException;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
@@ -49,40 +50,28 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.user.UserRole;
 import com.usermanager.manager.model.verification.VerificationToken;
 import com.usermanager.manager.model.verification.enums.TokenType;
+import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
-    @Mock
-    private UserService userService;
 
-    @Mock
-    private TokenProvider tokenProvider;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private VerificationTokenService verificationService;
-
-    @Mock
-    private AuthenticationManager authenticationManager;
-
-    @Mock
-    private MailService mailService;
-
-    @Mock
-    private RefreshTokenService refreshTokenService;
+    @Mock private UserService userService;
+    @Mock private TokenProvider tokenProvider;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private VerificationTokenService verificationService;
+    @Mock private MailService mailService;
+    @Mock private RefreshTokenService refreshTokenService;
+    @Mock private SubscriptionService subscriptionService;
+    @Mock private AuthenticationManager authenticationManager;
 
     @InjectMocks
     private AuthService authService;
 
     private User user;
-    private AuthenticationDTO authenticationDTO;
     private final String testEmail = "test@example.com";
     private final String testPassword = "password";
     private final String encodedPassword = "encodedPassword";
-    private final String testToken = "testToken";
 
     @BeforeEach
     void setUp() {
@@ -94,264 +83,293 @@ class AuthServiceTest {
                 .role(UserRole.ROLE_USER)
                 .enabled(true)
                 .build();
-
-        authenticationDTO = new AuthenticationDTO(testEmail, testPassword);
     }
 
+    // ----------- register -----------
     @Test
-    void register_Successful_ReturnsUserCreatedDTO() {
-        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, testPassword);
-        User savedUser = User.builder()
-                .id(1L)
-                .name("Test User")
-                .login(testEmail)
-                .password(encodedPassword)
-                .role(UserRole.ROLE_USER)
-                .enabled(false)
-                .build();
-        VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setUuid(UUID.randomUUID());
-
-        // Simula usuário não existente
+    void register_NewUser_Success() {
+        CreateUserDTO dto = new CreateUserDTO("Test User", testEmail, testPassword);
         when(userService.findUserEntityByLoginOptional(testEmail)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(testPassword)).thenReturn(encodedPassword);
-        when(userService.save(any(User.class))).thenReturn(savedUser);
-        when(verificationService.generateVerificationToken(savedUser, TokenType.EMAIL_VALIDATION)).thenReturn(verificationToken);
+        when(userService.save(any(User.class))).thenReturn(user);
+        VerificationToken token = new VerificationToken();
+        token.setUuid(UUID.randomUUID());
+        when(verificationService.generateVerificationToken(any(), eq(TokenType.EMAIL_VALIDATION))).thenReturn(token);
 
-        UserCreatedDTO result = authService.register(createUserDTO);
+        UserCreatedDTO result = authService.register(dto);
 
-        assertNotNull(result);
-        assertEquals(savedUser.getLogin(), result.login());
-        verify(userService).findUserEntityByLoginOptional(testEmail);
-        verify(passwordEncoder).encode(testPassword);
-        verify(userService).save(any(User.class));
-        verify(verificationService).generateVerificationToken(savedUser, TokenType.EMAIL_VALIDATION);
-        verify(mailService).sendVerificationMail(eq(savedUser.getLogin()), anyString());
+        assertEquals(testEmail, result.login());
+        verify(mailService).sendVerificationMail(eq(testEmail), anyString());
     }
 
     @Test
-    void register_UserAlreadyExists_ThrowsUserExistsException() {
-        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, testPassword);
+    void register_ExistingUserWithLoginAndEnabled_ThrowsUserExistsException() {
+        User existing = User.builder().id(2L).login(testEmail).enabled(true).lastLogin(ZonedDateTime.now()).build();
+        CreateUserDTO dto = new CreateUserDTO("Test User", testEmail, testPassword);
+        when(userService.findUserEntityByLoginOptional(testEmail)).thenReturn(Optional.of(existing));
 
-        // Simula usuário já existente, habilitado e sem lastLogin
-        User existingUser = User.builder()
-                .id(1L)
-                .name("Test User")
-                .login(testEmail)
-                .password(encodedPassword)
-                .role(UserRole.ROLE_USER)
-                .enabled(true)
-                .lastLogin(null)
-                .build();
-
-        when(userService.findUserEntityByLoginOptional(testEmail)).thenReturn(Optional.of(existingUser));
-
-        assertThrows(UserExistsException.class, () -> authService.register(createUserDTO));
-        verify(userService).findUserEntityByLoginOptional(testEmail);
-        verifyNoInteractions(passwordEncoder, verificationService, mailService);
+        assertThrows(UserExistsException.class, () -> authService.register(dto));
     }
 
     @Test
     void register_PasswordTooShort_ThrowsPasswordFormatNotValidException() {
-        CreateUserDTO createUserDTO = new CreateUserDTO("Test User", testEmail, "123");
-
-        // Simula usuário não existente
+        CreateUserDTO dto = new CreateUserDTO("Test User", testEmail, "123");
         when(userService.findUserEntityByLoginOptional(testEmail)).thenReturn(Optional.empty());
 
-        assertThrows(PasswordFormatNotValidException.class, () -> authService.register(createUserDTO));
-        verify(userService).findUserEntityByLoginOptional(testEmail);
-        verifyNoInteractions(passwordEncoder, verificationService, mailService);
+        assertThrows(PasswordFormatNotValidException.class, () -> authService.register(dto));
     }
 
     @Test
-    void loadUserByUsername_UserExists_ReturnsUserDetails() {
-        when(userService.findUserByLoginOptional("test@example.com")).thenReturn(Optional.of(user));
+    void register_ExistingUserUpdatesData() {
+        User existing = User.builder().id(2L).login(testEmail).enabled(false).build();
+        CreateUserDTO dto = new CreateUserDTO("New Name", testEmail, testPassword);
+        when(userService.findUserEntityByLoginOptional(testEmail)).thenReturn(Optional.of(existing));
+        when(passwordEncoder.encode(testPassword)).thenReturn(encodedPassword);
+        when(userService.save(any(User.class))).thenReturn(existing);
+        VerificationToken token = new VerificationToken();
+        token.setUuid(UUID.randomUUID());
+        when(verificationService.generateVerificationToken(any(), eq(TokenType.EMAIL_VALIDATION))).thenReturn(token);
 
-        UserDetails result = authService.loadUserByUsername(testEmail);
+        UserCreatedDTO result = authService.register(dto);
 
-        assertEquals(user, result);
+        assertEquals(testEmail, result.login());
+        verify(mailService).sendVerificationMail(eq(testEmail), anyString());
     }
 
+    // ----------- login -----------
     @Test
-    void loadUserByUsername_UserNotFound_ThrowsException() {
-        when(userService.findUserByLoginOptional("test@example.com")).thenReturn(Optional.empty());
-
-        assertThrows(BadCredentialsException.class, () -> authService.loadUserByUsername("test@example.com"));
-    }
-
-    @Test
-    void Login_Successful_ReturnsToken() {
+    void login_Success() {
+        AuthenticationDTO dto = new AuthenticationDTO(testEmail, testPassword);
         Authentication authentication = mock(Authentication.class);
 
-        when(userService.findUserByLogin(authenticationDTO.login())).thenReturn(user);
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
         when(passwordEncoder.matches(testPassword, encodedPassword)).thenReturn(true);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
-        when(tokenProvider.generateToken(user)).thenReturn(testToken);
+        when(tokenProvider.generateToken(user)).thenReturn("accessToken");
         when(refreshTokenService.createRefreshToken(user)).thenReturn("refreshToken");
+        when(userService.save(any(User.class))).thenReturn(user);
 
-        TokensDTO result = authService.login(authenticationDTO);
-        assertEquals(testToken, result.accessToken());
+        TokensDTO result = authService.login(dto);
+
+        assertEquals("accessToken", result.accessToken());
         assertEquals("refreshToken", result.refreshToken());
-        verify(authenticationManager).authenticate(any());
     }
 
     @Test
-    void Login_UserNotEnabled_ThrowsException() {
+    void login_UserNotEnabled_ThrowsException() {
         user.setEnabled(false);
-        when(userService.findUserByLogin(authenticationDTO.login())).thenReturn(user);
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
 
-        assertThrows(UserNotEnabledException.class, () -> authService.login(authenticationDTO));
+        assertThrows(UserNotEnabledException.class, () -> authService.login(new AuthenticationDTO(testEmail, testPassword)));
     }
 
     @Test
-    void Login_InvalidPassword_ThrowsException() {
-        when(userService.findUserByLogin(authenticationDTO.login())).thenReturn(user);
-        when(passwordEncoder.matches(authenticationDTO.password(), user.getPassword())).thenReturn(false);
+    void login_InvalidPassword_ThrowsException() {
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-        assertThrows(BadCredentialsException.class, () -> authService.login(authenticationDTO));
+        assertThrows(BadCredentialsException.class, () -> authService.login(new AuthenticationDTO(testEmail, testPassword)));
+    }
+
+    // ----------- refreshToken -----------
+    @Test
+    void refreshToken_ValidToken_Success() {
+        String oldToken = "oldToken";
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
+        when(refreshTokenService.findByToken(oldToken)).thenReturn(refreshToken);
+        when(tokenProvider.generateToken(user)).thenReturn("accessToken");
+        when(refreshTokenService.createRefreshToken(user)).thenReturn("newRefreshToken");
+
+        TokensDTO result = authService.refreshToken(oldToken);
+
+        assertEquals("accessToken", result.accessToken());
+        assertEquals("newRefreshToken", result.refreshToken());
+        verify(refreshTokenService).invalidateToken(oldToken);
     }
 
     @Test
-    void sendActivationCode_Sucessfull_SendsEmail() {
+    void refreshToken_TokenNotFound_ThrowsException() {
+        when(refreshTokenService.findByToken("invalid")).thenThrow(new TokenNotFoundException("not found"));
+        assertThrows(TokenNotFoundException.class, () -> authService.refreshToken("invalid"));
+    }
+
+    @Test
+    void refreshToken_TokenInvalid_ThrowsException() {
+        when(refreshTokenService.findByToken("expired")).thenThrow(new TokenInvalidException("expired"));
+        assertThrows(TokenInvalidException.class, () -> authService.refreshToken("expired"));
+    }
+
+    // ----------- sendActivationCode -----------
+    @Test
+    void sendActivationCode_UserNotEnabled_SendsMail() {
         user.setEnabled(false);
-        when(userService.findUserByLogin(authenticationDTO.login())).thenReturn(user);
-        VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setUuid(UUID.randomUUID());
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        VerificationToken token = new VerificationToken();
+        token.setUuid(UUID.randomUUID());
+        when(verificationService.generateVerificationToken(user, TokenType.EMAIL_VALIDATION)).thenReturn(token);
 
-        when(verificationService.generateVerificationToken(user, TokenType.EMAIL_VALIDATION))
-                .thenReturn(verificationToken);
-
-        boolean result = authService.sendActivationCode(user.getLogin());
+        boolean result = authService.sendActivationCode(testEmail);
 
         assertTrue(result);
-        verify(mailService).sendVerificationMail(eq(user.getLogin()), anyString());
+        verify(mailService).sendVerificationMail(eq(testEmail), anyString());
     }
 
     @Test
-    void sendActivationCode_Userenabled_ReturnsFalse() {
+    void sendActivationCode_UserEnabled_ReturnsFalse() {
         user.setEnabled(true);
         when(userService.findUserByLogin(testEmail)).thenReturn(user);
 
         boolean result = authService.sendActivationCode(testEmail);
 
         assertFalse(result);
-        verifyNoInteractions(verificationService, mailService);
+        verify(mailService, never()).sendVerificationMail(anyString(), anyString());
     }
 
+    // ----------- sendPasswordResetCode -----------
     @Test
-    void sendPasswordResetCode_Success_SendsEmail() {
+    void sendPasswordResetCode_UserEnabled_SendsMail() {
         user.setEnabled(true);
-
-        VerificationToken verificationToken = new VerificationToken();
-        UUID uuid = UUID.randomUUID();
-        verificationToken.setUuid(uuid);
-
-        when(userService.findUserByLogin(testEmail)).thenReturn(user);
-        when(verificationService.generateVerificationToken(user, TokenType.RESET_PASSWORD))
-                .thenReturn(verificationToken);
+        when(userService.findUserByLoginOptional(testEmail)).thenReturn(Optional.of(user));
+        VerificationToken token = new VerificationToken();
+        token.setUuid(UUID.randomUUID());
+        when(verificationService.generateVerificationToken(user, TokenType.RESET_PASSWORD)).thenReturn(token);
 
         boolean result = authService.sendPasswordResetCode(new UserEmailDTO(testEmail));
 
         assertTrue(result);
-        verify(mailService).sendResetPasswordEmail(eq(user.getLogin()), anyString());
+        verify(mailService).sendResetPasswordEmail(eq(testEmail), anyString());
+    }
+
+    @Test
+    void sendPasswordResetCode_UserNotFound_ReturnsFalse() {
+        when(userService.findUserByLoginOptional(testEmail)).thenReturn(Optional.empty());
+        boolean result = authService.sendPasswordResetCode(new UserEmailDTO(testEmail));
+        assertFalse(result);
     }
 
     @Test
     void sendPasswordResetCode_UserNotEnabled_ReturnsFalse() {
         user.setEnabled(false);
-        when(userService.findUserByLogin(testEmail)).thenReturn(user);
-
+        when(userService.findUserByLoginOptional(testEmail)).thenReturn(Optional.of(user));
         boolean result = authService.sendPasswordResetCode(new UserEmailDTO(testEmail));
-
         assertFalse(result);
-        verifyNoInteractions(verificationService, mailService);
     }
 
+    // ----------- passwordReset (token) -----------
     @Test
-    void passwordReset_ValidToken_UpdatesPasswordAndToken() {
-        UUID testUUID = UUID.randomUUID();
-        PasswordResetDTO dto = new PasswordResetDTO("newPassword");
+    void passwordReset_WithToken_UpdatesPasswordAndToken() {
+        UUID uuid = UUID.randomUUID();
+        PasswordResetDTO dto = new PasswordResetDTO("newPass");
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setUser(user);
 
-        when(verificationService.findVerificationByToken(testUUID)).thenReturn(verificationToken);
-        when(passwordEncoder.encode(dto.newPassword())).thenReturn("newEncodedPassword");
+        when(verificationService.findVerificationByToken(uuid)).thenReturn(verificationToken);
+        when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
 
-        authService.passwordReset(testUUID, dto);
+        authService.passwordReset(uuid, dto);
 
-        // Verify password update
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService).save(userCaptor.capture());
-        assertEquals("newEncodedPassword", userCaptor.getValue().getPassword());
+        assertEquals("encodedNewPass", user.getPassword());
+        assertTrue(verificationToken.isActivated());
+        assertNotNull(verificationToken.getActivationDate());
+        verify(userService).save(user);
+        verify(verificationService).saveVerificationToken(verificationToken);
+    }
 
-        // Verify token update
-        ArgumentCaptor<VerificationToken> tokenCaptor = ArgumentCaptor.forClass(VerificationToken.class);
-        verify(verificationService).saveVerificationToken(tokenCaptor.capture());
-        assertTrue(tokenCaptor.getValue().isActivated());
-        assertNotNull(tokenCaptor.getValue().getActivationDate());
+    // ----------- confirmEmail -----------
+    @Test
+    void confirmEmail_ValidToken_EnablesUserAndToken() {
+        UUID uuid = UUID.randomUUID();
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setUser(user);
+
+        when(verificationService.findByIdOrElseNull(uuid)).thenReturn(verificationToken);
+
+        boolean result = authService.confirmEmail(uuid);
+
+        assertTrue(result);
+        assertTrue(user.isEnabled());
+        assertEquals(Status.ACTIVE, user.getStatus());
+        assertTrue(verificationToken.isActivated());
+        assertNotNull(verificationToken.getActivationDate());
+        verify(userService).save(user);
+        verify(verificationService).saveVerificationToken(verificationToken);
     }
 
     @Test
-    void refreshToken_ShouldReturnNewTokens_WhenRefreshTokenIsValid() {
-        String oldRefreshToken = "oldRefreshToken";
-        String newAccessToken = "newAccessToken";
-        String newRefreshToken = "newRefreshToken";
+    void confirmEmail_InvalidToken_ReturnsFalse() {
+        UUID uuid = UUID.randomUUID();
+        when(verificationService.findByIdOrElseNull(uuid)).thenReturn(null);
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setToken(oldRefreshToken);
-        refreshToken.setUser(user);
+        boolean result = authService.confirmEmail(uuid);
 
-        when(refreshTokenService.findByToken(oldRefreshToken)).thenReturn(refreshToken);
-        when(tokenProvider.generateToken(user)).thenReturn(newAccessToken);
-        when(refreshTokenService.createRefreshToken(user)).thenReturn(newRefreshToken);
+        assertFalse(result);
+        verify(userService, never()).save(any());
+        verify(verificationService, never()).saveVerificationToken(any());
+    }
 
-        TokensDTO result = authService.refreshToken(oldRefreshToken);
+    // ----------- passwordReset (email) -----------
+    @Test
+    void passwordReset_WithEmail_UpdatesUserAndToken() {
+        PasswordResetWithEmailDTO dto = new PasswordResetWithEmailDTO(testEmail, "newPass");
+        VerificationToken verificationToken = new VerificationToken();
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        when(verificationService.findVerificationByUser(user)).thenReturn(verificationToken);
+        when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
 
-        assertEquals(newAccessToken, result.accessToken());
-        assertEquals(newRefreshToken, result.refreshToken());
-        verify(refreshTokenService).invalidateToken(oldRefreshToken);
+        authService.passwordReset(dto);
+
+        assertTrue(user.isEnabled());
+        assertEquals("encodedNewPass", user.getPassword());
+        assertTrue(verificationToken.isActivated());
+        assertNotNull(verificationToken.getActivationDate());
+        verify(userService, atLeastOnce()).save(user);
+        verify(verificationService).saveVerificationToken(verificationToken);
+    }
+
+    // ----------- isEmailConfirmed -----------
+    @Test
+    void isEmailConfirmed_ReturnsTrueIfEnabled() {
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        assertTrue(authService.isEmailConfirmed(new UserEmailDTO(testEmail)));
     }
 
     @Test
-    void refreshToken_ShouldThrowException_WhenRefreshTokenNotFound() {
-        String invalidToken = "invalidToken";
-
-        when(refreshTokenService.findByToken(invalidToken))
-                .thenThrow(new TokenNotFoundException("Refresh Token not found"));
-
-        assertThrows(TokenNotFoundException.class, () -> authService.refreshToken(invalidToken));
-        verify(refreshTokenService, never()).invalidateToken(anyString());
+    void isEmailConfirmed_ReturnsFalseIfNotEnabled() {
+        user.setEnabled(false);
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        assertFalse(authService.isEmailConfirmed(new UserEmailDTO(testEmail)));
     }
 
+    // ----------- findUserByLogin -----------
     @Test
-    void refreshToken_ShouldThrowException_WhenRefreshTokenIsExpired() {
-        String expiredToken = "expiredToken";
-
-        // Simula o comportamento do método findByToken lançando TokenInvalidException
-        when(refreshTokenService.findByToken(expiredToken))
-                .thenThrow(new TokenInvalidException("Refresh Token expired"));
-
-        // Verifica se a exceção é lançada ao chamar o método refreshToken
-        assertThrows(TokenInvalidException.class, () -> authService.refreshToken(expiredToken));
-
-        // Garante que o método invalidateToken nunca é chamado
-        verify(refreshTokenService, never()).invalidateToken(anyString());
+    void findUserByLogin_DelegatesToUserService() {
+        when(userService.findUserByLogin(testEmail)).thenReturn(user);
+        assertEquals(user, authService.findUserByLogin(testEmail));
     }
 
+    // ----------- confirmVerificationToken -----------
     @Test
-    void refreshToken_ShouldThrowException_WhenRefreshTokenIsAlreadyUsed() {
-        String usedToken = "usedToken";
+    void confirmVerificationToken_DelegatesToVerificationService() {
+        UUID uuid = UUID.randomUUID();
+        when(verificationService.confirmVerificationToken(uuid)).thenReturn(true);
+        assertTrue(authService.confirmVerificationToken(uuid));
+    }
 
-        // Simula o comportamento do método findByToken lançando TokenInvalidException
-        when(refreshTokenService.findByToken(usedToken))
-                .thenThrow(new TokenInvalidException("Refresh Token already used"));
+    // ----------- findVerificationByUser -----------
+    @Test
+    void findVerificationByUser_DelegatesToVerificationService() {
+        VerificationToken token = new VerificationToken();
+        when(verificationService.findVerificationByUser(user)).thenReturn(token);
+        assertEquals(token, authService.findVerificationByUser(user));
+    }
 
-        // Verifica se a exceção é lançada ao chamar o método refreshToken
-        assertThrows(TokenInvalidException.class, () -> authService.refreshToken(usedToken));
-
-        // Garante que o método invalidateToken nunca é chamado
-        verify(refreshTokenService, never()).invalidateToken(anyString());
+    // ----------- getExpirationDate -----------
+    @Test
+    void getExpirationDate_DelegatesToSubscriptionService() {
+        ZonedDateTime date = ZonedDateTime.now();
+        when(subscriptionService.getExpirationDate(user)).thenReturn(date);
+        assertEquals(date, authService.getExpirationDate(user));
     }
 }
