@@ -194,8 +194,8 @@ public class PaymentController {
         items.add(PreferenceItemRequest.builder()
                 .id("subscriptionPro-" + user.getId())
                 .pictureUrl("https://freeimage.host/i/34hk2ku")
-                .title("Assinatura PRO - ChamaGol")
-                .description(" mensal")
+                .title("ChamaGol")
+                .description("ChamaGol PRO")
                 .quantity(1)
                 .unitPrice(new BigDecimal("00.01"))
                 .currencyId("BRL")
@@ -226,7 +226,7 @@ public class PaymentController {
                         .failure("chamagol://payment/failure")
                         .pending("chamagol://payment/pending")
                         .build())
-                .notificationUrl("https://chamagol-9gfb.onrender.com/api/payment/webhook")
+                .notificationUrl("https://chamagol.com/api/payment/webhook")
                 .autoReturn("approved")
                 .build();
         log.debug("Preference request configured: {}", request);
