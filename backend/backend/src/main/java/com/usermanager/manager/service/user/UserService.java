@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
-import com.usermanager.manager.dto.user.ProUserDTO;
+import com.usermanager.manager.dto.user.VipUserDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
 import com.usermanager.manager.exception.user.UserNotFoundException;
@@ -133,9 +133,9 @@ public class UserService {
                 .map(x -> userMapper.userToUserDTO(x));
     }
 
-    public List<ProUserDTO> getUsersProPage() {
+    public List<VipUserDTO> getUsersVipPage() {
         return subscriptionRepository.findAll().stream()
-            .map(ProUserDTO::new)
+            .map(VipUserDTO::new)
             .toList();
     }
 }

@@ -40,7 +40,6 @@ public class UserTermAcceptanceController {
         this.termOfUseService = termOfUseService;
     }
 
-    // TODO: adicionar o aceitar do termo no controller de registro
     @Operation(summary = "Aceitar o termo de uso mais recente")
     @ApiResponse(responseCode = "200", description = "Termo aceito")
     @PostMapping("/accept-latest")

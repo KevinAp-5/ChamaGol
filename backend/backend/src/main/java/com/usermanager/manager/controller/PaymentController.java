@@ -74,8 +74,8 @@ public class PaymentController {
     ) {
         var userResponse = userService.findById(user.getId());
         Subscription userSubscription = userResponse.getSubscription();
-        if (userSubscription == Subscription.PRO) {
-            return ResponseEntity.ok(new ResponseMessage("PRO"));
+        if (userSubscription == Subscription.VIP) {
+            return ResponseEntity.ok(new ResponseMessage("VIP"));
         }
         return ResponseEntity.ok(new ResponseMessage(userSubscription.getValue()));
     }
@@ -192,10 +192,10 @@ public class PaymentController {
 
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
-                .id("subscriptionPro-" + user.getId())
+                .id("subscriptionVIP-" + user.getId())
                 .pictureUrl("https://freeimage.host/i/34hk2ku")
                 .title("ChamaGol")
-                .description("ChamaGol PRO")
+                .description("ChamaGol VIP")
                 .quantity(1)
                 .unitPrice(new BigDecimal("00.01"))
                 .currencyId("BRL")

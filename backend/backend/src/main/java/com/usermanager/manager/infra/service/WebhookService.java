@@ -203,10 +203,10 @@ public class WebhookService {
 
     private void updateUserSubscription(User user, String paymentStatus) {
         if (STATUS_APPROVED.equalsIgnoreCase(paymentStatus)) {
-            user.setSubscription(Subscription.PRO);
+            user.setSubscription(Subscription.VIP);
             createSubscriptionControl(user);
             userService.save(user);
-            log.info("User subscription updated to PRO: {}", user.getLogin());
+            log.info("User subscription updated to VIP: {}", user.getLogin());
         } else {
             log.info("Payment not approved for user {}, status: {}", user.getLogin(), paymentStatus);
         }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
-import com.usermanager.manager.dto.user.ProUserDTO;
+import com.usermanager.manager.dto.user.VipUserDTO;
 import com.usermanager.manager.dto.user.SubscriptionDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
@@ -128,8 +128,8 @@ public class UserController {
         return ResponseEntity.ok(new SubscriptionDTO(user.getSubscription().getValue()));
     }
 
-    @GetMapping("pro")
-    public ResponseEntity<List<ProUserDTO>> getsUsersPro() {
-            return ResponseEntity.ok(userService.getUsersProPage());
+    @GetMapping("vip")
+    public ResponseEntity<List<VipUserDTO>> getsUsersVip() {
+            return ResponseEntity.ok(userService.getUsersVipPage());
         }
 }

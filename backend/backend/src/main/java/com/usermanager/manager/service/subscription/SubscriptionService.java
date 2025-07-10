@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 // TODO: Criar Scheduler para atualizar assinaturas
 // TODO: Criar Schedular para limpar assinaturas expiradas
 // TODO: Criar scheduler para altera o estado do alert de assinatura expirando
+// TODO: testar pagamento pendente -> pix no browser do google
 public interface SubscriptionService {
 
     public SubscriptionControl createSubscriptionControl(@NotNull User user);

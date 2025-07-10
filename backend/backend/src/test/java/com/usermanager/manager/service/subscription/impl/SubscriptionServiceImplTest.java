@@ -60,7 +60,7 @@ class SubscriptionServiceImplTest {
     @Test
     void testUpdateSubscriptions_withExpiredSubscriptions() {
         User user = new User();
-        user.setSubscription(Subscription.PRO);
+        user.setSubscription(Subscription.VIP);
         SubscriptionControl expired = mock(SubscriptionControl.class);
         when(expired.getUserId()).thenReturn(user);
 

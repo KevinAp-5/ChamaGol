@@ -2,7 +2,7 @@ package com.usermanager.manager.enums;
 
 public enum Subscription {
     FREE("FREE"),
-    PRO("PRO");
+    VIP("VIP");
 
     Subscription(String value) {
         this.value = value;

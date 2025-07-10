@@ -8,7 +8,7 @@ public enum TipoEvento {
     GOL("GOL"),
     CARTAO("CARTAO"),
     ALERTA("ALERTA"),
-    PRO("PRO");
+    VIP("VIP");
 
     private final String name;
 
