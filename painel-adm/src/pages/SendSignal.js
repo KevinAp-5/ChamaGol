@@ -136,7 +136,7 @@ export default function SendSignal() {
             <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2"/>
           </svg>
         );
-      case "PRO":
+      case "VIP":
         return (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <polygon points="12,2 15.09,8.26 22,9 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9 8.91,8.26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -291,7 +291,7 @@ export default function SendSignal() {
                 <option value="GOL">⚽ GOL</option>
                 <option value="CARTAO">🟨 CARTÃO</option>
                 <option value="ALERTA">⚠️ ALERTA</option>
-                <option value="PRO">⭐ PRO</option>
+                <option value="VIP">⭐ VIP</option>
               </select>
               <div className="select-icon">
                 {getEventTypeIcon(form.tipoEvento)}
