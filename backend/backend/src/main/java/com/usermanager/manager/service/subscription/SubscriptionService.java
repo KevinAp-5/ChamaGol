@@ -6,7 +6,9 @@ import com.usermanager.manager.model.subscription.SubscriptionControl;
 import com.usermanager.manager.model.user.User;
 
 import jakarta.validation.constraints.NotNull;
-
+// TODO: Criar Scheduler para atualizar assinaturas
+// TODO: Criar Schedular para limpar assinaturas expiradas
+// TODO: Criar scheduler para altera o estado do alert de assinatura expirando
 public interface SubscriptionService {
 
     public SubscriptionControl createSubscriptionControl(@NotNull User user);
