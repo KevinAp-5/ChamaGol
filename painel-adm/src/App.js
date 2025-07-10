@@ -7,8 +7,7 @@ import SendSignal from "./pages/SendSignal";
 import Terms from "./pages/Terms";
 import Signals from "./pages/Signals";
 import Users from "./pages/Users";
-import ProUsers from "./pages/ProUsers";
-
+import ProUsers from "./pages/VipUsers";
 function App() {
   const [isLogged, setIsLogged] = useState(false);
 
