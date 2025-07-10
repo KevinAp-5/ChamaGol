@@ -331,7 +331,8 @@ export default function TimelineScreen({ navigation }: Props) {
     setIsConnecting(true);
     
     // const socket = new SockJS(`https://chamagol-9gfb.onrender.com/ws/chat?token=${token}`);
-    const socket = new SockJS(`http://192.168.1.10:8080/ws/chat?token=${token}`);
+    const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
+    // const socket = new SockJS(`http://192.168.1.10:8080/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
