@@ -19,6 +19,7 @@ import { useTheme } from "../../theme/theme";
 import { CustomAlertProvider, showCustomAlert } from "../../components/CustomAlert";
 import Logo from "../../components/logo"; // Importando o componente Logo
 import Footer from "../../components/footer";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const PaymentPendingScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -86,6 +87,9 @@ const PaymentPendingScreen = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const setSubscriptionPro = async () => {
+    await AsyncStorage.setItem("subscription", "PRO");
+  }
   // Função para verificar o status da assinatura no backend
   const checkSubscriptionStatus = async () => {
     if (isChecking) return;
@@ -103,8 +107,9 @@ const PaymentPendingScreen = () => {
         setTimeout(() => {
           setIsLoading(false);
           
-          if (subscriptionStatus === "PRO") {
+          if (subscriptionStatus === "VIP") {
             // Pagamento aprovado, redireciona para tela de sucesso
+            setSubscriptionPro();
             navigation.navigate("PaymentSuccess");
           } else {
             // Pagamento ainda pendente
