@@ -36,7 +36,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
   const benefits = [
     { 
       icon: 'crown', 
-      title: 'Sinais Exclusivos PRO', 
+      title: 'Sinais Exclusivos VIP', 
       description: 'Acesse sinais premium com alta taxa de acerto',
       iconType: 'font-awesome'
     },
@@ -49,7 +49,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
     { 
       icon: 'chart-line-variant', 
       title: 'Análises Avançadas', 
-      description: 'Gráficos e indicadores exclusivos para PRO',
+      description: 'Gráficos e indicadores exclusivos para VIP',
       iconType: 'material'
     },
     { 
@@ -191,7 +191,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
         confettiAnim.current.play();
       }
       showCustomAlert(
-        'Parabéns! Sua assinatura PRO foi ativada com sucesso. Aproveite todos os benefícios exclusivos agora mesmo!',
+        'Parabéns! Sua assinatura VIP foi ativada com sucesso. Aproveite todos os benefícios exclusivos agora mesmo!',
         '✅ Pagamento Aprovado'
       );
       // Aqui você poderia navegar para uma tela de sucesso ou atualizar o status do usuário
@@ -314,7 +314,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
             <MaskedView
               maskElement={
                 <View style={styles.proBadgeMask}>
-                  <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>ACESSO PRO</Text>
+                  <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>ACESSO VIP</Text>
                 </View>
               }
             >
@@ -333,7 +333,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                     transform: [{ translateX: shimmerTranslate }]
                   }}
                 />
-                <Text style={[styles.proBadgeText, { opacity: 0, fontFamily: fonts.bold }]}>ACESSO PRO</Text>
+                <Text style={[styles.proBadgeText, { opacity: 0, fontFamily: fonts.bold }]}>ACESSO VIP</Text>
               </LinearGradient>
             </MaskedView>
           </Animated.View>
@@ -353,7 +353,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
           >
             <Text style={[styles.heroSubtitle, { fontFamily: fonts.medium }]}>ELEVE SUA EXPERIÊNCIA</Text>
             <Text style={[styles.heroTitle, { fontFamily: fonts.extraBold }]}>
-              TORNE-SE <Text style={{color: '#FFD700'}}>PRO</Text>
+              TORNE-SE <Text style={{color: '#FFD700'}}>VIP</Text>
             </Text>
             
             <View style={styles.separator}>
@@ -458,7 +458,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
               </View>
               
               <View style={styles.priceContainer}>
-                <Text style={[styles.oldPrice, { fontFamily: fonts.regular }]}>DE R$19,90</Text>
+                <Text style={[styles.oldPrice, { fontFamily: fonts.regular }]}>DE R$39,90</Text>
                 <Animated.View 
                   style={[
                     styles.currentPriceRow,
@@ -468,7 +468,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                   ]}
                 >
                   <Text style={[styles.currency, { fontFamily: fonts.bold }]}>R$</Text>
-                  <Text style={[styles.price, { fontFamily: fonts.extraBold }]}>10</Text>
+                  <Text style={[styles.price, { fontFamily: fonts.extraBold }]}>29,90</Text>
                   <View style={styles.periodContainer}>
                     <Text style={[styles.period, { fontFamily: fonts.regular }]}>/mês</Text>
                   </View>

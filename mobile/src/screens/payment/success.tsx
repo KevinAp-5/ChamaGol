@@ -77,7 +77,7 @@ const PaymentSuccessScreen = () => {
   };
 
   const setSubscriptionPro = async () => {
-   await AsyncStorage.setItem("subscription", "PRO");
+   await AsyncStorage.setItem("subscription", "VIP");
   }
 
   const handleSupport = () => {
@@ -153,7 +153,7 @@ const PaymentSuccessScreen = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={[styles.proBadgeText, { fontFamily: fonts.extraBold }]}>PRO</Text>
+                <Text style={[styles.proBadgeText, { fontFamily: fonts.extraBold }]}>VIP</Text>
               </LinearGradient>
             </View>
           </View>
@@ -172,7 +172,7 @@ const PaymentSuccessScreen = () => {
           </View>
           
           <Text style={[styles.subtitle, { color: colors.highlight, fontFamily: fonts.semibold }]}>
-            Sua conta agora é PRO!
+            Sua conta agora é VIP!
           </Text>
           
           <Text style={[styles.description, { color: colors.muted, fontFamily: fonts.regular }]}>
@@ -227,7 +227,7 @@ const PaymentSuccessScreen = () => {
               activeOpacity={0.7}
             >
               <Text style={[styles.secondaryButtonText, { color: colors.accent, fontFamily: fonts.semibold }]}>
-                EXPLORAR RECURSOS PRO
+                EXPLORAR RECURSOS VIP
               </Text>
             </TouchableOpacity>
             

@@ -165,7 +165,7 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const getSubscriptionBadge = () => {
-    if (subscription === "PRO") {
+    if (subscription === "VIP") {
       return (
         <LinearGradient
           colors={["#E53935", "#B71C1C"]}
@@ -174,13 +174,13 @@ export default function ProfileScreen({ navigation }: any) {
           style={styles.proBadge}
         >
           <MaterialCommunityIcons
-            name="crown"
+            name="diamond-stone"
             size={16}
             color="#FFFFFF"
             style={{ marginRight: 4 }}
           />
           <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>
-            PRO
+            VIP
           </Text>
         </LinearGradient>
       );
@@ -196,7 +196,7 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const getSubscriptionStatus = () => {
-    if (subscription === "PRO") {
+    if (subscription === "VIP") { 
       return (
         <View style={styles.subscriptionStatusContainer}>
           <Text
@@ -205,7 +205,7 @@ export default function ProfileScreen({ navigation }: any) {
               { color: colors.primary, fontFamily: fonts.regular },
             ]}
           >
-            Assinante PRO
+            Assinante VIP
           </Text>
           {expirationDate && (
             <View style={styles.expirationContainer}>
@@ -375,7 +375,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <View style={styles.infoRow}>
                   <MaterialCommunityIcons
                     name={
-                      subscription === "PRO"
+                      subscription === "VIP"
                         ? "trophy-outline"
                         : "account-outline"
                     }

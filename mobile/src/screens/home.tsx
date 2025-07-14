@@ -27,7 +27,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
-type SubscriptionType = "FREE" | "PRO" | "PREMIUM" | null;
+type SubscriptionType = "FREE" | "PRO" | "VIP" | null;
 
 export default function HomeScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
@@ -291,8 +291,8 @@ export default function HomeScreen({ navigation }: Props) {
       return { text: "GRATUITO", color: colors.muted, icon: "account-outline" };
     } else if (subscription === "PRO") {
       return { text: "PRO", color: "#FFC107", icon: "crown" };
-    } else if (subscription === "PREMIUM") {
-      return { text: "PREMIUM", color: "#8E24AA", icon: "diamond-stone" };
+    } else if (subscription === "VIP") {
+      return { text: "VIP", color: "#8E24AA", icon: "diamond-stone" };
     }
     return { text: "GRATUITO", color: colors.muted, icon: "account-outline" };
   };
@@ -578,7 +578,7 @@ export default function HomeScreen({ navigation }: Props) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.premiumCard, shadows.medium]}
+                  style={[styles.VIPCard, shadows.medium]}
                   activeOpacity={0.8}
                   onPress={() =>
                     handleCardPress(cardAnimations[3], "ProSubscription")
@@ -586,11 +586,11 @@ export default function HomeScreen({ navigation }: Props) {
                 >
                   <LinearGradient
                     colors={["#F2994A", "#F2C94C"]}
-                    style={styles.premiumCardGradient}
+                    style={styles.VIPCardGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <View style={styles.premiumContent}>
+                    <View style={styles.VIPContent}>
                       <MaterialCommunityIcons
                         name="crown"
                         size={40}
@@ -598,25 +598,25 @@ export default function HomeScreen({ navigation }: Props) {
                       />
                       <Text
                         style={[
-                          styles.premiumTitle,
+                          styles.VIPTitle,
                           { fontFamily: fonts.bold },
                         ]}
                       >
-                        ATUALIZE PARA PRO
+                        ATUALIZE PARA VIP
                       </Text>
                       <Text
                         style={[
-                          styles.premiumDescription,
+                          styles.VIPDescription,
                           { fontFamily: fonts.regular },
                         ]}
                       >
                         Desbloqueie recursos exclusivos e aumente suas chances
                         de sucesso!
                       </Text>
-                      <View style={styles.premiumButton}>
+                      <View style={styles.VIPButton}>
                         <Text
                           style={[
-                            styles.premiumButtonText,
+                            styles.VIPButtonText,
                             { fontFamily: fonts.semibold },
                           ]}
                         >
@@ -749,19 +749,19 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 13,
   },
-  premiumCard: {
+  VIPCard: {
     borderRadius: 16,
     overflow: "hidden",
     marginVertical: 10,
   },
-  premiumCardGradient: {
+  VIPCardGradient: {
     width: "100%",
     padding: 20,
   },
-  premiumContent: {
+  VIPContent: {
     alignItems: "center",
   },
-  premiumTitle: {
+  VIPTitle: {
     color: "#FFFFFF",
     fontSize: 22,
     fontWeight: "bold",
@@ -769,14 +769,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-  premiumDescription: {
+  VIPDescription: {
     color: "#FFFFFF",
     fontSize: 14,
     textAlign: "center",
     marginBottom: 20,
     opacity: 0.9,
   },
-  premiumButton: {
+  VIPButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.3)",
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
   },
-  premiumButtonText: {
+  VIPButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     marginRight: 5,

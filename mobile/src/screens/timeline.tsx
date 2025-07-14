@@ -56,11 +56,11 @@ const MessageCard = React.memo(function MessageCard({
   messagesLength,
 }: any) {
   const isActive = item.status === "ACTIVE";
-  const isPROSignal = item.tipoEvento === "PRO";
+  const isVIPSignal = item.tipoEvento === "VIP";
   const isLast = index === messagesLength - 1;
 
-  // PRO bloqueado
-  if (isPROSignal && userSubscription !== "PRO") {
+  // VIP bloqueado
+  if (isVIPSignal && userSubscription !== "VIP") {
     return (
       <Animated.View
         style={[
@@ -94,7 +94,7 @@ const MessageCard = React.memo(function MessageCard({
             textAlign: 'center',
           }}
         >
-          Sinal exclusivo para assinantes PRO!
+          Sinal exclusivo para assinantes VIP!
         </Text>
         <Text
           style={{
@@ -118,7 +118,7 @@ const MessageCard = React.memo(function MessageCard({
             justifyContent: 'center',
           }}
           onPress={() => {
-            navigation.navigate("ProSubscription");
+            navigation.navigate("PROSubscription");
           }}
         >
           <Text style={{ color: colors.card, fontFamily: fonts.bold, marginRight: spacing.sm }}>
@@ -150,7 +150,7 @@ const MessageCard = React.memo(function MessageCard({
         },
       ]}
     >
-      {isPROSignal && (
+      {isVIPSignal && (
         <View style={styles.proBadge}>
           <LinearGradient
             colors={[colors.secondary, colors.highlight]}
@@ -158,7 +158,7 @@ const MessageCard = React.memo(function MessageCard({
             end={{ x: 1, y: 0 }}
             style={styles.proBadgeGradient}
           >
-            <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>PRO</Text>
+            <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>VIP</Text>
           </LinearGradient>
         </View>
       )}
