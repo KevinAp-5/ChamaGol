@@ -111,4 +111,56 @@ class SubscriptionServiceImplTest {
 
         assertNull(result);
     }
+
+    @Test
+    void testUpdateAllAlerts_setsExpirationAlertTrue() {
+        SubscriptionControl control = mock(SubscriptionControl.class);
+        List<SubscriptionControl> expiringSoon = List.of(control);
+
+        when(subscriptionRepository.findBySubscriptionEnding(any(), any())).thenReturn(expiringSoon);
+
+        subscriptionService.updateAllAlerts();
+
+        verify(control, times(1)).setExpirationAlert(true);
+        verify(subscriptionRepository, times(1)).saveAll(expiringSoon);
+    }
+
+    @Test
+    void testCleanExpiredSubscriptions_removesExpiredAndUpdatesUsers() {
+        User user = new User();
+        SubscriptionControl expired = mock(SubscriptionControl.class);
+        when(expired.getUserId()).thenReturn(user);
+
+        List<SubscriptionControl> expiredList = List.of(expired);
+
+        when(subscriptionRepository.findExpiredSubscription(any())).thenReturn(expiredList);
+
+        subscriptionService.cleanExpiredSubscriptions();
+
+        assertEquals(Subscription.FREE, user.getSubscription());
+        verify(userService, times(1)).saveAll(anyList());
+        verify(subscriptionRepository, times(1)).deleteAll(expiredList);
+    }
+
+    @Test
+    void testVerifyUserAlert_true() {
+        User user = new User();
+        SubscriptionControl control = mock(SubscriptionControl.class);
+        when(control.isExpirationAlert()).thenReturn(true);
+        when(subscriptionRepository.findByUserId(user)).thenReturn(Optional.of(control));
+
+        Boolean result = subscriptionService.verifyUserAlert(user);
+
+        assertEquals(true, result);
+    }
+
+    @Test
+    void testVerifyUserAlert_falseWhenEmpty() {
+        User user = new User();
+        when(subscriptionRepository.findByUserId(user)).thenReturn(Optional.empty());
+
+        Boolean result = subscriptionService.verifyUserAlert(user);
+
+        assertEquals(false, result);
+    }
 }
