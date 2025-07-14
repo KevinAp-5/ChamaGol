@@ -2,6 +2,7 @@ package com.usermanager.manager.controller;
 
 import java.util.List;
 
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +22,7 @@ import com.usermanager.manager.dto.user.SubscriptionDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
 import com.usermanager.manager.model.user.User;
+import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,9 +44,11 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
 
     private final UserService userService;
+    private final SubscriptionService subscriptionService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, SubscriptionService subscriptionService) {
         this.userService = userService;
+        this.subscriptionService = subscriptionService;
     }
 
     @Operation(summary = "Atualizar usuário")
@@ -126,6 +130,11 @@ public class UserController {
     ) {
         log.info("user {}", user);
         return ResponseEntity.ok(new SubscriptionDTO(user.getSubscription().getValue()));
+    }
+
+    @GetMapping("subscription/alert")
+    public ResponseEntity<Boolean> getUserSubscriptionAlert(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(subscriptionService.verifyUserAlert(user));
     }
 
     @GetMapping("vip")
