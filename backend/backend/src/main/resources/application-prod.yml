@@ -6,16 +6,16 @@ spring:
     username: ${db_user}
     password: ${db_password}
     hikari:
-      maximum-pool-size: 50 # Número máximo de conexões no pool
-      minimum-idle: 10 # Número mínimo de conexões ociosas
-      idle-timeout: 30000 # Tempo máximo que uma conexão pode ficar ociosa
-      max-lifetime: 1800000 # Tempo máximo de vida de uma conexão
-      connection-timeout: 20000 # Timeout para obter uma conexão do pool
+      maximum-pool-size: 32        # Até 2x núcleos, para 4 vCPU
+      minimum-idle: 8              # 1/4 do máximo
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 15000    # Reduzido para resposta mais rápida
   jpa:
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true # Desabilitado para produção
+    show-sql: false                # Desabilitado para produção
   mail:
     host: smtp.gmail.com
     port: 587
@@ -35,25 +35,25 @@ server:
   address: 0.0.0.0
   tomcat:
     threads:
-      max: 50 # Ajustado para suportar maior carga em produção
-      min-spare: 10
-    accept-count: 200 # Número máximo de requisições na fila
-    connection-timeout: 5000
+      max: 100                     # 4 vCPU suporta até 100 threads simultâneas
+      min-spare: 16                # 1 por vCPU
+    accept-count: 300              # Fila de requisições aguardando thread
+    connection-timeout: 10000      # Timeout de conexão menor para liberar recursos
     keep-alive-timeout: 60000
-    max-connections: 10000
+    max-connections: 2000          # Limite de conexões simultâneas
 logging:
   level:
     root: INFO
     org:
       springframework:
-        security: WARN # Reduzido para WARN em produção
+        security: WARN
 api:
   url: ${APP_URL}
   security:
     token:
       secret: ${jwt_secret:my-secret-key}
       refresh:
-        expiration: 10080 # Expiração do token de refresh em minutos (7 dias)
+        expiration: 10080
 management:
   endpoints:
     web:
