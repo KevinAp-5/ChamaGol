@@ -17,4 +17,6 @@ public interface SubscriptionService {
     public void updateSubscriptions();
 
     public ZonedDateTime getExpirationDate(@NotNull User user);
+
+    public Boolean verifyUserAlert(@NotNull User user);
 }
