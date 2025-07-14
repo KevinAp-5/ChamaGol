@@ -39,7 +39,6 @@ public class TimelineController {
         return message;
     }
 
-    // TODO: antes de mostrar os sinais dos topicos, criar botão que vai fazer o fetch dos sinais anteriores.
     @Operation(summary = "Agendamento de envio de sinais automáticos", description = "Envia sinais automáticos a cada 7 segundos para o tópico de sinais.")
     // @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {

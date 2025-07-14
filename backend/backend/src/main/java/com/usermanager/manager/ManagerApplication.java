@@ -11,7 +11,6 @@ public class ManagerApplication {
 		// TODO: adicionar envio de notificações mesmo com app fechado
 		// TODO: criar um Scheduler para ir limpando as entidades antigas
 
-		// TODO: mudar aplicação para portugues, incluindo mensagens de erros, e os email
 
 		// TODO: arrumar Error interno no servidor: could not execute statement [ERROR: duplicate key value violates unique constraint \"users_login_key\"\n  Detail: Key (login)=(keven.clash3@gmail.com) already exists.] [insert into users (created_at,is_enabled,last_login,login,name,password,role,status,subscription,updated_at) values (?,?,?,?,?,?,?,?,?,?)]; SQL [insert into users (created_at,is_enabled,last_login,login,name,password,role,status,subscription,updated_at) values (?,?,?,?,?,?,?,?,?,?)]; constraint [users_login_key]
 

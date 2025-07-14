@@ -29,7 +29,6 @@ public class TermOfUse {
 
     @Column(nullable = false, unique = true)
     // TODO: mudar de string para outro double(perhaps)
-    // TODO: criar indice para tabela
     private String version;
 
     @Lob
