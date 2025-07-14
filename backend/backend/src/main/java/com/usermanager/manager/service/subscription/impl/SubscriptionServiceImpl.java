@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,5 +48,39 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return subscriptionControl.get().getExpirationDate();
         }
         return null;
+    }
+
+    public Boolean verifyUserAlert(@NotNull User user) {
+        Optional<SubscriptionControl> subscriptionControl = subscriptionRepository.findByUserId(user);
+        if (subscriptionControl.isEmpty()) {
+            return false;
+        }
+        return subscriptionControl.get().isExpirationAlert();
+
+    }
+
+    @Scheduled(cron = "@midnight")
+    public void updateAllAlerts() {
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime threeDaysAhead = now.plusDays(3);
+        List<SubscriptionControl> expiringSoon = subscriptionRepository.findBySubscriptionEnding(now, threeDaysAhead);
+        expiringSoon.forEach(s -> s.setExpirationAlert(true));
+        subscriptionRepository.saveAll(expiringSoon);
+    }
+
+    @Scheduled(cron = "@daily")
+    public void cleanExpiredSubscriptions() {
+        List<SubscriptionControl> expiredSubcriptions = subscriptionRepository.findExpiredSubscription(ZonedDateTime.now());
+        List<User> users = expiredSubcriptions.stream()
+        .map(s -> s.getUserId())
+        .toList();
+
+        updateUsersSubscription(users);
+        subscriptionRepository.deleteAll(expiredSubcriptions);
+    }
+
+    private void updateUsersSubscription(List<User> users) {
+        users.forEach(user -> user.setSubscription(Subscription.FREE));
+        userService.saveAll(users);
     }
 }
