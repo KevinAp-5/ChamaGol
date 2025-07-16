@@ -6,38 +6,19 @@ services:
       context: .
       dockerfile: Dockerfile
     image: chamagol
-    ports:
-      - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/chamagol
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/chamagol
       - SPRING_DATASOURCE_USERNAME=${db_user}
       - SPRING_DATASOURCE_PASSWORD=${db_password}
       - SPRING_JPA_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
-    depends_on:
-      - db
-    networks:
-      - app-network
-    restart: always
-
-  db:
-    image: postgres:16
-    environment:
-      - POSTGRES_DB=chamagol
-      - POSTGRES_USER=${db_user}
-      - POSTGRES_PASSWORD=${db_password}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    restart: always
-
-networks:
-  app-network:
-    driver: bridge
-
-volumes:
-  postgres_data:
+      - jwt_secret=${jwt_secret}
+      - MERCADO_PAGO_ACCESS_TOKEN=${MERCADO_PAGO_ACCESS_TOKEN}
+      - MERCADO_PAGO_WEBHOOK_SECRET=${MERCADO_PAGO_WEBHOOK_SECRET}
+      - NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY=${NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY}
+      - mail_password=${mail_password}
+      - mail_username=${mail_username}
+      - mercado_pago_webhook=${mercado_pago_webhook}
+      - APP_URL=${APP_URL}
+    network_mode: host
