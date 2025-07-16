@@ -17,7 +17,7 @@ import Footer from "../components/footer";
 import Logo from "../components/logo";
 import { useTheme } from "../theme/theme";
 
-type Props = NativeStackScreenProps<RootStackParamList, "EmailConfirmationSuccess">;
+type Props = NativeStackScreenProps<RootStackParamList, "EmailConfirmationSuccessScreen">;
 
 export default function EmailConfirmationSuccessScreen({ navigation }: Props) {
   const { colors, fonts } = useTheme();
