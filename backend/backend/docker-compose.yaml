@@ -1,17 +1,43 @@
+version: '3.8'
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: spring:latest
+    image: chamagol
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/login
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/chamagol
       - SPRING_DATASOURCE_USERNAME=${db_user}
       - SPRING_DATASOURCE_PASSWORD=${db_password}
+      - SPRING_JPA_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
-      - SPRING_FLYWAY_ENABLED=true
-      - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      - db
     networks:
-      - backend
+      - app-network
+    restart: always
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=chamagol
+      - POSTGRES_USER=${db_user}
+      - POSTGRES_PASSWORD=${db_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: always
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

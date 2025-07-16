@@ -11,7 +11,7 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 
 # Compila o projeto e gera o arquivo .jar
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests -Pprod
 
 # Etapa 2: Configuração para produção
 FROM eclipse-temurin:21-jdk
@@ -21,5 +21,6 @@ WORKDIR /app
 # Copia o .jar gerado na etapa de build
 COPY --from=builder /app/target/*.jar app.jar
 
+EXPOSE 8080
 # Define o comando para executar a aplicação
-CMD ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
