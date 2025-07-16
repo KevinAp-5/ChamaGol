@@ -36,29 +36,33 @@ export default function HomeScreen({ navigation }: Props) {
   const [username, setUsername] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastLogin, setLastLogin] = useState<string | null>(null);
-
+  const [subscriptionAlert, setSubscriptionAlert] = useState(false);
   // Mudança: usar boolean para flags
-  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
+  // const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
+  const [subscriptionAlertLoaded, setSubscriptionAlertLoaded] = useState(false);
   const [termLoaded, setTermLoaded] = useState(false);
 
   useEffect(() => {
     const setFlagsAndFetch = async () => {
       try {
-        const subscriptionFlag = await AsyncStorage.getItem("subscriptionFlag");
+        // Verifica se já mostrou o alerta nesta sessão
+        const subscriptionAlertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
+        const subscriptionAlertLoaded = subscriptionAlertFlag === "1";
         const termFlag = await AsyncStorage.getItem("termFlag");
-        const subscriptionLoaded = subscriptionFlag === "1";
         const termLoaded = termFlag === "1";
-        setSubscriptionLoaded(subscriptionLoaded);
         setTermLoaded(termLoaded);
 
-        if (!subscriptionLoaded) {
-          await fetchSubscription();
+        // Executa fetchSubscriptionAlert apenas se não mostrou o alerta nesta sessão
+        if (!subscriptionAlertLoaded) {
+          await fetchSubscriptionAlert();
         }
+        // Sempre executa fetchSubscription
+        await fetchSubscription();
+
         if (!termLoaded) {
           await checkTermAcceptance();
         }
       } catch (error) {
-        setSubscriptionLoaded(false);
         setTermLoaded(false);
       }
     };
@@ -159,17 +163,53 @@ export default function HomeScreen({ navigation }: Props) {
     getUserInfo();
   }, []);
 
-  const fetchSubscription = async () => {
-    console.log(
-      "fetchSubscription chamado, subscriptionLoaded:",
-      subscriptionLoaded
-    );
 
-    if (subscriptionLoaded) {
-      console.log("Subscription já carregada, pulando requisição");
-      return;
+  const fetchSubscriptionAlert = async () => {
+    console.log("fetchSubscriptionAlert chamado");
+    try {
+      // Verifica se já mostrou o alerta nesta sessão
+      const alertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
+      if (alertFlag === "1") {
+        console.log("Alerta de assinatura já mostrado nesta sessão");
+        // Já mostrou o alerta, não mostra novamente
+        return;
+      }
+
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (!token) {
+        console.log("Erro ao recuperar o token.");
+        return;
+      }
+
+      console.log("Fazendo requisição de subscription alert...");
+      const response = await api.get("users/subscription/alert", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("response.status:", response.status);
+      console.log("response.data:", response.data);
+
+      if (response.status === 200) {
+        setSubscriptionAlert(response.data);
+
+
+        // Se o alerta estiver ativo, mostra popup e seta flag
+        if (response.data) {
+          showCustomAlert(
+            "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
+            "Sua assinatura vai expirar em breve"
+          );
+          await AsyncStorage.setItem("subscriptionAlertFlag", "1");
+        }
+      } else {
+        console.log("Erro ao recuperar alerta de assinatura do usuário", response.data);
+      }
+    } catch (error) {
+      console.log("Erro ao recuperar alerta de assinatura do usuário", error);
     }
+  }
 
+  const fetchSubscription = async () => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
       if (!token) {
@@ -190,11 +230,11 @@ export default function HomeScreen({ navigation }: Props) {
           );
           setSubscription(response.data.userSubscription as SubscriptionType);
 
-          // Definir flag como carregado
-          await AsyncStorage.setItem("subscriptionFlag", "1");
-          setSubscriptionLoaded(true);
+          // Remove o controle da subscriptionFlag: não define mais a flag
+          // await AsyncStorage.setItem("subscriptionFlag", "1");
+          // setSubscriptionLoaded(true);
 
-          console.log("Subscription carregada e flag definida");
+          console.log("Subscription carregada");
         } catch (error) {
           console.log("Erro ao salvar dados no AsyncStorage");
         }
