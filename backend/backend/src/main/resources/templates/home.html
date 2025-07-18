@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChamaGol - Trading Esportivo Profissional</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="description" content="ChamaGol - O melhor app de consultoria esportiva. Receba sinais exclusivos de trading esportivo e odds vencedoras.">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">⚽</div>
+            <h2>ChamaGol</h2>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="logo">
+                    <span class="logo-icon">⚽</span>
+                    <span class="logo-text">ChamaGol</span>
+                </div>
+                <div class="nav-menu">
+                    <a href="#features" class="nav-link">Recursos</a>
+                    <a href="#pricing" class="nav-link">Planos</a>
+                    <a href="#contact" class="nav-link">Contato</a>
+                    <button class="download-btn-nav" id="downloadBtnNav">
+                        <span>📱</span>
+                        Baixar App
+                    </button>
+                </div>
+                <button class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Trading Esportivo
+                    <span class="highlight">Profissional</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Receba sinais exclusivos de odds vencedoras e maximize seus lucros no trading esportivo de futebol
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">Taxa de Acerto</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">50K+</div>
+                        <div class="stat-label">Usuários Ativos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Suporte</div>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <button class="btn-primary" id="downloadBtnHero">
+                        <span>📱</span>
+                        Baixar Agora
+                    </button>
+                    <button class="btn-secondary" onclick="scrollToSection('features')">
+                        Saiba Mais
+                    </button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="app-preview">
+                            <div class="app-header">
+                                <div class="app-title">ChamaGol</div>
+                                <div class="pro-badge">PRO</div>
+                            </div>
+                            <div class="signal-card">
+                                <div class="signal-title">🔥 Sinal Quente</div>
+                                <div class="match-info">Arsenal vs Chelsea</div>
+                                <div class="odd-info">Over 2.5 - 1.85</div>
+                                <div class="confidence">Confiança: 95%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Por que escolher o ChamaGol?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Sinais Precisos</h3>
+                    <p>Receba sinais analisados por nossa equipe de especialistas com alta taxa de acerto</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Tempo Real</h3>
+                    <p>Notificações instantâneas para você não perder nenhuma oportunidade de lucro</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Análises Detalhadas</h3>
+                    <p>Estatísticas completas e análises fundamentalistas para cada sinal enviado</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Resultados Comprovados</h3>
+                    <p>Histórico transparente de resultados e performance de todos os sinais</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Suporte VIP</h3>
+                    <p>Atendimento exclusivo para membros PRO com suporte 24/7</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>ROI Garantido</h3>
+                    <p>Estratégias testadas para maximizar seus lucros no trading esportivo</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title white">Escolha seu plano</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Gratuito</h3>
+                    <div class="price">
+                        <span class="currency">R$</span>
+                        <span class="amount">0</span>
+                        <span class="period">/mês</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>✅ 3 sinais por semana</li>
+                        <li>✅ Análises básicas</li>
+                        <li>✅ Suporte por email</li>
+                        <li>❌ Sinais VIP</li>
+                        <li>❌ Suporte prioritário</li>
+                    </ul>
+                    <button class="btn-primary" id="freePlan">Começar Grátis</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Mais Popular</div>
+                    <h3>PRO</h3>
+                    <div class="price">
+                        <span class="currency">R$</span>
+                        <span class="amount">97</span>
+                        <span class="period">/mês</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>✅ Sinais ilimitados</li>
+                        <li>✅ Análises detalhadas</li>
+                        <li>✅ Suporte 24/7</li>
+                        <li>✅ Sinais VIP exclusivos</li>
+                        <li>✅ Grupo premium</li>
+                    </ul>
+                    <button class="btn-primary" id="proPlan">Assinar PRO</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>VIP</h3>
+                    <div class="price">
+                        <span class="currency">R$</span>
+                        <span class="amount">197</span>
+                        <span class="period">/mês</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>✅ Tudo do PRO</li>
+                        <li>✅ Consultoria 1:1</li>
+                        <li>✅ Estratégias personalizadas</li>
+                        <li>✅ Acesso antecipado</li>
+                        <li>✅ Mentoria exclusiva</li>
+                    </ul>
+                    <button class="btn-primary" id="premiumPlan">Assinar VIP</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title">O que nossos usuários dizem</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Com o ChamaGol consegui aumentar minha banca em 300% em apenas 3 meses. Os sinais são precisos e o suporte é excepcional!"</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-info">
+                            <div class="author-name">João Silva</div>
+                            <div class="author-title">Trader Esportivo</div>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Aplicativo incrível! As análises são detalhadas e os resultados falam por si só. Já recuperei o investimento na primeira semana."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-info">
+                            <div class="author-name">Maria Santos</div>
+                            <div class="author-title">Investidora</div>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Finalmente encontrei uma equipe séria no trading esportivo. Transparência total e resultados consistentes."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-info">
+                            <div class="author-name">Carlos Oliveira</div>
+                            <div class="author-title">Empresário</div>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Pronto para começar a lucrar?</h2>
+                <p>Baixe o app agora e comece a receber sinais vencedores hoje mesmo!</p>
+                <button class="btn-primary large" id="downloadBtnCTA">
+                    <span>📱</span>
+                    Baixar ChamaGol
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <span class="logo-icon">⚽</span>
+                        <span class="logo-text">ChamaGol</span>
+                    </div>
+                    <p>O melhor app de consultoria esportiva do Brasil. Trading profissional ao seu alcance.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contato</h4>
+                    <p>📧 contato@chamagol.com</p>
+                    <p>📱 (11) 9999-9999</p>
+                    <p>📍 São Paulo, SP</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <a href="#" class="footer-link">Termos de Uso</a>
+                    <a href="#" class="footer-link">Política de Privacidade</a>
+                    <a href="#" class="footer-link">Suporte</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChamaGol. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification">
+        <span class="notification-icon">✅</span>
+        <span class="notification-text">Download iniciado com sucesso!</span>
+    </div>
+
+    <script>
+        // Loading Animation
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 500);
+            }, 1500);
+        });
+
+        // Mobile Menu Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const navMenu = document.querySelector('.nav-menu');
+
+        menuToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+        });
+
+        // Smooth Scrolling
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Download Button Actions
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = notification.querySelector('.notification-text');
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Download Button Events
+        document.getElementById('downloadBtnNav').addEventListener('click', function() {
+            showNotification('Download iniciado com sucesso!');
+        });
+
+        document.getElementById('downloadBtnHero').addEventListener('click', function() {
+            showNotification('Download iniciado com sucesso!');
+        });
+
+        document.getElementById('downloadBtnCTA').addEventListener('click', function() {
+            showNotification('Download iniciado com sucesso!');
+        });
+
+        // Plan Selection Events
+        document.getElementById('freePlan').addEventListener('click', function() {
+            showNotification('Plano gratuito selecionado! Baixe o app para começar.');
+        });
+
+        document.getElementById('proPlan').addEventListener('click', function() {
+            showNotification('Plano PRO selecionado! Redirecionando para pagamento...');
+        });
+
+        document.getElementById('premiumPlan').addEventListener('click', function() {
+            showNotification('Plano Premium selecionado! Redirecionando para pagamento...');
+        });
+
+        // Scroll Animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .pricing-card, .testimonial-card').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Nav Link Clicks
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href').substring(1);
+                scrollToSection(target);
+                
+                // Close mobile menu if open
+                navMenu.classList.remove('active');
+                menuToggle.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
