@@ -15,7 +15,6 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import LottieView from 'lottie-react-native';
 import { useTheme } from '../../theme/theme';
 import { RootStackParamList } from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,8 +28,8 @@ const PaymentSuccessScreen = () => {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const translateY = useRef(new Animated.Value(50)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
-  const lottieRef = useRef<LottieView>(null);
-  
+  const checkmarkScale = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     // Executar animações de entrada
     Animated.parallel([
@@ -52,12 +51,15 @@ const PaymentSuccessScreen = () => {
       })
     ]).start();
 
-    // Iniciar animação Lottie
-    if (lottieRef.current) {
-      setTimeout(() => {
-        lottieRef.current?.play();
-      }, 200);
-    }
+    // Executar animação do checkmark
+    setTimeout(() => {
+      Animated.spring(checkmarkScale, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true
+      }).start();
+    }, 400);
   }, []);
   
   const handlePressIn = () => {
@@ -85,7 +87,7 @@ const PaymentSuccessScreen = () => {
   };
 
   const handleExploreFeatures = () => {
-    setSubscriptionPro
+    setSubscriptionPro();
     navigation.navigate("Timeline");
   };
 
@@ -106,9 +108,6 @@ const PaymentSuccessScreen = () => {
             style={styles.logo}
             resizeMode="contain"
           />
-          {/* <Text style={[styles.logoText, { color: colors.secondary, fontFamily: fonts.bold }]}>
-            CHAMAGOL
-          </Text> */}
         </View>
         
         {/* Conteúdo Principal */}
@@ -126,7 +125,7 @@ const PaymentSuccessScreen = () => {
             }
           ]}
         >
-          {/* Ícone de sucesso animado */}
+          {/* Ícone de sucesso animado (checkmark igual ao EmailConfirmationSuccess) */}
           <View style={styles.successIconWrapper}>
             <LinearGradient
               colors={[colors.secondary, colors.accent]}
@@ -134,18 +133,23 @@ const PaymentSuccessScreen = () => {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <View style={styles.successIconInner}>
-                <LottieView
-                  ref={lottieRef}
-                  source={require('../../assets/success-checkmark.json')}
-                  style={styles.lottieAnimation}
-                  autoPlay={false}
-                  loop={true}
-                />
-              </View>
+              <Animated.View 
+                style={[
+                  styles.successIconInner, 
+                  { transform: [{ scale: checkmarkScale }] }
+                ]}
+              >
+                <View style={[styles.checkmarkCircle, { backgroundColor: colors.success }]}>
+                  <MaterialCommunityIcons 
+                    name="check" 
+                    size={40} 
+                    color="#FFFFFF" 
+                  />
+                </View>
+              </Animated.View>
             </LinearGradient>
             
-            {/* Badge PRO */}
+            {/* Badge VIP */}
             <View style={styles.proBadgePosition}>
               <LinearGradient
                 colors={[colors.accent, colors.secondary]}
@@ -307,12 +311,11 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    padding: 3, // Borda gradiente
+    padding: 3,
     justifyContent: 'center',
     alignItems: 'center',
   },
   successIconInner: {
-    backgroundColor: '#FFF',
     width: '100%',
     height: '100%',
     borderRadius: 45,
@@ -320,9 +323,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
-  lottieAnimation: {
-    width: 130,
-    height: 130,
+  checkmarkCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#4CAF50", // ou colors.success
   },
   proBadgePosition: {
     position: 'absolute',
