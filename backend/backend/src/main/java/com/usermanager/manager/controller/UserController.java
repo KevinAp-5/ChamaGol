@@ -1,9 +1,7 @@
 package com.usermanager.manager.controller;
 
 import java.util.List;
-import java.util.Map;
 
-import org.checkerframework.checker.units.qual.s;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,10 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.dto.user.SubscriptionAlert;
-import com.usermanager.manager.dto.user.VipUserDTO;
 import com.usermanager.manager.dto.user.SubscriptionDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
+import com.usermanager.manager.dto.user.VipUserDTO;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;

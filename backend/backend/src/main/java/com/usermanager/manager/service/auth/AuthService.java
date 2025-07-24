@@ -262,4 +262,12 @@ public class AuthService implements UserDetailsService {
     public ZonedDateTime getExpirationDate(User user) {
         return subscriptionService.getExpirationDate(user);
     }
+
+    public void updateAllAlerts() {
+        subscriptionService.updateAllAlerts();
+    }
+
+    public void cleanExpiredSubscriptions() {
+        subscriptionService.cleanExpiredSubscriptions();
+    }
 }

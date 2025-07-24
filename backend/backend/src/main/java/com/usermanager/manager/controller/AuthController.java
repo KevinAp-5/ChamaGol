@@ -58,11 +58,24 @@ public class AuthController {
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
     private final AuthService authService;
+    // TODO: Remover esse serviço passar para authService
     private final NotificationService notificationService;
 
     public AuthController(AuthService authService, NotificationService notificationService) {
         this.authService = authService;
         this.notificationService = notificationService;
+    }
+
+    @GetMapping("teste/updateAllAlerts")
+    public ResponseEntity<ResponseMessage> testeUpdateAllAlerts() {
+        authService.updateAllAlerts();
+        return ResponseEntity.ok(new ResponseMessage("ok"));
+    }
+
+    @GetMapping("teste/cleanExpiredSubscriptions")
+    public ResponseEntity<ResponseMessage> testeCleanExpiredSubscriptions() {
+        authService.cleanExpiredSubscriptions();
+        return ResponseEntity.ok(new ResponseMessage("ok"));
     }
 
     @Operation(summary = "Enviar notificação de teste para todos os usuários")
@@ -75,19 +88,13 @@ public class AuthController {
 
     @Operation(summary = "Registrar novo usuário", description = "Cria um novo usuário e envia e-mail de confirmação.")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso"),
-        @ApiResponse(responseCode = "409", description = "Usuário já existe")
+            @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso"),
+            @ApiResponse(responseCode = "409", description = "Usuário já existe")
     })
     @PostMapping("register")
     @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(
-        @RequestBody(
-            description = "Dados para registro de usuário",
-            required = true,
-            content = @Content(schema = @Schema(implementation = CreateUserDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody @Valid CreateUserDTO dto
-    ) {
+            @RequestBody(description = "Dados para registro de usuário", required = true, content = @Content(schema = @Schema(implementation = CreateUserDTO.class))) @org.springframework.web.bind.annotation.RequestBody @Valid CreateUserDTO dto) {
         UserCreatedDTO response = authService.register(dto);
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/users")
                 .path("/{id}")
@@ -100,10 +107,8 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Conta confirmada (HTML)")
     @GetMapping("register/confirm")
     public String confirmUser(
-        @Parameter(description = "Token de confirmação enviado por e-mail", required = true)
-        @RequestParam("token") @NotBlank String token,
-        Model model
-    ) {
+            @Parameter(description = "Token de confirmação enviado por e-mail", required = true) @RequestParam("token") @NotBlank String token,
+            Model model) {
         boolean validated = authService.confirmVerificationToken(convertStringToUUID(token));
         model.addAttribute("confirmed", validated);
         return "account_confirmed";
@@ -111,23 +116,18 @@ public class AuthController {
 
     @Operation(summary = "Solicitar redefinição de senha", description = "Envia um e-mail para redefinição de senha.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "E-mail enviado com sucesso"),
-        @ApiResponse(responseCode = "409", description = "Usuário não habilitado")
+            @ApiResponse(responseCode = "200", description = "E-mail enviado com sucesso"),
+            @ApiResponse(responseCode = "409", description = "Usuário não habilitado")
     })
     @PostMapping("password/forget")
     @ResponseBody
     public ResponseEntity<ResponseMessage> sendPasswordResetCode(
-        @RequestBody(
-            description = "E-mail do usuário",
-            required = true,
-            content = @Content(schema = @Schema(implementation = UserEmailDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody @Valid UserEmailDTO data
-    ) {
+            @RequestBody(description = "E-mail do usuário", required = true, content = @Content(schema = @Schema(implementation = UserEmailDTO.class))) @org.springframework.web.bind.annotation.RequestBody @Valid UserEmailDTO data) {
         boolean response = authService.sendPasswordResetCode(data);
         if (!response)
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ResponseMessage("Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
+                    .body(new ResponseMessage(
+                            "Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
 
         return ResponseEntity.ok(new ResponseMessage("Link para redefinição de senha enviado para seu e-mail."));
     }
@@ -137,13 +137,7 @@ public class AuthController {
     @PostMapping("password/reset")
     @ResponseBody
     public ResponseEntity<ResponseMessage> confirmPasswordReset(
-        @RequestBody(
-            description = "Dados para redefinição de senha",
-            required = true,
-            content = @Content(schema = @Schema(implementation = PasswordResetWithEmailDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody @Valid PasswordResetWithEmailDTO data
-    ) {
+            @RequestBody(description = "Dados para redefinição de senha", required = true, content = @Content(schema = @Schema(implementation = PasswordResetWithEmailDTO.class))) @org.springframework.web.bind.annotation.RequestBody @Valid PasswordResetWithEmailDTO data) {
         authService.passwordReset(data);
         return ResponseEntity.ok().body(new ResponseMessage("Senha alterada com sucesso."));
     }
@@ -152,10 +146,8 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "E-mail confirmado (HTML)")
     @GetMapping("/password/reset/confirmEmail")
     public String confirmEmailreset(
-        @Parameter(description = "Token de confirmação enviado por e-mail", required = true)
-        @RequestParam("token") String uuid,
-        Model model
-    ) {
+            @Parameter(description = "Token de confirmação enviado por e-mail", required = true) @RequestParam("token") String uuid,
+            Model model) {
         boolean confirmed = authService.confirmEmail(convertStringToUUID(uuid));
         model.addAttribute("confirmed", confirmed);
         return "index";
@@ -163,22 +155,15 @@ public class AuthController {
 
     @Operation(summary = "Login do usuário", description = "Autentica o usuário e retorna tokens de acesso.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Login realizado com sucesso"),
-        @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+            @ApiResponse(responseCode = "200", description = "Login realizado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
     })
     @PostMapping("login")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> login(
-        @RequestBody(
-            description = "Dados de autenticação",
-            required = true,
-            content = @Content(schema = @Schema(implementation = AuthenticationDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody @Valid AuthenticationDTO data,
-        HttpServletResponse response,
-        @Parameter(description = "Tipo de cliente (MOBILE ou WEB)", example = "MOBILE")
-        @RequestParam(defaultValue = "MOBILE") ClientType clientType
-    ) {
+            @RequestBody(description = "Dados de autenticação", required = true, content = @Content(schema = @Schema(implementation = AuthenticationDTO.class))) @org.springframework.web.bind.annotation.RequestBody @Valid AuthenticationDTO data,
+            HttpServletResponse response,
+            @Parameter(description = "Tipo de cliente (MOBILE ou WEB)", example = "MOBILE") @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
         TokensDTO tokens = authService.login(data);
         if (clientType == ClientType.WEB) {
             response.addCookie(createCookie("refreshToken", tokens.refreshToken()));
@@ -192,24 +177,16 @@ public class AuthController {
 
     @Operation(summary = "Renovar token de acesso", description = "Gera um novo token de acesso a partir do refresh token.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Token renovado com sucesso"),
-        @ApiResponse(responseCode = "401", description = "Refresh token ausente ou inválido")
+            @ApiResponse(responseCode = "200", description = "Token renovado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Refresh token ausente ou inválido")
     })
     @PostMapping("token/refresh")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> refreshToken(
-        @Parameter(description = "Refresh token do cookie", required = false)
-        @CookieValue(name = "refreshToken", defaultValue = "") String cookieToken,
-        HttpServletResponse response,
-        @RequestBody(
-            description = "Refresh token no corpo da requisição (opcional para MOBILE)",
-            required = false,
-            content = @Content(schema = @Schema(implementation = RefreshTokenRequest.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
-        @Parameter(description = "Tipo de cliente (MOBILE ou WEB)", example = "MOBILE")
-        @RequestParam(defaultValue = "MOBILE") ClientType clientType
-    ) {
+            @Parameter(description = "Refresh token do cookie", required = false) @CookieValue(name = "refreshToken", defaultValue = "") String cookieToken,
+            HttpServletResponse response,
+            @RequestBody(description = "Refresh token no corpo da requisição (opcional para MOBILE)", required = false, content = @Content(schema = @Schema(implementation = RefreshTokenRequest.class))) @org.springframework.web.bind.annotation.RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
+            @Parameter(description = "Tipo de cliente (MOBILE ou WEB)", example = "MOBILE") @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
 
         String refreshToken = cookieToken;
 
@@ -241,42 +218,31 @@ public class AuthController {
 
     @Operation(summary = "Enviar código de ativação", description = "Envia um código de ativação para o e-mail do usuário.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Código enviado com sucesso"),
-        @ApiResponse(responseCode = "409", description = "Usuário já ativo")
+            @ApiResponse(responseCode = "200", description = "Código enviado com sucesso"),
+            @ApiResponse(responseCode = "409", description = "Usuário já ativo")
     })
     @PostMapping("activate")
     @ResponseBody
     public ResponseEntity<ResponseMessage> activateUser(
-        @RequestBody(
-            description = "Dados para ativação de usuário",
-            required = true,
-            content = @Content(schema = @Schema(implementation = ActivateUserDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody @Valid ActivateUserDTO data
-    ) {
+            @RequestBody(description = "Dados para ativação de usuário", required = true, content = @Content(schema = @Schema(implementation = ActivateUserDTO.class))) @org.springframework.web.bind.annotation.RequestBody @Valid ActivateUserDTO data) {
         boolean activationSent = authService.sendActivationCode(data.email());
         if (!activationSent)
             return ResponseEntity.status(409)
                     .body(new ResponseMessage("Usuário já está ativo com o e-mail: " + data.email()));
 
-        return ResponseEntity.ok(new ResponseMessage("Link de ativação enviado para " + data.email() + " com sucesso."));
+        return ResponseEntity
+                .ok(new ResponseMessage("Link de ativação enviado para " + data.email() + " com sucesso."));
     }
 
     @Operation(summary = "Verificar se e-mail está confirmado", description = "Verifica se o e-mail do usuário foi confirmado.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "E-mail ativado"),
-        @ApiResponse(responseCode = "400", description = "E-mail não ativado")
+            @ApiResponse(responseCode = "200", description = "E-mail ativado"),
+            @ApiResponse(responseCode = "400", description = "E-mail não ativado")
     })
     @PostMapping("email/confirmed")
     @ResponseBody
     public ResponseEntity<ResponseMessage> isEmailConfirmed(
-        @RequestBody(
-            description = "E-mail do usuário",
-            required = true,
-            content = @Content(schema = @Schema(implementation = UserEmailDTO.class))
-        )
-        @org.springframework.web.bind.annotation.RequestBody UserEmailDTO data
-    ) {
+            @RequestBody(description = "E-mail do usuário", required = true, content = @Content(schema = @Schema(implementation = UserEmailDTO.class))) @org.springframework.web.bind.annotation.RequestBody UserEmailDTO data) {
         var user = authService.findUserByLogin(data.email());
         var verificationToken = authService.findVerificationByUser(user);
         boolean validated = verificationToken.isActivated();
@@ -291,8 +257,7 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Token válido")
     @GetMapping("token/validate")
     public ResponseEntity<String> validateToken(
-        @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
-    ) {
+            @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) {
         return ResponseEntity.ok("válido");
     }
 
@@ -301,8 +266,7 @@ public class AuthController {
     @GetMapping("me")
     @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(
-        @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
-    ) {
+            @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) {
         ZonedDateTime expirationDate = authService.getExpirationDate(user);
         return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(),
                 user.getSubscription().getValue(), expirationDate));
@@ -313,8 +277,7 @@ public class AuthController {
     @GetMapping("user/info")
     @ResponseBody
     public ResponseEntity<UserLoginInfo> getUserLoginInfo(
-        @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
-    ) {
+            @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) {
         String username = capitalize(user.getName().split(" ")[0]);
         return ResponseEntity.ok(
                 new UserLoginInfo(username, user.getLastLogin()));

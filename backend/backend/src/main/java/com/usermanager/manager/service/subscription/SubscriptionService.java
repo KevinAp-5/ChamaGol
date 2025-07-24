@@ -19,4 +19,8 @@ public interface SubscriptionService {
     public ZonedDateTime getExpirationDate(@NotNull User user);
 
     public Boolean verifyUserAlert(@NotNull User user);
+
+    public void updateAllAlerts();
+    
+    public void cleanExpiredSubscriptions();
 }

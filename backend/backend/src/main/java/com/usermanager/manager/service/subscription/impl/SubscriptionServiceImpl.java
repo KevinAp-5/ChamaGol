@@ -64,6 +64,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime threeDaysAhead = now.plusDays(3);
         List<SubscriptionControl> expiringSoon = subscriptionRepository.findBySubscriptionEnding(now, threeDaysAhead);
+        System.out.println("expiringSoon:");
+        expiringSoon.forEach(System.out::println);
         expiringSoon.forEach(s -> s.setExpirationAlert(true));
         subscriptionRepository.saveAll(expiringSoon);
     }
@@ -74,6 +76,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         List<User> users = expiredSubcriptions.stream()
         .map(s -> s.getUserId())
         .toList();
+        System.out.println("users:");
+        users.forEach(System.out::println);
 
         updateUsersSubscription(users);
         subscriptionRepository.deleteAll(expiredSubcriptions);
