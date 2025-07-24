@@ -19,7 +19,7 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionContro
     Optional<SubscriptionControl> findByUserId(User user);
 
     @Query("SELECT s from SubscriptionControl s WHERE s.expirationDate BETWEEN :now AND :threeDaysAhead")
-    List<SubscriptionControl> findBySubscriptionEnding(@Param("now") ZonedDateTime now, @Param("ThreeDaysAhead") ZonedDateTime threeDaysAhead);
+    List<SubscriptionControl> findBySubscriptionEnding(@Param("now") ZonedDateTime now, @Param("threeDaysAhead") ZonedDateTime threeDaysAhead);
 
     @Query("SELECT s from SubscriptionControl s WHERE s.expirationDate < :today")
     List<SubscriptionControl> findExpiredSubscription(@Param("today") ZonedDateTime today);
