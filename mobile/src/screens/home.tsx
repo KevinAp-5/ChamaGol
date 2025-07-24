@@ -37,26 +37,37 @@ export default function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastLogin, setLastLogin] = useState<string | null>(null);
   const [subscriptionAlert, setSubscriptionAlert] = useState(false);
-  // Mudança: usar boolean para flags
-  // const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
   const [subscriptionAlertLoaded, setSubscriptionAlertLoaded] = useState(false);
   const [termLoaded, setTermLoaded] = useState(false);
+
+  // Recupera subscription do AsyncStorage assim que entra na tela
+  useEffect(() => {
+    const loadInitialSubscription = async () => {
+      try {
+        const storedSubscription = await AsyncStorage.getItem("subscription");
+        if (storedSubscription) {
+          setSubscription(storedSubscription as SubscriptionType);
+        }
+      } catch (error) {
+        console.log("Erro ao recuperar subscription do AsyncStorage", error);
+      }
+    };
+    loadInitialSubscription();
+  }, []);
 
   useEffect(() => {
     const setFlagsAndFetch = async () => {
       try {
-        // Verifica se já mostrou o alerta nesta sessão
         const subscriptionAlertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
         const subscriptionAlertLoaded = subscriptionAlertFlag === "1";
         const termFlag = await AsyncStorage.getItem("termFlag");
         const termLoaded = termFlag === "1";
         setTermLoaded(termLoaded);
 
-        // Executa fetchSubscriptionAlert apenas se não mostrou o alerta nesta sessão
         if (!subscriptionAlertLoaded) {
           await fetchSubscriptionAlert();
         }
-        // Sempre executa fetchSubscription
+        // Atualiza subscription via API
         await fetchSubscription();
 
         if (!termLoaded) {
