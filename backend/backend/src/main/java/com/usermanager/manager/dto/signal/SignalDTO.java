@@ -1,5 +1,7 @@
 package com.usermanager.manager.dto.signal;
 
+import java.time.ZonedDateTime;
+
 import com.usermanager.manager.enums.TipoEvento;
 
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +15,7 @@ public record SignalDTO(
     @NotBlank String tempoPartida, 
     @NotBlank String placar, 
     @NotBlank String acaoSinal,
+    @NotBlank ZonedDateTime createdAt,
     @NotNull TipoEvento tipoEvento) {
 
 }

@@ -70,5 +70,4 @@ public class SignalController {
         return ResponseEntity.ok(signalsService.getSignal());
     }
 
-    // TODO; criar endpoint para pegar os ultimos 10 sinais
 }
