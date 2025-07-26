@@ -45,7 +45,19 @@ export default function RegisterScreen({ navigation }: Props) {
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const buttonScale = useState(new Animated.Value(1))[0];
-  
+ 
+  useEffect(() => {
+      showCustomAlert(
+        "Você confirma que tem mais de 18 anos?", {
+          title: "Confirmação de idade",
+          confirmText: "Sim",
+          cancelText: "Não",
+          showCancel: true,
+          onConfirm: () => {},
+          onCancel: () => {navigation.navigate("Login")}
+        }
+      )
+  }, []); 
   useEffect(() => {
     // Run entrance animations
     Animated.parallel([
