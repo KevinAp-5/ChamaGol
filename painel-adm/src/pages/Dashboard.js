@@ -27,7 +27,7 @@ export default function Dashboard() {
       } catch {}
       
       try {
-        const proUsersRes = await api.get("/api/users/pro");
+        const proUsersRes = await api.get("/api/users/vip");
         proUsers = Array.isArray(proUsersRes.data) ? proUsersRes.data.length : 0;
       } catch {}
       
