@@ -43,6 +43,7 @@ public class SecurityConfigurations {
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/page/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/teste/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
