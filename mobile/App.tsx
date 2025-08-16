@@ -14,7 +14,7 @@ import SplashScreen from "./src/screens/splash";
 import ProSubscriptionScreen from "./src/screens/subscription";
 import TimelineScreen from "./src/screens/timeline";
 import EmailVerificationScreen from "./src/screens/EmailVerification";
-import EmailConfirmationSuccessScreen from "./src/screens/EmailConfirmationSuccess";
+import EmailConfirmationSuccessScreen from './src/screens/EmailConfirmationSuccess';
 import PaymentSuccessScreen from "./src/screens/payment/success";
 import PaymentFailureScreen from "./src/screens/payment/failure";
 import PaymentPendingScreen from "./src/screens/payment/pending";
@@ -35,6 +35,7 @@ export type RootStackParamList = {
   PaymentSuccess: undefined;
   PaymentFailure: undefined;
   PaymentPending: undefined;
+  EmailConfirmationSuccessScreen: undefined;
 };
 
 const Stack = createStackNavigator();
@@ -69,7 +70,7 @@ export default function App() {
       <NavigationContainer linking={linking}>
         <DeepLinkListener />
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="Splash"
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
