@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 
 // TODO: testar pagamento pendente -> pix no browser do google
 
-// TODO: criar alert para o frontend do app quando tiver alert disponível
 public interface SubscriptionService {
 
     public SubscriptionControl createSubscriptionControl(@NotNull User user);
@@ -21,6 +20,6 @@ public interface SubscriptionService {
     public Boolean verifyUserAlert(@NotNull User user);
 
     public void updateAllAlerts();
-    
+
     public void cleanExpiredSubscriptions();
 }
