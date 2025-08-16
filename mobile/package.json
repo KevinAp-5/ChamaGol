@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
+    "@lottiefiles/dotlottie-react": "^0.6.5",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-navigation/native": "^7.1.6",
@@ -27,6 +28,7 @@
     "expo-image": "~2.3.2",
     "expo-linear-gradient": "^14.1.4",
     "expo-linking": "~7.1.7",
+    "expo-modules-core": "~2.4.2",
     "expo-notifications": "~0.31.4",
     "expo-secure-store": "~14.2.3",
     "expo-splash-screen": "~0.30.10",
@@ -48,8 +50,7 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "rettiwt-api": "^4.2.0",
-    "sockjs-client": "^1.6.1",
-    "expo-modules-core": "~2.4.2"
+    "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
