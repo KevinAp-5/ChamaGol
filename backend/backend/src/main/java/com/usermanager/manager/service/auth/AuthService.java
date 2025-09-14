@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.cloud.storage.NotificationInfo;
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
 import com.usermanager.manager.dto.authentication.CreateUserDTO;
 import com.usermanager.manager.dto.authentication.PasswordResetDTO;
@@ -28,6 +29,7 @@ import com.usermanager.manager.exception.authentication.PasswordFormatNotValidEx
 import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.infra.mail.MailService;
+import com.usermanager.manager.infra.service.NotificationService;
 import com.usermanager.manager.model.security.RefreshToken;
 import com.usermanager.manager.model.security.TokenProvider;
 import com.usermanager.manager.model.user.User;
@@ -54,11 +56,14 @@ public class AuthService implements UserDetailsService {
     private final MailService mailService;
     private final RefreshTokenService refreshTokenService;
     private final SubscriptionService subscriptionService;
+    private final NotificationService notificationService;
     private AuthenticationManager authenticationManager;
 
     public AuthService(UserService userService, @Lazy AuthenticationManager authenticationManager,
             TokenProvider tokenProvider, PasswordEncoder passwordEncoder,
-            VerificationTokenService verificationService, MailService mailService, RefreshTokenService refreshTokenService, SubscriptionService subscriptionService) {
+            VerificationTokenService verificationService, MailService mailService,
+            RefreshTokenService refreshTokenService, SubscriptionService subscriptionService,
+            NotificationService notificationService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
@@ -67,6 +72,7 @@ public class AuthService implements UserDetailsService {
         this.mailService = mailService;
         this.refreshTokenService = refreshTokenService;
         this.subscriptionService = subscriptionService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -76,41 +82,42 @@ public class AuthService implements UserDetailsService {
 
     }
 
-        @Transactional
-        public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
-            log.info("register attempt: {}", dto.login());
+    @Transactional
+    public UserCreatedDTO register(@NotNull @Valid CreateUserDTO dto) {
+        log.info("register attempt: {}", dto.login());
 
-            // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já é uma conta
-            Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
-            if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() != null) {
-                throw new UserExistsException(dto.login());
-            }
-
-            if (dto.password().length() < 6) {
-                throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
-            }
-
-            User user;
-            if (userOptional.isPresent()) {
-                user = userOptional.get();
-                user.setName(dto.name());
-                user.setPassword(passwordEncoder.encode(dto.password()));
-                user.setUpdatedAt(ZonedDateTime.now());
-                user = userService.save(user); // use save para update
-            } else {
-                String encryptedPassword = passwordEncoder.encode(dto.password());
-                log.info("tentando registro para {}", dto.login());
-                user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
-            }
-
-            VerificationToken verificationToken = verificationService.generateVerificationToken(user,
-                    TokenType.EMAIL_VALIDATION);
-
-            mailService.sendVerificationMail(user.getLogin(), verificationToken.getUuid().toString());
-
-            log.info("register successfull {}", dto.login());
-            return new UserCreatedDTO(user);
+        // Caso o usuário já esteja habilitado e tenha feito login, vai informar que já
+        // é uma conta
+        Optional<User> userOptional = userService.findUserEntityByLoginOptional(dto.login());
+        if (userOptional.isPresent() && (userOptional.get().isEnabled()) && userOptional.get().getLastLogin() != null) {
+            throw new UserExistsException(dto.login());
         }
+
+        if (dto.password().length() < 6) {
+            throw new PasswordFormatNotValidException("A senha deve conter no mínimo 6 caractéres.");
+        }
+
+        User user;
+        if (userOptional.isPresent()) {
+            user = userOptional.get();
+            user.setName(dto.name());
+            user.setPassword(passwordEncoder.encode(dto.password()));
+            user.setUpdatedAt(ZonedDateTime.now());
+            user = userService.save(user); // use save para update
+        } else {
+            String encryptedPassword = passwordEncoder.encode(dto.password());
+            log.info("tentando registro para {}", dto.login());
+            user = userService.save(new User(dto.name(), dto.login(), encryptedPassword));
+        }
+
+        VerificationToken verificationToken = verificationService.generateVerificationToken(user,
+                TokenType.EMAIL_VALIDATION);
+
+        mailService.sendVerificationMail(user.getLogin(), verificationToken.getUuid().toString());
+
+        log.info("register successfull {}", dto.login());
+        return new UserCreatedDTO(user);
+    }
 
     @Transactional
     public TokensDTO login(@Valid AuthenticationDTO data) {
@@ -134,7 +141,7 @@ public class AuthService implements UserDetailsService {
 
         Authentication auth = authenticationManager.authenticate(usernamePassword);
         log.info("user {} sucessfully authenticated", data.login());
-        String acessToken =  tokenProvider.generateToken((User) auth.getPrincipal());
+        String acessToken = tokenProvider.generateToken((User) auth.getPrincipal());
         String refreshToken = refreshTokenService.createRefreshToken(user);
         log.info("user {} sucessfully generated refresh token", data.login());
         return new TokensDTO(acessToken, refreshToken);
@@ -152,7 +159,6 @@ public class AuthService implements UserDetailsService {
         log.info("user {} sucessfully generated refresh token", refreshToken.getUser().getLogin());
         return new TokensDTO(accessToken, newRefreshToken);
     }
-
 
     @Transactional
     public boolean sendActivationCode(@Email @NotBlank String email) {
@@ -269,5 +275,9 @@ public class AuthService implements UserDetailsService {
 
     public void cleanExpiredSubscriptions() {
         subscriptionService.cleanExpiredSubscriptions();
+    }
+
+    public NotificationService getNotificationService() {
+        return this.notificationService;
     }
 }

@@ -1,14 +1,5 @@
 package com.usermanager.manager.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -20,7 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-// import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -40,10 +30,17 @@ import com.usermanager.manager.dto.user.ProfileDTO;
 import com.usermanager.manager.dto.user.UserLoginInfo;
 import com.usermanager.manager.enums.ClientType;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
-import com.usermanager.manager.infra.service.NotificationService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.auth.AuthService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -58,12 +55,9 @@ public class AuthController {
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
     private final AuthService authService;
-    // TODO: Remover esse serviço passar para authService
-    private final NotificationService notificationService;
 
-    public AuthController(AuthService authService, NotificationService notificationService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.notificationService = notificationService;
     }
 
     @GetMapping("teste/updateAllAlerts")
@@ -82,7 +76,7 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Notificação enviada")
     @PostMapping("notification")
     public ResponseEntity<ResponseMessage> sendNotification() {
-        notificationService.sendNotificationToAllUsers("Teste", "Olá");
+        authService.getNotificationService().sendNotificationToAllUsers("Teste", "Olá");
         return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
     }
 
