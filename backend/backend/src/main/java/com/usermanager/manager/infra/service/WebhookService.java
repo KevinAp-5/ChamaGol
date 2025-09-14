@@ -23,6 +23,7 @@ import com.mercadopago.resources.merchantorder.MerchantOrder;
 import com.mercadopago.resources.payment.Payment;
 import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.exception.webhook.WebhookProcessingException;
+import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
@@ -45,17 +46,19 @@ public class WebhookService {
     private final MerchantOrderClient merchantOrderClient;
     private final ObjectMapper objectMapper;
     private final SubscriptionService subscriptionService;
+    private final MailService mailService;
 
     @Value("${mercadopago.webhook.secret:}")
     private String webhookSecret;
 
-    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, SubscriptionService subscriptionService) {
+    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, SubscriptionService subscriptionService, MailService mailService) {
         this.webhookRepository = webhookRepository;
         this.userService = userService;
         this.paymentClient = new PaymentClient();
         this.merchantOrderClient = new MerchantOrderClient();
         this.objectMapper = new ObjectMapper();
         this.subscriptionService = subscriptionService;
+        this.mailService = mailService;
     }
 
     @Scheduled(fixedRate = 30000)
@@ -102,6 +105,7 @@ public class WebhookService {
         User user = findUser(userId);
 
         updateUserSubscription(user, payment.getStatus());
+        mailService.sendMail(user.getLogin(), "Assinatura aprovada", "você se tornou usuário VIP!");
     }
 
     private Map<String, Object> parsePayload(WebhookEvent event) throws WebhookProcessingException {
