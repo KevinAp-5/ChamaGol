@@ -44,6 +44,7 @@ import com.usermanager.manager.exception.authentication.TokenNotFoundException;
 import com.usermanager.manager.exception.user.UserExistsException;
 import com.usermanager.manager.exception.user.UserNotEnabledException;
 import com.usermanager.manager.infra.mail.MailService;
+import com.usermanager.manager.infra.service.NotificationService;
 import com.usermanager.manager.model.security.RefreshToken;
 import com.usermanager.manager.model.security.TokenProvider;
 import com.usermanager.manager.model.user.User;
@@ -64,6 +65,7 @@ class AuthServiceTest {
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private SubscriptionService subscriptionService;
     @Mock private AuthenticationManager authenticationManager;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private AuthService authService;
@@ -86,6 +88,12 @@ class AuthServiceTest {
     }
 
     // ----------- register -----------
+
+    @Test
+    void getNotificationService_ReturnsInjectedNotificationService() {
+        assertEquals(notificationService, authService.getNotificationService());
+    }
+
     @Test
     void register_NewUser_Success() {
         CreateUserDTO dto = new CreateUserDTO("Test User", testEmail, testPassword);
