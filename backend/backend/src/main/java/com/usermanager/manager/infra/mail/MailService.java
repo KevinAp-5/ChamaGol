@@ -122,4 +122,8 @@ public class MailService {
             throw new RuntimeException("Erro ao carregar template de email: " + templateName, e);
         }
     }
+
+    public void sendMail(String recipient, String subject, String body) {
+        mailProvider.sendEmail(recipient, subject, body);
+    }
 }
