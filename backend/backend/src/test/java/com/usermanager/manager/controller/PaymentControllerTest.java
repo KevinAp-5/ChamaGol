@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
@@ -138,14 +139,14 @@ class PaymentControllerTest {
         com.usermanager.manager.model.user.User user = new com.usermanager.manager.model.user.User();
         user.setId(123L);
         Preference preference = mock(Preference.class);
-        when(preference.getId()).thenReturn("pref-123");
+        when(preference.getInitPoint()).thenReturn("pref-123");
         when(preferenceClient.create(any())).thenReturn(preference);
 
         // Act
         ResponseEntity<String> response = paymentController.createPayment(user);
 
         // Assert
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
         assertEquals("pref-123", response.getBody());
     }
 
