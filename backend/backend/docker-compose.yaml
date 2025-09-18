@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     image: chamagol
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/chamagol
