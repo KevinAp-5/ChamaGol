@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,14 +32,14 @@ public class Sale {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, precision = 2, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal salePrice;
 
     @Column(nullable = false)
     // UserAmout = 0 para ofertas que contem tempo de expiração
     private Integer userAmount = 0;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private ZonedDateTime saleExpiration;
 
     @Column(nullable = false)
@@ -47,4 +48,11 @@ public class Sale {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+
+    @PrePersist
+    public void prePersist() {
+        if (userAmount == 0 && saleExpiration == null) {
+            throw new IllegalArgumentException("Para ofertas ilimitadas de usuário, é necessário ter uma data de expiração.");
+        }
+    }
 }
