@@ -20,7 +20,7 @@ export default function ProUsers() {
   async function fetchProUsers() {
     setLoading(true);
     try {
-      const res = await api.get("/api/users/pro");
+      const res = await api.get("/api/users/vip");
       setUsers(res.data || []);
     } catch (error) {
       console.error("Erro ao buscar usuários VIP:", error);
