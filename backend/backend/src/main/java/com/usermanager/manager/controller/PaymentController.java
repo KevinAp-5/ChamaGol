@@ -1,10 +1,5 @@
 package com.usermanager.manager.controller;
 
-import io.swagger.v3.oas.annotations.*;
-import io.swagger.v3.oas.annotations.media.*;
-import io.swagger.v3.oas.annotations.responses.*;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -44,6 +39,13 @@ import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.service.user.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Tag(name = "Pagamentos", description = "Endpoints de pagamentos, webhooks e callbacks MercadoPago")
@@ -188,7 +190,7 @@ public class PaymentController {
         }
 
         log.info("Initiating payment creation");
-        PreferenceClient client = this.preferenceClient;
+               PreferenceClient client = this.preferenceClient;
 
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(PreferenceItemRequest.builder()
@@ -203,7 +205,6 @@ public class PaymentController {
         log.debug("Payment items configured: {}", items);
 
         List<PreferencePaymentTypeRequest> excludedPaymentTypes = new ArrayList<>();
-        excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("ticket").build());
         excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("atm").build());
 
         PreferencePaymentMethodsRequest paymentMethods = PreferencePaymentMethodsRequest.builder()
@@ -216,10 +217,10 @@ public class PaymentController {
                 .items(items)
                 .paymentMethods(paymentMethods)
                 .statementDescriptor("Chamagol")
-                .payer(PreferencePayerRequest.builder()
-                        .email(user.getLogin())
-                        .name(user.getName())
-                        .build())
+                // .payer(PreferencePayerRequest.builder()
+                //         .email(user.getLogin())
+                //         .name(user.getName())
+                //         .build())
                 .externalReference(String.valueOf(user.getId()))
                 .backUrls(PreferenceBackUrlsRequest.builder()
                         .success("chamagol://payment/success")
@@ -234,7 +235,7 @@ public class PaymentController {
         try {
             Preference preference = client.create(request);
             log.info("Payment preference created successfully. ID: {}", preference.getId());
-            return ResponseEntity.ok(preference.getId());
+            return ResponseEntity.ok(preference.getInitPoint());
         } catch (MPApiException apiEx) {
             log.error("MercadoPago API error: {}", apiEx.getApiResponse().getContent(), apiEx);
             return ResponseEntity.status(500).body("Erro no gateway de pagamento");
