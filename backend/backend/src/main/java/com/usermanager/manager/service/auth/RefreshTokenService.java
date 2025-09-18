@@ -1,6 +1,5 @@
 package com.usermanager.manager.service.auth;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,6 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.repository.RefreshTokenRepository;
 
 import lombok.extern.slf4j.Slf4j;
-// TODO: migrar para interface para diminuir acoplamento
 
 @Service
 @Slf4j
@@ -31,14 +29,16 @@ public class RefreshTokenService {
         this.tokenProvider = tokenProvider;
     }
 
-
     @Scheduled(cron = "@midnight")
     public void deleteAllActivatedAndExpired() {
-        Instant date = Instant.now().minusSeconds(7 * 24 * 60 * 60);
-        refreshTokenRepository.deleteAllUsedAndExpired(date);
+        var sevenDays = LocalDateTime.now().minusDays(7);
+        int deletedCount = refreshTokenRepository.deleteAllUsedAndExpired(sevenDays);
+
+        log.info("deleted counter: {}", deletedCount);
         log.info("RefreshTokenService cron job delete all used and Expired.");
 
     }
+
     @Transactional
     public String createRefreshToken(User user) {
         // refreshTokenRepository.deleteByUser(user);
