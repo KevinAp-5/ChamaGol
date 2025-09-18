@@ -25,6 +25,7 @@ import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.resources.merchantorder.MerchantOrder;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.payment.PaymentOrder;
+import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
@@ -46,13 +47,16 @@ class WebhookServiceTest {
     @Mock
     private SubscriptionService subscriptionService;
 
+    @Mock
+    private MailService MailService;
+
     @InjectMocks
     private WebhookService webhookService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        webhookService = new WebhookService(webhookRepository, userService, subscriptionService);
+        webhookService = new WebhookService(webhookRepository, userService, subscriptionService, MailService);
         // Injeta o mock do PaymentClient na instância real
         ReflectionTestUtils.setField(webhookService, "paymentClient", paymentClient);
     }
