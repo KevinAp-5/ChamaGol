@@ -105,7 +105,8 @@ public class WebhookService {
         User user = findUser(userId);
 
         updateUserSubscription(user, payment.getStatus());
-        mailService.sendMail(user.getLogin(), "Assinatura aprovada", "você se tornou usuário VIP!");
+        if (STATUS_APPROVED.equalsIgnoreCase(payment.getStatus()))
+            mailService.sendMail(user.getLogin(), "Assinatura aprovada", "você se tornou usuário VIP!");
     }
 
     private Map<String, Object> parsePayload(WebhookEvent event) throws WebhookProcessingException {
