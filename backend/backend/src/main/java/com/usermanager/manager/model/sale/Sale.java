@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Sale {
 
     @Id
@@ -37,16 +39,29 @@ public class Sale {
 
     @Column(nullable = false)
     // UserAmout = 0 para ofertas que contem tempo de expiração
+    @Builder.Default
     private Integer userAmount = 0;
-
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer usedAmount = 0;
+    
     @Column(nullable = true)
     private ZonedDateTime saleExpiration;
 
     @Column(nullable = false)
+    private ZonedDateTime creationDate;
+
+    @Column(nullable = true)
+    private ZonedDateTime finishedDate;
+
+    @Column(nullable = false)
+    @Builder.Default
     private Integer userSubscriptionTime = 30;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Status status = Status.ACTIVE;
 
     @PrePersist
