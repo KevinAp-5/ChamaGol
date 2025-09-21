@@ -12,6 +12,7 @@ import com.usermanager.manager.exception.authentication.PasswordFormatNotValidEx
 import com.usermanager.manager.exception.authentication.TokenInvalid;
 import com.usermanager.manager.exception.authentication.TokenInvalidException;
 import com.usermanager.manager.exception.authentication.TokenNotFoundException;
+import com.usermanager.manager.exception.sale.ActiveSaleException;
 import com.usermanager.manager.exception.term.TermExistsException;
 import com.usermanager.manager.exception.term.TermNotFoundException;
 import com.usermanager.manager.exception.user.UserExistsException;
@@ -83,5 +84,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TermNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleTermNotFoundException(TermNotFoundException ex) {
         return ResponseEntity.status(404).body(new ResponseMessage("Nenhum termo encontrado: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(ActiveSaleException.class)
+    public ResponseEntity<ResponseMessage> handleActiveSaleException(ActiveSaleException ex) {
+        return ResponseEntity.status(409).body(new ResponseMessage("Não é possível criar uma oferta nova. Desative a oferta ativa antes."));
     }
 }
