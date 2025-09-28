@@ -70,4 +70,9 @@ public class Sale {
             throw new IllegalArgumentException("Para ofertas ilimitadas de usuário, é necessário ter uma data de expiração.");
         }
     }
+
+    public Sale deactivate() {
+        this.status = Status.INACTIVE;
+        return this;
+    }
 }
