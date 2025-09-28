@@ -51,5 +51,15 @@ public class SaleController {
         return new ResponseEntity<Void>(HttpStatusCode.valueOf(200));
     }
 
+    @GetMapping("all")
+    public ResponseEntity<List<Sale>> getAllSales() {
+        List<Sale> sales = saleService.getAllSales().reversed();
+        return ResponseEntity.ok(sales);
+    }
 
+    @GetMapping
+    public ResponseEntity<Sale> getActiveSale() {
+        Sale activeSale = saleService.getActiveSale();
+        return ResponseEntity.ok(activeSale);
+    }
 }
