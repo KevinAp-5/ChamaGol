@@ -7,5 +7,6 @@ public interface SaleService {
 
     Sale createSale(CreateSale sale);
 
+    void deactivateSale();
 
 }
