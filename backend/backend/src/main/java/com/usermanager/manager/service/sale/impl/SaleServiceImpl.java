@@ -2,6 +2,8 @@ package com.usermanager.manager.service.sale.impl;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +12,7 @@ import com.usermanager.manager.dto.sale.CreateSale;
 import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.sale.ActiveSaleException;
 import com.usermanager.manager.model.sale.Sale;
+import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.repository.SaleRepository;
 import com.usermanager.manager.service.sale.SaleService;
 
@@ -29,7 +32,9 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     public Sale createSale(CreateSale sale) {
 
-        saleRepository.findFirstByStatus(Status.ACTIVE).ifPresent(value -> {throw new ActiveSaleException("");});
+        saleRepository.findFirstByStatus(Status.ACTIVE).ifPresent(value -> {
+            throw new ActiveSaleException("");
+        });
 
         Sale newSale = Sale.builder()
                 .name(sale.name())
@@ -49,7 +54,24 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     public void deactivateSale() {
         saleRepository.findFirstByStatus(Status.ACTIVE)
-        .ifPresent(sale -> saleRepository.save(sale.deactivate()));
+                .ifPresent(sale -> saleRepository.save(sale.deactivate()));
     }
 
+    @Override
+    public List<Sale> getAllSales() {
+        return saleRepository.findAll();
+    }
+
+    @Override
+    public Sale getActiveSale() {
+        return saleRepository.findFirstByStatus(Status.ACTIVE).orElse(null);
+    }
+
+    public Sale useSale() {
+        Sale activeSale = saleRepository.findFirstByStatus(Status.ACTIVE).orElse(null);
+        
+        Integer usedAmount = activeSale.getUsedAmount();
+        activeSale.setUsedAmount(usedAmount++);
+        
+    }
 }
