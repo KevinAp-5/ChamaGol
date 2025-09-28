@@ -4,6 +4,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.sale.CreateSale;
 import com.usermanager.manager.enums.Status;
@@ -25,6 +26,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional
     public Sale createSale(CreateSale sale) {
 
         saleRepository.findFirstByStatus(Status.ACTIVE).ifPresent(value -> {throw new ActiveSaleException("");});
@@ -42,5 +44,12 @@ public class SaleServiceImpl implements SaleService {
                 .build();
         return saleRepository.save(newSale);
     };
+
+    @Override
+    @Transactional
+    public void deactivateSale() {
+        saleRepository.findFirstByStatus(Status.ACTIVE)
+        .ifPresent(sale -> saleRepository.save(sale.deactivate()));
+    }
 
 }
