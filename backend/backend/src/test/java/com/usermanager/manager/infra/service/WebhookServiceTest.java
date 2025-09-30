@@ -30,8 +30,8 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.repository.WebhookEventsRepository;
-import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
+import com.usermanager.manager.service.vip_activation.VipActivationService;
 
 class WebhookServiceTest {
 
@@ -45,10 +45,10 @@ class WebhookServiceTest {
     private MerchantOrderClient merchantOrderClient;
 
     @Mock
-    private SubscriptionService subscriptionService;
+    private VipActivationService vipActivationService;
 
     @Mock
-    private MailService MailService;
+    private MailService mailService;
 
     @InjectMocks
     private WebhookService webhookService;
@@ -56,7 +56,7 @@ class WebhookServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        webhookService = new WebhookService(webhookRepository, userService, subscriptionService, MailService);
+        webhookService = new WebhookService(webhookRepository, userService, vipActivationService, mailService);
         // Injeta o mock do PaymentClient na instância real
         ReflectionTestUtils.setField(webhookService, "paymentClient", paymentClient);
     }
