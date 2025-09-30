@@ -44,4 +44,8 @@ public class VipActivation {
     @Builder.Default
     private ZonedDateTime creationDate = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo"));
 
+    @Column(name = "processed", nullable = false)
+    @Builder.Default
+    private Boolean processed = false;
+
 }
