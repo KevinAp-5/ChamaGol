@@ -61,6 +61,8 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
                         .requestMatchers("/api/acceptance/**").permitAll()
                         .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/sale/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
 
