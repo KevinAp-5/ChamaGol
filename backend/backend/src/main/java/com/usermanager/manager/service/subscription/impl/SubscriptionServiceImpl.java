@@ -1,5 +1,6 @@
 package com.usermanager.manager.service.subscription.impl;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
@@ -27,11 +29,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         this.subscriptionRepository = subscriptionRepository;
     }
 
+    @Override
     public SubscriptionControl createSubscriptionControl(@NotNull User user) {
         var subscription = new SubscriptionControl(user);
         return subscriptionRepository.save(subscription);
     }
 
+    @Override
+    public SubscriptionControl createSubscriptionControl(@NotNull User user, @Positive @NotNull int SubscriptionDays) {
+        var subscription = new SubscriptionControl(user);
+        subscription.setExpirationDate(ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).plusDays(SubscriptionDays));
+        return subscriptionRepository.save(subscription);
+    }
+
+    @Override
     @Transactional
     public void updateSubscriptions () {
         List<SubscriptionControl> expiredSubscription = subscriptionRepository.findAllExpired(ZonedDateTime.now());
@@ -42,6 +53,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscriptionRepository.deleteAll(expiredSubscription);
     }
 
+    @Override
     public ZonedDateTime getExpirationDate(@NotNull User user) {
         Optional<SubscriptionControl> subscriptionControl = subscriptionRepository.findByUserId(user);
         if (subscriptionControl.isPresent()) {
@@ -50,6 +62,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return null;
     }
 
+    @Override
     public Boolean verifyUserAlert(@NotNull User user) {
         Optional<SubscriptionControl> subscriptionControl = subscriptionRepository.findByUserId(user);
         if (subscriptionControl.isEmpty()) {
@@ -59,17 +72,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     }
 
+    @Override
     @Scheduled(cron = "@midnight")
     public void updateAllAlerts() {
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime threeDaysAhead = now.plusDays(3);
-        List<SubscriptionControl> expiringSoon = subscriptionRepository.findBySubscriptionEnding(now, threeDaysAhead);
+        ZonedDateTime daysAhead = now.plusDays(5);
+        List<SubscriptionControl> expiringSoon = subscriptionRepository.findBySubscriptionEnding(now, daysAhead);
         System.out.println("expiringSoon:");
         expiringSoon.forEach(System.out::println);
         expiringSoon.forEach(s -> s.setExpirationAlert(true));
         subscriptionRepository.saveAll(expiringSoon);
     }
 
+    @Override
     @Scheduled(cron = "@daily")
     public void cleanExpiredSubscriptions() {
         List<SubscriptionControl> expiredSubcriptions = subscriptionRepository.findExpiredSubscription(ZonedDateTime.now());
