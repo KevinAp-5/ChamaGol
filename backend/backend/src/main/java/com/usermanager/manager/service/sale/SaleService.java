@@ -1,6 +1,7 @@
 package com.usermanager.manager.service.sale;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.usermanager.manager.dto.sale.CreateSale;
 import com.usermanager.manager.model.sale.Sale;
@@ -13,5 +14,7 @@ public interface SaleService {
 
     List<Sale> getAllSales();
 
-    Sale getActiveSale();
+    Optional<Sale> getActiveSale();
+
+    Sale useSale();
 }
