@@ -21,15 +21,14 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.merchantorder.MerchantOrder;
 import com.mercadopago.resources.payment.Payment;
-import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.exception.webhook.WebhookProcessingException;
 import com.usermanager.manager.infra.mail.MailService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.model.webhook.WebhookEvent;
 import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.repository.WebhookEventsRepository;
-import com.usermanager.manager.service.subscription.SubscriptionService;
 import com.usermanager.manager.service.user.UserService;
+import com.usermanager.manager.service.vip_activation.VipActivationService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,19 +44,19 @@ public class WebhookService {
     private final PaymentClient paymentClient;
     private final MerchantOrderClient merchantOrderClient;
     private final ObjectMapper objectMapper;
-    private final SubscriptionService subscriptionService;
+    private final VipActivationService vipActivationService;
     private final MailService mailService;
 
     @Value("${mercadopago.webhook.secret:}")
     private String webhookSecret;
 
-    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, SubscriptionService subscriptionService, MailService mailService) {
+    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, VipActivationService vipActivationService, MailService mailService) {
         this.webhookRepository = webhookRepository;
         this.userService = userService;
         this.paymentClient = new PaymentClient();
         this.merchantOrderClient = new MerchantOrderClient();
         this.objectMapper = new ObjectMapper();
-        this.subscriptionService = subscriptionService;
+        this.vipActivationService = vipActivationService;
         this.mailService = mailService;
     }
 
@@ -208,18 +207,11 @@ public class WebhookService {
 
     private void updateUserSubscription(User user, String paymentStatus) {
         if (STATUS_APPROVED.equalsIgnoreCase(paymentStatus)) {
-            user.setSubscription(Subscription.VIP);
-            createSubscriptionControl(user);
-            userService.save(user);
-            log.info("User subscription updated to VIP: {}", user.getLogin());
+            vipActivationService.createVipActivation(user);            
+            log.info("Vip activation created updated for: {}", user.getLogin());
         } else {
             log.info("Payment not approved for user {}, status: {}", user.getLogin(), paymentStatus);
         }
-    }
-
-    @Transactional
-    private void createSubscriptionControl(User user) {
-        subscriptionService.createSubscriptionControl(user);
     }
 
     private void handleProcessingError(WebhookEvent event) {
