@@ -1,5 +1,6 @@
 package com.usermanager.manager.model.subscription;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import com.usermanager.manager.model.user.User;
@@ -13,7 +14,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -46,14 +46,9 @@ public class SubscriptionControl {
     private boolean expirationAlert = false;
 
     @Column(updatable = false)
-    private ZonedDateTime purchaseDate;
+    private ZonedDateTime purchaseDate = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo"));
 
     @Column(updatable = false)
-    private ZonedDateTime expirationDate;
+    private ZonedDateTime expirationDate = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo"));
 
-    @PrePersist
-    public void prePersist() {
-        this.purchaseDate = ZonedDateTime.now();
-        this.expirationDate = ZonedDateTime.now().plusMonths(1);
-    }
 }
