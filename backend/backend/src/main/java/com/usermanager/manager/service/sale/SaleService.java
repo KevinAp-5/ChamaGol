@@ -10,7 +10,7 @@ public interface SaleService {
 
     Sale createSale(CreateSale sale);
 
-    void deactivateSale();
+    Optional<Sale> deactivateSale();
 
     List<Sale> getAllSales();
 
