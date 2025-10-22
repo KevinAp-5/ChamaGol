@@ -46,6 +46,10 @@ public class Sale {
     @Builder.Default
     private Integer usedAmount = 0;
     
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean userUnlimited = false;
+
     @Column(nullable = true)
     private ZonedDateTime saleExpiration;
 
