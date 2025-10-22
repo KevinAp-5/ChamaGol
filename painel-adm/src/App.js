@@ -8,6 +8,8 @@ import Terms from "./pages/Terms";
 import Signals from "./pages/Signals";
 import Users from "./pages/Users";
 import ProUsers from "./pages/VipUsers";
+import Sales from "./pages/Sales";
+
 function App() {
   const [isLogged, setIsLogged] = useState(false);
 
@@ -28,6 +30,7 @@ function App() {
             <Route path="/usuarios" element={<Users />} />
             <Route path="*" element={<Navigate to="/" />} />
             <Route path="/usuarios-pro" element={<ProUsers />} />
+            <Route path="/sales" element={<Sales />} />
           </>
         )}
       </Routes>
