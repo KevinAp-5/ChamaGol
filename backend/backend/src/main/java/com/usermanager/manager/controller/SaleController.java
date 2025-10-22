@@ -1,8 +1,8 @@
 package com.usermanager.manager.controller;
 
 import java.util.List;
+import java.util.Optional;
 
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,9 +46,9 @@ public class SaleController {
 
     @PutMapping
     @RequestMapping("/deactivate")
-    public ResponseEntity<Void> deactivateSale() {
-        saleService.deactivateSale();
-        return new ResponseEntity<Void>(HttpStatusCode.valueOf(200));
+    public ResponseEntity<Sale> deactivateSale() {
+        Optional<Sale> sale = saleService.deactivateSale();
+        return ResponseEntity.ok(sale.orElseGet(null));
     }
 
     @GetMapping("all")
@@ -61,5 +61,12 @@ public class SaleController {
     public ResponseEntity<Sale> getActiveSale() {
         Sale activeSale = saleService.getActiveSale().orElse(null);
         return ResponseEntity.ok(activeSale);
+    }
+
+    @GetMapping
+    @RequestMapping("/use")
+    public ResponseEntity<Sale> useSale() {
+        Sale sale = saleService.useSale();
+        return ResponseEntity.ok(sale);
     }
 }
