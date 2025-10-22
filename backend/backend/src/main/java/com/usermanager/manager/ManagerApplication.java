@@ -26,35 +26,17 @@ public class ManagerApplication {
 
 		// --------------------------
 		// Sale implementatios tasks
-		// TODO: modificar controller de payments, para realizar o fetch da sale ativar,
-		// e implementar no sistema para pegar o preço e nome da oferta.
-		// TODO: Ao efetivar o usuário para vip com a sale com o subscriptionTime
-		// determinado(30, 60, 90 dias).
-
-		// TODO: implementar o SaleService na webhookService, para quando for processado o pagamento
-		// para modificar o sale.
 
 		// TODO: criar a classe de testes da SaleService
 
 		// --------------------------
 		// Sale feature todos
 		// TODO: adicionar controle de usuários que já usaram a sale.
-		// TODO: criar campo userIlimited (boolean) na entidade Sale para saber se é
-		// limitada por tempo ou usuários.
 		// TODO: métodos da SaleService: scheduler para remover sale
 		// na data de expiração, usar sale (diminuir quantidade de usuários
 		// disponíveis).
 		// TODO: modificar PaymentController para buscar sale ativa e usar preço/nome da
 		// oferta.
-		// TODO: ao efetivar usuário VIP, usar subscriptionTime da sale (30, 60, 90
-		// dias).
-		// TODO: adicionar campo data de criação da oferta na entidade Sale.
-		// TODO: adicionar campo data de encerramento real na entidade Sale.
-		// TODO: adicionar lista de usuários que usaram a oferta na entidade Sale.
-				// TODO: criar uma tabela que vai armazenar os usuários que utilizaram
-		// TODO: adicionar endpoint para consultar oferta ativa.
-		// TODO: adicionar endpoint para consultar histórico de ofertas.
-		// TODO: adicionar validação no backend para impedir criação de nova oferta ativa.
 
 		// --------------------------
 		// Painel ADM frontend todos

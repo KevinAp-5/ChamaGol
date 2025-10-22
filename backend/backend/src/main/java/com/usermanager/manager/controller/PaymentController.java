@@ -251,6 +251,7 @@ public class PaymentController {
 
     private List<PreferenceItemRequest> createPaymentItem(User user) {
         Sale sale = saleService.getActiveSale().orElse(null);
+        log.info("sale: {}", sale);
         BigDecimal unitPrice = (sale != null) ? sale.getSalePrice() : new BigDecimal("29.00");
         log.info("SALE PRICE: {}", unitPrice);
         List<PreferenceItemRequest> items = new ArrayList<>();
