@@ -16,10 +16,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { RootStackParamList } from "../../App";
 import Footer from "../components/footer";
 import Logo from "../components/logo";
+import { CustomAlertProvider } from "../components/CustomAlert";
 
 type Props = NativeStackScreenProps<RootStackParamList, "PasswordResetEmailConfirmed">;
 
-export default function PasswordResetEmailConfirmed({ navigation }: Props) {
+function PasswordResetEmailConfirmedContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
   
   // Animation values
@@ -199,6 +200,14 @@ export default function PasswordResetEmailConfirmed({ navigation }: Props) {
   );
 }
 
+export default function PasswordResetEmailConfirmed(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <PasswordResetEmailConfirmedContent {...props} />
+    </CustomAlertProvider>
+  );
+}
+
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -210,9 +219,9 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 30,
     paddingHorizontal: 16,
-    minHeight: 120,
+    minHeight: 140,
     justifyContent: "center",
   },
   appTitle: {
@@ -238,6 +247,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 32,
     alignItems: "center",
+    marginTop: 32, // afasta do header
+    backgroundColor: "#FFF",
+    zIndex: 1,
   },
   cardShadow: {
     shadowColor: "#000",
