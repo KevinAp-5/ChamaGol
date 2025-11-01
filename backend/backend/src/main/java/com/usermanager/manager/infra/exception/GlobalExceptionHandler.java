@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ResponseMessage> handleUserDoesNotExistsException(UserNotFoundException ex) {
-        return ResponseEntity.status(404).body(new ResponseMessage("Usuário não encontrado com login: " + ex.getMessage()));
+        return ResponseEntity.status(404).body(new ResponseMessage("Usuário não encontrado"));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ResponseMessage> handleBadCredentialsException(BadCredentialsException ex) {
-        return ResponseEntity.status(401).body(new ResponseMessage("Credenciais inválidas: " + ex.getMessage()));
+        return ResponseEntity.status(401).body(new ResponseMessage("Credenciais inválidas, verifique email ou senha"));
     }
 
     @ExceptionHandler(UserNotEnabledException.class)
