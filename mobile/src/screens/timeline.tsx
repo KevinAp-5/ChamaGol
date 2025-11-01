@@ -230,7 +230,7 @@ const MessageCard = React.memo(function MessageCard({
   );
 });
 
-export default function TimelineScreen({ navigation }: Props) {
+export default function SinaisScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
   const [userSubscription, setUserSubscription] = useState<String | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -285,7 +285,7 @@ export default function TimelineScreen({ navigation }: Props) {
           setToken(storedToken);
         } else {
           console.log("Token não encontrado");
-          showCustomAlert("Sessão expirada. Faça login novamente.", "Acesso negado");
+          showCustomAlert("Sessão expirada. Faça login novamente.", { title: "Acesso negado" });
           navigation.navigate("Login");
         }
         setIsTokenLoaded(true);
@@ -305,7 +305,7 @@ export default function TimelineScreen({ navigation }: Props) {
         if (!tokenResponse) {
           showCustomAlert(
             "Acesso atualizado, faça login novamente para continuar!",
-            "Alerta"
+            { title: "Alerta" }
           );
           navigation.navigate("Login");
         }
@@ -313,7 +313,7 @@ export default function TimelineScreen({ navigation }: Props) {
         console.log("Erro ao validar token", error);
         showCustomAlert(
           "Não foi possível validar sua sessão. Tente novamente mais tarde.",
-          "Erro"
+          { title: "Erro" }
         );
       }
     };
@@ -331,8 +331,8 @@ export default function TimelineScreen({ navigation }: Props) {
     setIsConnecting(true);
     
     // const socket = new SockJS(`https://chamagol-9gfb.onrender.com/ws/chat?token=${token}`);
-    const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
-    // const socket = new SockJS(`http://192.168.1.10:8080/ws/chat?token=${token}`);
+    // const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
+    const socket = new SockJS(`http://192.168.0.103:8080/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -543,7 +543,7 @@ export default function TimelineScreen({ navigation }: Props) {
           <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
             <View style={styles.headerContent}>
               <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-                Timeline
+                Sinais
               </Text>
               <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
                 Sinais em tempo real
