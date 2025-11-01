@@ -33,13 +33,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/chat")
                 .setAllowedOriginPatterns("*")
-                // .addInterceptors(new WebSocketAuthInterceptor(tokenService, userService))
+                .addInterceptors(new WebSocketAuthInterceptor(tokenService, userService))
                 .withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        // registration.interceptors(new WebSocketAuthInterceptor(tokenService, userService));
+        registration.interceptors(new WebSocketAuthInterceptor(tokenService, userService));
     }
 
 }
