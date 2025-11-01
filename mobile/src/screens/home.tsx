@@ -56,19 +56,81 @@ function HomeContent({ navigation }: Props) {
     loadInitialSubscription();
   }, []);
 
+  // Atualize o fetchSubscriptionAlert para depender do fetchSubscription
+  const fetchSubscriptionAlert = async (currentSubscription: SubscriptionType) => {
+    // Só mostra alerta se o usuário tiver PRO ou VIP
+    if (!currentSubscription || currentSubscription === "FREE") {
+      setSubscriptionAlert(false);
+      return;
+    }
+
+    try {
+      const alertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
+      if (alertFlag === "1") {
+        return;
+      }
+
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (!token) return;
+
+      const response = await api.get("users/subscription/alert", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200) {
+        setSubscriptionAlert(response.data);
+
+        // Só mostra se o alerta estiver ativo E o usuário tem assinatura
+        if (response.data && currentSubscription !== "FREE" && currentSubscription !== null) {
+          showAlert(
+            "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
+            { title: "Sua assinatura vai expirar em breve" }
+          );
+          await AsyncStorage.setItem("subscriptionAlertFlag", "1");
+        }
+      }
+    } catch (error) {
+      // Apenas loga, não mostra alerta para quem não tem assinatura
+      console.log("Erro ao recuperar alerta de assinatura do usuário", error);
+    }
+  };
+
+  // Sempre busque a assinatura antes de buscar o alerta
+  const fetchSubscription = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (!token) return;
+
+      const response = await api.get("users/subscription", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let userSubscription: SubscriptionType = null;
+      if (response.status === 200 && response.data.userSubscription) {
+        userSubscription = response.data.userSubscription as SubscriptionType;
+        await AsyncStorage.setItem("subscription", userSubscription);
+        setSubscription(userSubscription);
+      } else {
+        setSubscription(null);
+      }
+
+      // Só chama o alerta depois de saber a assinatura
+      await fetchSubscriptionAlert(userSubscription);
+
+    } catch (error) {
+      setSubscription(null);
+      console.log("Erro ao recuperar assinatura do usuário", error);
+    }
+  };
+
   useEffect(() => {
     const setFlagsAndFetch = async () => {
       try {
-        const subscriptionAlertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
-        const subscriptionAlertLoaded = subscriptionAlertFlag === "1";
         const termFlag = await AsyncStorage.getItem("termFlag");
         const termLoaded = termFlag === "1";
         setTermLoaded(termLoaded);
 
-        if (!subscriptionAlertLoaded) {
-          await fetchSubscriptionAlert();
-        }
-        // Atualiza subscription via API
+        // Sempre atualiza subscription e alerta juntos
         await fetchSubscription();
 
         if (!termLoaded) {
@@ -175,86 +237,6 @@ function HomeContent({ navigation }: Props) {
     getUserInfo();
   }, []);
 
-
-  const fetchSubscriptionAlert = async () => {
-    console.log("fetchSubscriptionAlert chamado");
-    try {
-      // Verifica se já mostrou o alerta nesta sessão
-      const alertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
-      if (alertFlag === "1") {
-        console.log("Alerta de assinatura já mostrado nesta sessão");
-        // Já mostrou o alerta, não mostra novamente
-        return;
-      }
-
-      const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) {
-        console.log("Erro ao recuperar o token.");
-        return;
-      }
-
-      console.log("Fazendo requisição de subscription alert...");
-      const response = await api.get("users/subscription/alert", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log("response.status:", response.status);
-      console.log("response.data:", response.data);
-
-      if (response.status === 200) {
-        setSubscriptionAlert(response.data);
-
-
-        // Se o alerta estiver ativo, mostra popup e seta flag
-        if (response.data) {
-          showAlert(
-            "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
-            { title: "Sua assinatura vai expirar em breve" }
-          );
-          await AsyncStorage.setItem("subscriptionAlertFlag", "1");
-        }
-      } else {
-        console.log("Erro ao recuperar alerta de assinatura do usuário", response.data);
-      }
-    } catch (error) {
-      console.log("Erro ao recuperar alerta de assinatura do usuário", error);
-    }
-  }
-
-  const fetchSubscription = async () => {
-    try {
-      const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) {
-        console.log("Erro ao recuperar o token.");
-        return;
-      }
-
-      console.log("Fazendo requisição de subscription...");
-      const response = await api.get("users/subscription", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.status === 200 && response.data.userSubscription) {
-        try {
-          await AsyncStorage.setItem(
-            "subscription",
-            response.data.userSubscription
-          );
-          setSubscription(response.data.userSubscription as SubscriptionType);
-
-          // Remove o controle da subscriptionFlag: não define mais a flag
-          // await AsyncStorage.setItem("subscriptionFlag", "1");
-          // setSubscriptionLoaded(true);
-
-          console.log("Subscription carregada");
-        } catch (error) {
-          console.log("Erro ao salvar dados no AsyncStorage");
-        }
-      }
-    } catch (error) {
-      console.log("Erro ao recuperar assinatura do usuário", error);
-    }
-  };
 
   const checkTermAcceptance = async () => {
     console.log("checkTermAcceptance chamado, termLoaded:", termLoaded);
