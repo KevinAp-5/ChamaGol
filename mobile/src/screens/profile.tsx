@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   StatusBar,
   Animated,
   Dimensions,
@@ -15,13 +14,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../theme/theme";
 import { api } from "../config/Api";
-import {
-  CustomAlertProvider,
-  showCustomAlert,
-} from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 
-export default function ProfileScreen({ navigation }: any) {
+function ProfileContent({ navigation }: any) {
   const { colors, fonts } = useTheme();
+  const { showAlert } = useCustomAlert();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [created, setCreated] = useState("");
@@ -39,7 +36,6 @@ export default function ProfileScreen({ navigation }: any) {
   const logoutButtonScale = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
-    // Run entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -89,9 +85,9 @@ export default function ProfileScreen({ navigation }: any) {
           setCreated(formatted);
         }
       } catch (error) {
-        showCustomAlert(
+        showAlert(
           "Não foi possível carregar o perfil. Verifique sua conexão e tente novamente.",
-          "Erro de conexão"
+          { title: "Erro de conexão" }
         );
       } finally {
         setLoading(false);
@@ -136,27 +132,17 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const handleLogout = () => {
-    showCustomAlert(
+    showAlert(
       "Você tem certeza que deseja sair?",
-      "Sair da conta",
-      () => {
-        // Animação de saída antes de navegar
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(slideAnim, {
-            toValue: 50,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
+      {
+        title: "Sair da conta",
+        confirmText: "Sair",
+        cancelText: "Cancelar",
+        showCancel: true,
+        onConfirm: () => {
           navigation.navigate("Login");
-        });
-      },
-      "Sair"
+        }
+      }
     );
   };
 
@@ -242,236 +228,242 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   return (
-    <CustomAlertProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        <LinearGradient
-          colors={["#000000", "#B71C1C"]}
-          style={styles.gradientHeader}
-        >
-          <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-            MEU PERFIL
-          </Text>
-          <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-            Gerencie suas informações
-          </Text>
-        </LinearGradient>
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <LinearGradient
+        colors={["#000000", "#B71C1C"]}
+        style={styles.gradientHeader}
+      >
+        <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
+          MEU PERFIL
+        </Text>
+        <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
+          Gerencie suas informações
+        </Text>
+      </LinearGradient>
 
-        <ScrollView
-          style={[styles.container, { backgroundColor: colors.background }]}
-          contentContainerStyle={styles.contentContainer}
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }, { scale: cardScale }],
+            },
+          ]}
         >
-          <Animated.View
+          <View
             style={[
-              styles.content,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }, { scale: cardScale }],
-              },
+              styles.profileHeader,
+              { backgroundColor: colors.background },
             ]}
           >
-            <View
+            <View style={styles.avatarContainer}>
+              <LinearGradient
+                colors={["#E53935", "#FF5722"]}
+                style={styles.avatarGradient}
+              >
+                <Text
+                  style={[styles.avatarText, { fontFamily: fonts.extraBold }]}
+                >
+                  {username ? username.charAt(0).toUpperCase() : "?"}
+                </Text>
+              </LinearGradient>
+            </View>
+            <Text
               style={[
-                styles.profileHeader,
-                { backgroundColor: colors.background },
+                styles.profileName,
+                { color: colors.primary, fontFamily: fonts.bold },
               ]}
             >
-              <View style={styles.avatarContainer}>
-                <LinearGradient
-                  colors={["#E53935", "#FF5722"]}
-                  style={styles.avatarGradient}
-                >
-                  <Text
-                    style={[styles.avatarText, { fontFamily: fonts.extraBold }]}
-                  >
-                    {username ? username.charAt(0).toUpperCase() : "?"}
-                  </Text>
-                </LinearGradient>
-              </View>
-              <Text
-                style={[
-                  styles.profileName,
-                  { color: colors.primary, fontFamily: fonts.bold },
-                ]}
-              >
-                {username || "Carregando..."}
-              </Text>
-              {getSubscriptionBadge()}
-            </View>
+              {username || "Carregando..."}
+            </Text>
+            {getSubscriptionBadge()}
+          </View>
 
-            <View
-              style={[styles.infoCard, { backgroundColor: colors.background }]}
-            >
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeaderRow}>
-                  <MaterialCommunityIcons
-                    name="card-account-details-outline"
-                    size={22}
-                    color={colors.secondary}
-                  />
-                  <Text
-                    style={[
-                      styles.infoTitle,
-                      { color: colors.secondary, fontFamily: fonts.semibold },
-                    ]}
-                  >
-                    Informações da Conta
-                  </Text>
-                </View>
-                <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-
-                <View style={styles.infoRow}>
-                  <MaterialCommunityIcons
-                    name="email-outline"
-                    size={20}
-                    color={colors.muted}
-                  />
-                  <View style={styles.infoTextContainer}>
-                    <Text
-                      style={[
-                        styles.infoLabel,
-                        { color: colors.muted, fontFamily: fonts.medium },
-                      ]}
-                    >
-                      E-mail
-                    </Text>
-                    <Text
-                      style={[
-                        styles.infoValue,
-                        { color: colors.primary, fontFamily: fonts.regular },
-                      ]}
-                    >
-                      {email || "Carregando..."}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <MaterialCommunityIcons
-                    name="calendar-outline"
-                    size={20}
-                    color={colors.muted}
-                  />
-                  <View style={styles.infoTextContainer}>
-                    <Text
-                      style={[
-                        styles.infoLabel,
-                        { color: colors.muted, fontFamily: fonts.medium },
-                      ]}
-                    >
-                      Data de Registro
-                    </Text>
-                    <Text
-                      style={[
-                        styles.infoValue,
-                        { color: colors.primary, fontFamily: fonts.regular },
-                      ]}
-                    >
-                      {created || "Carregando..."}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <MaterialCommunityIcons
-                    name={
-                      subscription === "VIP"
-                        ? "trophy-outline"
-                        : "account-outline"
-                    }
-                    size={20}
-                    color={colors.muted}
-                  />
-                  <View style={styles.infoTextContainer}>
-                    <Text
-                      style={[
-                        styles.infoLabel,
-                        { color: colors.muted, fontFamily: fonts.medium },
-                      ]}
-                    >
-                      Tipo de Conta
-                    </Text>
-                    {getSubscriptionStatus()}
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.buttonGroup}>
-              {/* Botão de Modificar Senha */}
-              <Animated.View
-                style={{ transform: [{ scale: changePasswordButtonScale }], width: "100%" }}
-              >
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: colors.secondary }]}
-                  onPress={handleChangePassword}
-                  onPressIn={handleChangePasswordPressIn}
-                  onPressOut={handleChangePasswordPressOut}
-                  activeOpacity={0.8}
-                >
-                  <MaterialCommunityIcons
-                    name="lock-reset"
-                    size={20}
-                    color="#FFFFFF"
-                    style={styles.buttonIcon}
-                  />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      { color: "#FFFFFF", fontFamily: fonts.bold },
-                    ]}
-                  >
-                    MODIFICAR SENHA
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-              {/* Botão de Logout */}
-              <Animated.View
-                style={{
-                  transform: [{ scale: logoutButtonScale }],
-                  width: "100%",
-                  marginTop: 16,
-                }}
-              >
-                <TouchableOpacity
-                  style={[styles.outlineButton, { borderColor: colors.error }]}
-                  onPress={handleLogout}
-                  onPressIn={handleLogoutPressIn}
-                  onPressOut={handleLogoutPressOut}
-                  activeOpacity={0.8}
-                >
-                  <MaterialCommunityIcons
-                    name="logout"
-                    size={20}
-                    color={colors.error}
-                    style={styles.buttonIcon}
-                  />
-                  <Text
-                    style={[
-                      styles.outlineButtonText,
-                      { color: colors.error, fontFamily: fonts.bold },
-                    ]}
-                  >
-                    SAIR DA CONTA
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
-          </Animated.View>
-        </ScrollView>
-
-        <View style={[styles.footer, { borderTopColor: colors.divider }]}>
-          <Text
-            style={[
-              styles.footerText,
-              { color: colors.muted, fontFamily: fonts.regular },
-            ]}
+          <View
+            style={[styles.infoCard, { backgroundColor: colors.background }]}
           >
-            © 2025 CHAMAGOL • Todos os direitos reservados
-          </Text>
-        </View>
-      </SafeAreaView>
+            <View style={styles.infoSection}>
+              <View style={styles.infoHeaderRow}>
+                <MaterialCommunityIcons
+                  name="card-account-details-outline"
+                  size={22}
+                  color={colors.secondary}
+                />
+                <Text
+                  style={[
+                    styles.infoTitle,
+                    { color: colors.secondary, fontFamily: fonts.semibold },
+                  ]}
+                >
+                  Informações da Conta
+                </Text>
+              </View>
+              <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={20}
+                  color={colors.muted}
+                />
+                <View style={styles.infoTextContainer}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: colors.muted, fontFamily: fonts.medium },
+                    ]}
+                  >
+                    E-mail
+                  </Text>
+                  <Text
+                    style={[
+                      styles.infoValue,
+                      { color: colors.primary, fontFamily: fonts.regular },
+                    ]}
+                  >
+                    {email || "Carregando..."}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons
+                  name="calendar-outline"
+                  size={20}
+                  color={colors.muted}
+                />
+                <View style={styles.infoTextContainer}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: colors.muted, fontFamily: fonts.medium },
+                    ]}
+                  >
+                    Data de Registro
+                  </Text>
+                  <Text
+                    style={[
+                      styles.infoValue,
+                      { color: colors.primary, fontFamily: fonts.regular },
+                    ]}
+                  >
+                    {created || "Carregando..."}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons
+                  name={
+                    subscription === "VIP"
+                      ? "trophy-outline"
+                      : "account-outline"
+                  }
+                  size={20}
+                  color={colors.muted}
+                />
+                <View style={styles.infoTextContainer}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: colors.muted, fontFamily: fonts.medium },
+                    ]}
+                  >
+                    Tipo de Conta
+                  </Text>
+                  {getSubscriptionStatus()}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.buttonGroup}>
+            {/* Botão de Modificar Senha */}
+            <Animated.View
+              style={{ transform: [{ scale: changePasswordButtonScale }], width: "100%" }}
+            >
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: colors.secondary }]}
+                onPress={handleChangePassword}
+                onPressIn={handleChangePasswordPressIn}
+                onPressOut={handleChangePasswordPressOut}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name="lock-reset"
+                  size={20}
+                  color="#FFFFFF"
+                  style={styles.buttonIcon}
+                />
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: "#FFFFFF", fontFamily: fonts.bold },
+                  ]}
+                >
+                  MODIFICAR SENHA
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Botão de Logout */}
+            <Animated.View
+              style={{
+                transform: [{ scale: logoutButtonScale }],
+                width: "100%",
+                marginTop: 16,
+              }}
+            >
+              <TouchableOpacity
+                style={[styles.outlineButton, { borderColor: colors.error }]}
+                onPress={handleLogout}
+                onPressIn={handleLogoutPressIn}
+                onPressOut={handleLogoutPressOut}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={20}
+                  color={colors.error}
+                  style={styles.buttonIcon}
+                />
+                <Text
+                  style={[
+                    styles.outlineButtonText,
+                    { color: colors.error, fontFamily: fonts.bold },
+                  ]}
+                >
+                  SAIR DA CONTA
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Animated.View>
+      </ScrollView>
+
+      <View style={[styles.footer, { borderTopColor: colors.divider }]}>
+        <Text
+          style={[
+            styles.footerText,
+            { color: colors.muted, fontFamily: fonts.regular },
+          ]}
+        >
+          © 2025 CHAMAGOL • Todos os direitos reservados
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export default function ProfileScreen(props: any) {
+  return (
+    <CustomAlertProvider>
+      <ProfileContent {...props} />
     </CustomAlertProvider>
   );
 }

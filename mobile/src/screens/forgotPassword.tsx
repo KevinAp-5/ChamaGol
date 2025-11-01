@@ -18,9 +18,9 @@ import { api } from "../config/Api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Footer from "../components/footer";
 import Logo from "../components/logo";
-import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 
-export default function ForgotPasswordScreen({ navigation }: any) {
+function ForgotPasswordContent({ navigation }: any) {
   const { colors, fonts, spacing, shadows } = useTheme();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +30,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
   const [email, setEmail] = useState<string>("");
   const [isNewPasswordFocused, setIsNewPasswordFocused] = useState(false);
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
+  const { showAlert } = useCustomAlert();
 
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -88,23 +89,23 @@ export default function ForgotPasswordScreen({ navigation }: any) {
 
   const handlePasswordReset = async () => {
     if (!newPassword || !confirmPassword) {
-      showCustomAlert("Por favor, preencha todos os campos.", "Campos obrigatórios");
+      showAlert("Por favor, preencha todos os campos.", { title: "Campos obrigatórios" });
       return;
     }
 
     const passwordValidation = validatePassword(newPassword);
     if (passwordValidation) {
-      showCustomAlert(passwordValidation, "Senha inválida");
+      showAlert(passwordValidation, { title: "Senha inválida" });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      showCustomAlert("As senhas não coincidem.", "Erro de confirmação");
+      showAlert("As senhas não coincidem.", { title: "Erro de confirmação" });
       return;
     }
 
     if (!email) {
-      showCustomAlert("E-mail não encontrado. Tente novamente o fluxo de recuperação.", "Erro");
+      showAlert("E-mail não encontrado. Tente novamente o fluxo de recuperação.", { title: "Erro" });
       return;
     }
 
@@ -116,16 +117,17 @@ export default function ForgotPasswordScreen({ navigation }: any) {
       });
       
       if (response.status === 200) {
-        showCustomAlert('Sua senha foi redefinida com sucesso.', 'Sucesso', 
-            () => navigation.navigate('Login')
+        showAlert(
+          "Sua senha foi redefinida com sucesso.",
+          { title: "Sucesso", onConfirm: () => navigation.navigate("Login") }
         );
       } else {
-        showCustomAlert(response.data?.message || "Erro ao redefinir a senha.", "Erro");
+        showAlert(response.data?.message || "Erro ao redefinir a senha.", { title: "Erro" });
       }
     } catch (error: any) {
-      showCustomAlert(
-        error?.response?.data?.message || "Ocorreu um erro inesperado.", 
-        "Erro"
+      showAlert(
+        error?.response?.data?.message || "Ocorreu um erro inesperado.",
+        { title: "Erro" }
       );
     } finally {
       setLoading(false);
@@ -133,198 +135,204 @@ export default function ForgotPasswordScreen({ navigation }: any) {
   };
 
   return (
-    <CustomAlertProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-        <LinearGradient
-          colors={[colors.primary, colors.highlight]}
-          style={styles.gradientBackground}
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <LinearGradient
+        colors={[colors.primary, colors.highlight]}
+        style={styles.gradientBackground}
+      >
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+          <Animated.View 
+            style={[
+              styles.logoContainer, 
+              { 
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
           >
-            <Animated.View 
-              style={[
-                styles.logoContainer, 
-                { 
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }]
-                }
-              ]}
-            >
-              <Logo source={require("../assets/logo_white_label.png")} />
-              <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
-                CHAMAGOL
-              </Text>
-              <Text style={[styles.tagline, { color: '#FFFFFF', fontFamily: fonts.regular }]}>
-                Seu universo esportivo
-              </Text>
-            </Animated.View>
+            <Logo source={require("../assets/logo_white_label.png")} />
+            <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
+              CHAMAGOL
+            </Text>
+            <Text style={[styles.tagline, { color: '#FFFFFF', fontFamily: fonts.regular }]}>
+              Seu universo esportivo
+            </Text>
+          </Animated.View>
 
-            <Animated.View 
-              style={[
-                styles.formContainer, 
-                { 
-                  backgroundColor: colors.background,
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }]
-                },
-                shadows.large
-              ]}
-            >
-              <View style={styles.iconContainer}>
+          <Animated.View 
+            style={[
+              styles.formContainer, 
+              { 
+                backgroundColor: colors.background,
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              },
+              shadows.large
+            ]}
+          >
+            <View style={styles.iconContainer}>
+              <MaterialCommunityIcons 
+                name="lock-reset" 
+                size={64} 
+                color={colors.secondary} 
+              />
+            </View>
+
+            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
+              Redefinir Senha
+            </Text>
+            
+            <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
+              Insira sua nova senha e confirme para redefinir.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <View style={[
+                styles.inputContainer,
+                isNewPasswordFocused && styles.inputContainerFocused,
+                { borderColor: isNewPasswordFocused ? colors.secondary : colors.divider }
+              ]}>
                 <MaterialCommunityIcons 
-                  name="lock-reset" 
-                  size={64} 
-                  color={colors.secondary} 
+                  name="lock-outline" 
+                  size={20} 
+                  color={isNewPasswordFocused ? colors.secondary : colors.muted} 
+                  style={styles.inputIcon}
                 />
-              </View>
-
-              <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
-                Redefinir Senha
-              </Text>
-              
-              <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
-                Insira sua nova senha e confirme para redefinir.
-              </Text>
-
-              <View style={styles.inputGroup}>
-                <View style={[
-                  styles.inputContainer,
-                  isNewPasswordFocused && styles.inputContainerFocused,
-                  { borderColor: isNewPasswordFocused ? colors.secondary : colors.divider }
-                ]}>
-                  <MaterialCommunityIcons 
-                    name="lock-outline" 
-                    size={20} 
-                    color={isNewPasswordFocused ? colors.secondary : colors.muted} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Nova senha"
-                    placeholderTextColor={colors.muted}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    onFocus={() => setIsNewPasswordFocused(true)}
-                    onBlur={() => setIsNewPasswordFocused(false)}
-                    style={[
-                      styles.input,
-                      { color: colors.primary, fontFamily: fonts.regular }
-                    ]}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.passwordToggle}
-                  >
-                    <MaterialCommunityIcons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={22}
-                      color={colors.muted}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={[
-                  styles.inputContainer,
-                  isConfirmPasswordFocused && styles.inputContainerFocused,
-                  { borderColor: isConfirmPasswordFocused ? colors.secondary : colors.divider }
-                ]}>
-                  <MaterialCommunityIcons 
-                    name="lock-check-outline" 
-                    size={20} 
-                    color={isConfirmPasswordFocused ? colors.secondary : colors.muted} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    placeholder="Confirmar nova senha"
-                    placeholderTextColor={colors.muted}
-                    secureTextEntry={!showConfirmPassword}
-                    autoCapitalize="none"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    onFocus={() => setIsConfirmPasswordFocused(true)}
-                    onBlur={() => setIsConfirmPasswordFocused(false)}
-                    style={[
-                      styles.input,
-                      { color: colors.primary, fontFamily: fonts.regular }
-                    ]}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    style={styles.passwordToggle}
-                  >
-                    <MaterialCommunityIcons
-                      name={showConfirmPassword ? "eye-off" : "eye"}
-                      size={22}
-                      color={colors.muted}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.passwordHint}>
-                <MaterialCommunityIcons 
-                  name="information-outline" 
-                  size={16} 
-                  color={colors.muted} 
+                <TextInput
+                  placeholder="Nova senha"
+                  placeholderTextColor={colors.muted}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  onFocus={() => setIsNewPasswordFocused(true)}
+                  onBlur={() => setIsNewPasswordFocused(false)}
+                  style={[
+                    styles.input,
+                    { color: colors.primary, fontFamily: fonts.regular }
+                  ]}
                 />
-                <Text style={[styles.hintText, { color: colors.muted, fontFamily: fonts.regular }]}>
-                  A senha deve ter pelo menos 8 caracteres, incluindo letras e números.
-                </Text>
-              </View>
-
-              <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
                 <TouchableOpacity
-                  style={[styles.confirmButton, { backgroundColor: colors.secondary }]}
-                  onPress={handlePasswordReset}
-                  disabled={loading}
-                  onPressIn={handlePressIn}
-                  onPressOut={handlePressOut}
-                  activeOpacity={0.8}
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.passwordToggle}
                 >
-                  {loading ? (
-                    <View style={styles.loadingIndicator}>
-                      <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
-                      <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold, marginLeft: 8 }]}>
-                        Redefinindo...
-                      </Text>
-                    </View>
-                  ) : (
-                    <>
-                      <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
-                        CONFIRMAR NOVA SENHA
-                      </Text>
-                      <MaterialCommunityIcons name="check" size={20} color="#FFF" />
-                    </>
-                  )}
+                  <MaterialCommunityIcons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={22}
+                    color={colors.muted}
+                  />
                 </TouchableOpacity>
-              </Animated.View>
+              </View>
 
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Login")}
-                style={styles.backToLoginButton}
-                activeOpacity={0.7}
-              >
+              <View style={[
+                styles.inputContainer,
+                isConfirmPasswordFocused && styles.inputContainerFocused,
+                { borderColor: isConfirmPasswordFocused ? colors.secondary : colors.divider }
+              ]}>
                 <MaterialCommunityIcons 
-                  name="arrow-left" 
-                  size={18} 
-                  color={colors.secondary} 
+                  name="lock-check-outline" 
+                  size={20} 
+                  color={isConfirmPasswordFocused ? colors.secondary : colors.muted} 
+                  style={styles.inputIcon}
                 />
-                <Text style={[styles.backToLoginText, { color: colors.secondary, fontFamily: fonts.medium }]}>
-                  Voltar ao login
-                </Text>
+                <TextInput
+                  placeholder="Confirmar nova senha"
+                  placeholderTextColor={colors.muted}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  onFocus={() => setIsConfirmPasswordFocused(true)}
+                  onBlur={() => setIsConfirmPasswordFocused(false)}
+                  style={[
+                    styles.input,
+                    { color: colors.primary, fontFamily: fonts.regular }
+                  ]}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.passwordToggle}
+                >
+                  <MaterialCommunityIcons
+                    name={showConfirmPassword ? "eye-off" : "eye"}
+                    size={22}
+                    color={colors.muted}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.passwordHint}>
+              <MaterialCommunityIcons 
+                name="information-outline" 
+                size={16} 
+                color={colors.muted} 
+              />
+              <Text style={[styles.hintText, { color: colors.muted, fontFamily: fonts.regular }]}>
+                A senha deve ter pelo menos 8 caracteres, incluindo letras e números.
+              </Text>
+            </View>
+
+            <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
+              <TouchableOpacity
+                style={[styles.confirmButton, { backgroundColor: colors.secondary }]}
+                onPress={handlePasswordReset}
+                disabled={loading}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <View style={styles.loadingIndicator}>
+                    <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
+                    <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold, marginLeft: 8 }]}>
+                      Redefinindo...
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
+                      CONFIRMAR NOVA SENHA
+                    </Text>
+                    <MaterialCommunityIcons name="check" size={20} color="#FFF" />
+                  </>
+                )}
               </TouchableOpacity>
             </Animated.View>
 
-            <Footer />
-          </ScrollView>
-        </LinearGradient>
-      </SafeAreaView>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Login")}
+              style={styles.backToLoginButton}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons 
+                name="arrow-left" 
+                size={18} 
+                color={colors.secondary} 
+              />
+              <Text style={[styles.backToLoginText, { color: colors.secondary, fontFamily: fonts.medium }]}>
+                Voltar ao login
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Footer />
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+export default function ForgotPasswordScreen(props: any) {
+  return (
+    <CustomAlertProvider>
+      <ForgotPasswordContent {...props} />
     </CustomAlertProvider>
   );
 }

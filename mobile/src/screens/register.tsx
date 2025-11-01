@@ -12,7 +12,6 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-  Alert
 } from "react-native";
 import CheckBox from "expo-checkbox";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,13 +23,14 @@ import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { fetchTerm } from "../components/termOfUse";
-import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Register">;
 
-export default function RegisterScreen({ navigation }: Props) {
+function RegisterContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
+  const { showAlert } = useCustomAlert();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -40,26 +40,27 @@ export default function RegisterScreen({ navigation }: Props) {
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
- 
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const buttonScale = useState(new Animated.Value(1))[0];
- 
+
   useEffect(() => {
-      showCustomAlert(
-        "Você confirma que tem mais de 18 anos?", {
-          title: "Confirmação de idade",
-          confirmText: "Sim",
-          cancelText: "Não",
-          showCancel: true,
-          onConfirm: () => {},
-          onCancel: () => {navigation.navigate("Login")}
-        }
-      )
-  }, []); 
+    showAlert(
+      "Você confirma que tem mais de 18 anos?",
+      {
+        title: "Confirmação de idade",
+        confirmText: "Sim",
+        cancelText: "Não",
+        showCancel: true,
+        onConfirm: () => {},
+        onCancel: () => { navigation.navigate("Login"); }
+      }
+    );
+  }, []);
+
   useEffect(() => {
-    // Run entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -73,7 +74,7 @@ export default function RegisterScreen({ navigation }: Props) {
       })
     ]).start();
   }, []);
-  
+
   const handlePressIn = () => {
     Animated.timing(buttonScale, {
       toValue: 0.95,
@@ -81,7 +82,7 @@ export default function RegisterScreen({ navigation }: Props) {
       useNativeDriver: true
     }).start();
   };
-  
+
   const handlePressOut = () => {
     Animated.timing(buttonScale, {
       toValue: 1,
@@ -92,7 +93,10 @@ export default function RegisterScreen({ navigation }: Props) {
 
   const handleViewTerm = async () => {
     const term = await fetchTerm();
-    Alert.alert("Termos de uso", term || "Não foi possível carregar o termo.");
+    showAlert(term || "Não foi possível carregar o termo.", {
+      title: "Termos de uso",
+      confirmText: "OK"
+    });
   };
 
   const validateEmail = (email: string) => {
@@ -102,25 +106,33 @@ export default function RegisterScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     if (!isTermAccepted) {
-      showCustomAlert("Aceite os termos de uso para prosseguir.", "Termos de Uso");
+      showAlert("Aceite os termos de uso para prosseguir.", {
+        title: "Termos de Uso"
+      });
       return;
     }
-    
+
     if (!name || !email || !password) {
-      showCustomAlert("Por favor, preencha todos os campos.", "Campos Obrigatórios");
+      showAlert("Por favor, preencha todos os campos.", {
+        title: "Campos Obrigatórios"
+      });
       return;
     }
-    
+
     if (!validateEmail(email)) {
-      showCustomAlert("Por favor, insira um e-mail válido.", "E-mail Inválido");
+      showAlert("Por favor, insira um e-mail válido.", {
+        title: "E-mail Inválido"
+      });
       return;
     }
-    
+
     if (password.length < 6) {
-      showCustomAlert("A senha deve ter pelo menos 6 caracteres.", "Senha Inválida");
+      showAlert("A senha deve ter pelo menos 6 caracteres.", {
+        title: "Senha Inválida"
+      });
       return;
     }
-    
+
     setLoading(true);
     try {
       const response = await api.post(
@@ -132,220 +144,230 @@ export default function RegisterScreen({ navigation }: Props) {
         await AsyncStorage.setItem("registerEmail", email);
         navigation.navigate("EmailVerification");
       } else {
-        showCustomAlert((response.data as { message: string })?.message || "Erro ao registrar.", "Erro");
+        showAlert((response.data as { message: string })?.message || "Erro ao registrar.", {
+          title: "Erro"
+        });
       }
     } catch (error: any) {
-      showCustomAlert(error?.response?.data?.message || "Ocorreu um erro ao registrar. Tente novamente.", "Erro");
+      showAlert(error?.response?.data?.message || "Ocorreu um erro ao registrar. Tente novamente.", {
+        title: "Erro"
+      });
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
-    <CustomAlertProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-        <LinearGradient
-          colors={[colors.primary, '#222222']}
-          style={styles.gradientBackground}
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <LinearGradient
+        colors={[colors.primary, '#222222']}
+        style={styles.gradientBackground}
+      >
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
+            <Animated.View 
+              style={[
+                styles.logoContainer, 
+                { 
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }]
+                }
+              ]}
             >
-              <Animated.View 
-                style={[
-                  styles.logoContainer, 
-                  { 
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }]
-                  }
-                ]}
-              >
-                <Logo source={require("../assets/logo_white_label.png")} />
-                <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
-                  CHAMAGOL
+              <Logo source={require("../assets/logo_white_label.png")} />
+              <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
+                CHAMAGOL
+              </Text>
+              <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
+                Seu universo esportivo
+              </Text>
+            </Animated.View>
+            
+            <Animated.View 
+              style={[
+                styles.formContainer, 
+                { 
+                  backgroundColor: colors.background,
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }]
+                }
+              ]}
+            >
+              <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
+                Crie sua conta
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
+                Preencha os dados abaixo para começar
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <View style={[
+                  styles.inputContainer,
+                  isNameFocused && styles.inputContainerFocused,
+                  { borderColor: isNameFocused ? colors.secondary : colors.muted }
+                ]}>
+                  <MaterialCommunityIcons 
+                    name="account-outline" 
+                    size={20} 
+                    color={isNameFocused ? colors.secondary : colors.muted} 
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    placeholder="Nome completo"
+                    placeholderTextColor={colors.muted}
+                    value={name}
+                    onChangeText={setName}
+                    onFocus={() => setIsNameFocused(true)}
+                    onBlur={() => setIsNameFocused(false)}
+                    style={[
+                      styles.input,
+                      { color: colors.primary, fontFamily: fonts.regular }
+                    ]}
+                  />
+                </View>
+                
+                <View style={[
+                  styles.inputContainer,
+                  isEmailFocused && styles.inputContainerFocused,
+                  { borderColor: isEmailFocused ? colors.secondary : colors.muted }
+                ]}>
+                  <MaterialCommunityIcons 
+                    name="email-outline" 
+                    size={20} 
+                    color={isEmailFocused ? colors.secondary : colors.muted} 
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    placeholder="E-mail"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
+                    onFocus={() => setIsEmailFocused(true)}
+                    onBlur={() => setIsEmailFocused(false)}
+                    style={[
+                      styles.input,
+                      { color: colors.primary, fontFamily: fonts.regular }
+                    ]}
+                  />
+                </View>
+                
+                <View style={[
+                  styles.inputContainer,
+                  isPasswordFocused && styles.inputContainerFocused,
+                  { borderColor: isPasswordFocused ? colors.secondary : colors.muted }
+                ]}>
+                  <MaterialCommunityIcons 
+                    name="lock-outline" 
+                    size={20} 
+                    color={isPasswordFocused ? colors.secondary : colors.muted} 
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    placeholder="Senha"
+                    placeholderTextColor={colors.muted}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
+                    style={[
+                      styles.input,
+                      { color: colors.primary, fontFamily: fonts.regular }
+                    ]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.passwordToggle}
+                  >
+                    <MaterialCommunityIcons
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={22}
+                      color={colors.muted}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <View style={styles.termsContainer}>
+                <CheckBox 
+                  value={isTermAccepted} 
+                  onValueChange={setIsTermAccepted}
+                  color={isTermAccepted ? colors.secondary : undefined}
+                  style={styles.checkbox}
+                />
+                <Text style={[styles.termsText, { color: colors.muted, fontFamily: fonts.regular }]}>
+                  Eu aceito os {" "}
+                  <Text 
+                    style={[styles.termsLink, { color: colors.secondary, fontFamily: fonts.semiBold }]}
+                    onPress={handleViewTerm}>
+                    Termos de Uso e declaro ser maior de idade
+                  </Text>
                 </Text>
-                <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
-                  Seu universo esportivo
-                </Text>
+              </View>
+              
+              <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
+                <TouchableOpacity
+                  style={[
+                    styles.registerButton, 
+                    { 
+                      backgroundColor: !isTermAccepted ? colors.muted : colors.secondary,
+                      opacity: !isTermAccepted ? 0.7 : 1 
+                    }
+                  ]}
+                  onPress={handleRegister}
+                  disabled={loading || !isTermAccepted}
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
+                  activeOpacity={0.8}
+                >
+                  {loading ? (
+                    <View style={styles.loadingIndicator}>
+                      <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
+                    </View>
+                  ) : (
+                    <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
+                      CRIAR CONTA
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </Animated.View>
               
-              <Animated.View 
-                style={[
-                  styles.formContainer, 
-                  { 
-                    backgroundColor: colors.background,
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }]
-                  }
-                ]}
-              >
-                <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
-                  Crie sua conta
+              <View style={styles.loginOption}>
+                <Text style={[styles.loginText, { color: colors.muted, fontFamily: fonts.regular }]}>
+                  Já tem uma conta?
                 </Text>
-                <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
-                  Preencha os dados abaixo para começar
-                </Text>
-                
-                <View style={styles.inputGroup}>
-                  <View style={[
-                    styles.inputContainer,
-                    isNameFocused && styles.inputContainerFocused,
-                    { borderColor: isNameFocused ? colors.secondary : colors.muted }
-                  ]}>
-                    <MaterialCommunityIcons 
-                      name="account-outline" 
-                      size={20} 
-                      color={isNameFocused ? colors.secondary : colors.muted} 
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="Nome completo"
-                      placeholderTextColor={colors.muted}
-                      value={name}
-                      onChangeText={setName}
-                      onFocus={() => setIsNameFocused(true)}
-                      onBlur={() => setIsNameFocused(false)}
-                      style={[
-                        styles.input,
-                        { color: colors.primary, fontFamily: fonts.regular }
-                      ]}
-                    />
-                  </View>
-                  
-                  <View style={[
-                    styles.inputContainer,
-                    isEmailFocused && styles.inputContainerFocused,
-                    { borderColor: isEmailFocused ? colors.secondary : colors.muted }
-                  ]}>
-                    <MaterialCommunityIcons 
-                      name="email-outline" 
-                      size={20} 
-                      color={isEmailFocused ? colors.secondary : colors.muted} 
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="E-mail"
-                      placeholderTextColor={colors.muted}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      value={email}
-                      onChangeText={setEmail}
-                      onFocus={() => setIsEmailFocused(true)}
-                      onBlur={() => setIsEmailFocused(false)}
-                      style={[
-                        styles.input,
-                        { color: colors.primary, fontFamily: fonts.regular }
-                      ]}
-                    />
-                  </View>
-                  
-                  <View style={[
-                    styles.inputContainer,
-                    isPasswordFocused && styles.inputContainerFocused,
-                    { borderColor: isPasswordFocused ? colors.secondary : colors.muted }
-                  ]}>
-                    <MaterialCommunityIcons 
-                      name="lock-outline" 
-                      size={20} 
-                      color={isPasswordFocused ? colors.secondary : colors.muted} 
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      placeholder="Senha"
-                      placeholderTextColor={colors.muted}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      value={password}
-                      onChangeText={setPassword}
-                      onFocus={() => setIsPasswordFocused(true)}
-                      onBlur={() => setIsPasswordFocused(false)}
-                      style={[
-                        styles.input,
-                        { color: colors.primary, fontFamily: fonts.regular }
-                      ]}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.passwordToggle}
-                    >
-                      <MaterialCommunityIcons
-                        name={showPassword ? "eye-off" : "eye"}
-                        size={22}
-                        color={colors.muted}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                <View style={styles.termsContainer}>
-                  <CheckBox 
-                    value={isTermAccepted} 
-                    onValueChange={setIsTermAccepted}
-                    color={isTermAccepted ? colors.secondary : undefined}
-                    style={styles.checkbox}
-                  />
-                  <Text style={[styles.termsText, { color: colors.muted, fontFamily: fonts.regular }]}>
-                    Eu aceito os {" "}
-                    <Text 
-                      style={[styles.termsLink, { color: colors.secondary, fontFamily: fonts.semiBold }]}
-                      onPress={handleViewTerm}>
-                      Termos de Uso e declaro ser maior de idade
-                    </Text>
+                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                  <Text style={[styles.loginLink, { color: colors.secondary, fontFamily: fonts.semiBold }]}>
+                    Entrar
                   </Text>
-                </View>
-                
-                <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
-                  <TouchableOpacity
-                    style={[
-                      styles.registerButton, 
-                      { 
-                        backgroundColor: !isTermAccepted ? colors.muted : colors.secondary,
-                        opacity: !isTermAccepted ? 0.7 : 1 
-                      }
-                    ]}
-                    onPress={handleRegister}
-                    disabled={loading || !isTermAccepted}
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    activeOpacity={0.8}
-                  >
-                    {loading ? (
-                      <View style={styles.loadingIndicator}>
-                        <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
-                      </View>
-                    ) : (
-                      <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
-                        CRIAR CONTA
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
-                
-                <View style={styles.loginOption}>
-                  <Text style={[styles.loginText, { color: colors.muted, fontFamily: fonts.regular }]}>
-                    Já tem uma conta?
-                  </Text>
-                  <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                    <Text style={[styles.loginLink, { color: colors.secondary, fontFamily: fonts.semiBold }]}>
-                      Entrar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
-            </ScrollView>
-            
-            <Footer />
-          </KeyboardAvoidingView>
-        </LinearGradient>
-      </SafeAreaView>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </ScrollView>
+          
+          <Footer />
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+export default function RegisterScreen(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <RegisterContent {...props} />
     </CustomAlertProvider>
   );
 }

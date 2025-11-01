@@ -13,7 +13,8 @@ import {
   Platform,
   Animated,
   Dimensions,
-  ScrollView
+  ScrollView,
+  Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,13 +23,14 @@ import Footer from "../components/footer";
 import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
-import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from '../components/CustomAlert';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
-export default function LoginScreen({ navigation }: Props) {
+function LoginContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
+  const { showAlert } = useCustomAlert();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -135,14 +137,21 @@ export default function LoginScreen({ navigation }: Props) {
     }).start();
   };
 
+  // Exemplo de uso:
   const handleLogin = async () => {
     if (!email || !password) {
-      showCustomAlert("Por favor, preencha seu e-mail e senha.", "Campos obrigatórios");
+      showAlert("Por favor, preencha seu e-mail e senha.", {
+        title: "Campos obrigatórios",
+        confirmText: "OK"
+      });
       return;
     }
     
     if (!validateEmail(email)) {
-      showCustomAlert("Por favor, insira um e-mail válido.", "E-mail inválido");
+      showAlert("Por favor, insira um e-mail válido.", {
+        title: "E-mail inválido",
+        confirmText: "OK"
+      });
       return;
     }
     
@@ -161,23 +170,26 @@ export default function LoginScreen({ navigation }: Props) {
           await SecureStore.setItemAsync('refreshToken', refreshToken);
         }
         
-        // Resetar flags para permitir nova busca na próxima sessão
         await Promise.all([
           AsyncStorage.setItem("subscriptionFlag", "0"),
           AsyncStorage.setItem("termFlag", "0")
         ]);
-        console.log("Login realizado, flags resetadas");
         
-        // Use a brief timeout to show loading state before navigation
         setTimeout(() => {
           navigation.navigate("Home");
         }, 500);
       } else {
-        showCustomAlert("E-mail ou senha inválidos.", "Falha no login");
+        showAlert("E-mail ou senha inválidos.", {
+          title: "Erro",
+          confirmText: "OK"
+        });
       }
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || "Ocorreu um erro ao fazer login. Tente novamente.";
-      showCustomAlert(errorMessage, "Erro");
+      showAlert(errorMessage, {
+        title: "Atenção",
+        confirmText: "OK"
+      });
     } finally {
       setLoading(false);
     }
@@ -207,231 +219,237 @@ export default function LoginScreen({ navigation }: Props) {
   });
 
   return (
-    <CustomAlertProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        <LinearGradient
-          colors={['#000000', '#B71C1C']}
-          style={styles.gradientBackground}
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <LinearGradient
+        colors={['#000000', '#B71C1C']}
+        style={styles.gradientBackground}
+      >
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
           >
-            <ScrollView 
-              contentContainerStyle={styles.scrollContainer}
-              showsVerticalScrollIndicator={false}
-              bounces={false}
+            {/* Logo Section com animação melhorada */}
+            <Animated.View 
+              style={[
+                styles.logoContainer, 
+                { 
+                  opacity: fadeAnim,
+                  transform: [
+                    { translateY: slideAnim },
+                    { scale: logoScale }
+                  ]
+                }
+              ]}
             >
-              {/* Logo Section com animação melhorada */}
-              <Animated.View 
-                style={[
-                  styles.logoContainer, 
-                  { 
-                    opacity: fadeAnim,
-                    transform: [
-                      { translateY: slideAnim },
-                      { scale: logoScale }
-                    ]
-                  }
-                ]}
-              >
-                <View style={styles.logoWrapper}>
-                  <Logo source={require("../assets/logo_white_label.png")} />
-                </View>
-                <Text style={styles.appTitle}>
-                  CHAMAGOL
+              <View style={styles.logoWrapper}>
+                <Logo source={require("../assets/logo_white_label.png")} />
+              </View>
+              <Text style={styles.appTitle}>
+                CHAMAGOL
+              </Text>
+              <Text style={styles.tagline}>
+                Seu universo esportivo
+              </Text>
+            </Animated.View>
+            
+            {/* Form Section com design melhorado */}
+            <Animated.View 
+              style={[
+                styles.formContainer, 
+                { 
+                  opacity: fadeAnim,
+                  transform: [{ translateY: formSlideAnim }]
+                }
+              ]}
+            >
+              <View style={styles.welcomeSection}>
+                <Text style={styles.welcomeTitle}>
+                  Bem-vindo de volta!
                 </Text>
-                <Text style={styles.tagline}>
-                  Seu universo esportivo
+                <Text style={styles.welcomeSubtitle}>
+                  Faça login para continuar
                 </Text>
-              </Animated.View>
+              </View>
               
-              {/* Form Section com design melhorado */}
-              <Animated.View 
-                style={[
-                  styles.formContainer, 
-                  { 
-                    opacity: fadeAnim,
-                    transform: [{ translateY: formSlideAnim }]
-                  }
-                ]}
-              >
-                <View style={styles.welcomeSection}>
-                  <Text style={styles.welcomeTitle}>
-                    Bem-vindo de volta!
-                  </Text>
-                  <Text style={styles.welcomeSubtitle}>
-                    Faça login para continuar
-                  </Text>
-                </View>
-                
-                <View style={styles.inputGroup}>
-                  {/* Input Email melhorado */}
-                  <View style={[
-                    styles.inputContainer,
-                    isEmailFocused && styles.inputContainerFocused
-                  ]}>
-                    <View style={styles.inputIconContainer}>
-                      <MaterialCommunityIcons 
-                        name="email-outline" 
-                        size={20} 
-                        color={isEmailFocused ? "#E53935" : "#757575"} 
-                      />
-                    </View>
-                    <TextInput
-                      placeholder="Digite seu e-mail"
-                      placeholderTextColor="#757575"
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      value={email}
-                      onChangeText={setEmail}
-                      onFocus={() => {
-                        setIsEmailFocused(true);
-                        handleInputFocus();
-                      }}
-                      onBlur={() => {
-                        setIsEmailFocused(false);
-                        handleInputBlur();
-                      }}
-                      style={styles.input}
+              <View style={styles.inputGroup}>
+                {/* Input Email melhorado */}
+                <View style={[
+                  styles.inputContainer,
+                  isEmailFocused && styles.inputContainerFocused
+                ]}>
+                  <View style={styles.inputIconContainer}>
+                    <MaterialCommunityIcons 
+                      name="email-outline" 
+                      size={20} 
+                      color={isEmailFocused ? "#E53935" : "#757575"} 
                     />
                   </View>
-                  
-                  {/* Input Password melhorado */}
-                  <View style={[
-                    styles.inputContainer,
-                    isPasswordFocused && styles.inputContainerFocused
-                  ]}>
-                    <View style={styles.inputIconContainer}>
-                      <MaterialCommunityIcons 
-                        name="lock-outline" 
-                        size={20} 
-                        color={isPasswordFocused ? "#E53935" : "#757575"} 
-                      />
-                    </View>
-                    <TextInput
-                      placeholder="Digite sua senha"
-                      placeholderTextColor="#757575"
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      value={password}
-                      onChangeText={setPassword}
-                      onFocus={() => {
-                        setIsPasswordFocused(true);
-                        handleInputFocus();
-                      }}
-                      onBlur={() => {
-                        setIsPasswordFocused(false);
-                        handleInputBlur();
-                      }}
-                      style={styles.input}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.passwordToggle}
-                    >
-                      <MaterialCommunityIcons
-                        name={showPassword ? "eye-off" : "eye"}
-                        size={20}
-                        color="#757575"
-                      />
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    placeholder="Digite seu e-mail"
+                    placeholderTextColor="#757575"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
+                    onFocus={() => {
+                      setIsEmailFocused(true);
+                      handleInputFocus();
+                    }}
+                    onBlur={() => {
+                      setIsEmailFocused(false);
+                      handleInputBlur();
+                    }}
+                    style={styles.input}
+                  />
                 </View>
                 
-                {/* Forgot Password */}
-                <TouchableOpacity
-                  onPress={() => navigation.navigate("RequestPassword")}
-                  style={styles.forgotPasswordButton}
-                >
-                  <Text style={styles.forgotPasswordText}>
-                    Esqueceu sua senha?
-                  </Text>
-                </TouchableOpacity>
-                
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                  <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
-                    <TouchableOpacity
-                      style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-                      onPress={handleLogin}
-                      disabled={loading}
-                      onPressIn={handlePressIn}
-                      onPressOut={handlePressOut}
-                      activeOpacity={0.9}
-                    >
-                      {loading ? (
-                        <View style={styles.loadingContainer}>
-                          <Animated.View
-                            style={[
-                              styles.loadingIndicator,
-                              { transform: [{ rotate: rotateInterpolate }] }
-                            ]}
-                          >
-                            <MaterialCommunityIcons 
-                              name="loading" 
-                              size={20} 
-                              color="#FFFFFF" 
-                            />
-                          </Animated.View>
-                          <Text style={styles.loadingText}>
-                            Entrando...
-                          </Text>
-                        </View>
-                      ) : (
-                        <View style={styles.buttonContent}>
-                          <Text style={styles.buttonText}>
-                            ENTRAR
-                          </Text>
-                          <MaterialCommunityIcons 
-                            name="arrow-right" 
-                            size={20} 
-                            color="#FFFFFF" 
-                            style={styles.buttonIcon}
-                          />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  </Animated.View>
-                  
-                  {/* Divider melhorado */}
-                  <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <View style={styles.dividerTextContainer}>
-                      <Text style={styles.dividerText}>
-                        ou
-                      </Text>
-                    </View>
-                    <View style={styles.dividerLine} />
+                {/* Input Password melhorado */}
+                <View style={[
+                  styles.inputContainer,
+                  isPasswordFocused && styles.inputContainerFocused
+                ]}>
+                  <View style={styles.inputIconContainer}>
+                    <MaterialCommunityIcons 
+                      name="lock-outline" 
+                      size={20} 
+                      color={isPasswordFocused ? "#E53935" : "#757575"} 
+                    />
                   </View>
-                  
-                  {/* Register Button melhorado */}
+                  <TextInput
+                    placeholder="Digite sua senha"
+                    placeholderTextColor="#757575"
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => {
+                      setIsPasswordFocused(true);
+                      handleInputFocus();
+                    }}
+                    onBlur={() => {
+                      setIsPasswordFocused(false);
+                      handleInputBlur();
+                    }}
+                    style={styles.input}
+                  />
                   <TouchableOpacity
-                    style={styles.registerButton}
-                    onPress={() => navigation.navigate("Register")}
-                    activeOpacity={0.8}
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.passwordToggle}
                   >
-                    <View style={styles.registerButtonContent}>
-                      <MaterialCommunityIcons 
-                        name="account-plus" 
-                        size={20} 
-                        color="#E53935" 
-                        style={styles.registerButtonIcon}
-                      />
-                      <Text style={styles.registerButtonText}>
-                        CRIAR CONTA
-                      </Text>
-                    </View>
+                    <MaterialCommunityIcons
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#757575"
+                    />
                   </TouchableOpacity>
                 </View>
-              </Animated.View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-          <Footer />
-        </LinearGradient>
-      </SafeAreaView>
+              </View>
+              
+              {/* Forgot Password */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate("RequestPassword")}
+                style={styles.forgotPasswordButton}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  Esqueceu sua senha?
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
+                  <TouchableOpacity
+                    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    activeOpacity={0.9}
+                  >
+                    {loading ? (
+                      <View style={styles.loadingContainer}>
+                        <Animated.View
+                          style={[
+                            styles.loadingIndicator,
+                            { transform: [{ rotate: rotateInterpolate }] }
+                          ]}
+                        >
+                          <MaterialCommunityIcons 
+                            name="loading" 
+                            size={20} 
+                            color="#FFFFFF" 
+                          />
+                        </Animated.View>
+                        <Text style={styles.loadingText}>
+                          Entrando...
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.buttonContent}>
+                        <Text style={styles.buttonText}>
+                          ENTRAR
+                        </Text>
+                        <MaterialCommunityIcons 
+                          name="arrow-right" 
+                          size={20} 
+                          color="#FFFFFF" 
+                          style={styles.buttonIcon}
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+                
+                {/* Divider melhorado */}
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <View style={styles.dividerTextContainer}>
+                    <Text style={styles.dividerText}>
+                      ou
+                    </Text>
+                  </View>
+                  <View style={styles.dividerLine} />
+                </View>
+                
+                {/* Register Button melhorado */}
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={() => navigation.navigate("Register")}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.registerButtonContent}>
+                    <MaterialCommunityIcons 
+                      name="account-plus" 
+                      size={20} 
+                      color="#E53935" 
+                      style={styles.registerButtonIcon}
+                    />
+                    <Text style={styles.registerButtonText}>
+                      CRIAR CONTA
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+        <Footer />
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+export default function LoginScreen(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <LoginContent {...props} />
     </CustomAlertProvider>
   );
 }

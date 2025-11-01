@@ -22,15 +22,16 @@ import Footer from "../components/footer";
 import * as SecureStore from "expo-secure-store";
 import { api } from "../config/Api";
 import { TermModal } from "../components/term";
-import { showCustomAlert } from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 type SubscriptionType = "FREE" | "PRO" | "VIP" | null;
 
-export default function HomeScreen({ navigation }: Props) {
+function HomeContent({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
+  const { showAlert } = useCustomAlert();
   const [showTermModal, setShowTermModal] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionType>(null);
   const [username, setUsername] = useState<string>("");
@@ -99,9 +100,9 @@ export default function HomeScreen({ navigation }: Props) {
       try {
         const tokenResponse = await api.get("/auth/token/validate");
         if (!tokenResponse) {
-          showCustomAlert(
+          showAlert(
             "Acesso atualizado, faça login novamente para continuar!",
-            "Alerta"
+            { title: "Alerta" }
           );
           navigation.navigate("Login");
         }
@@ -206,9 +207,9 @@ export default function HomeScreen({ navigation }: Props) {
 
         // Se o alerta estiver ativo, mostra popup e seta flag
         if (response.data) {
-          showCustomAlert(
+          showAlert(
             "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
-            "Sua assinatura vai expirar em breve"
+            { title: "Sua assinatura vai expirar em breve" }
           );
           await AsyncStorage.setItem("subscriptionAlertFlag", "1");
         }
@@ -283,13 +284,13 @@ export default function HomeScreen({ navigation }: Props) {
       console.log("Terms verificados e flag definida");
 
       if (response.status === 404) {
-        showCustomAlert(
+        showAlert(
           "Erro ao validar usuário, faça login novamente",
-          "Erro"
+          { title: "Erro" }
         );
       }
     } catch (error) {
-      showCustomAlert("Erro ao verificar aceite dos termos.", "Erro");
+      showAlert("Erro ao verificar aceite dos termos.", { title: "Erro" });
     }
   };
 
@@ -703,6 +704,14 @@ export default function HomeScreen({ navigation }: Props) {
         onAccepted={() => setShowTermModal(false)}
       />
     </SafeAreaView>
+  );
+}
+
+export default function HomeScreen(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <HomeContent {...props} />
+    </CustomAlertProvider>
   );
 }
 
