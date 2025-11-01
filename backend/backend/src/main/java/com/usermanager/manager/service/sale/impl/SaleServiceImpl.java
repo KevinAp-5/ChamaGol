@@ -47,7 +47,7 @@ public class SaleServiceImpl implements SaleService {
                 .salePrice(sale.salePrice())
                 .userAmount(sale.userAmount())
                 .usedAmount(0)
-                .saleExpiration(sale.saleExpiration())
+                .saleExpiration(ZonedDateTime.now().plusDays(sale.saleExpiration()))
                 .creationDate(ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")))
                 .finishedDate(null)
                 .userSubscriptionTime(sale.userSubscriptionTime())
