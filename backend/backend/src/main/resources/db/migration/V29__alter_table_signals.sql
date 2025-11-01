@@ -1,0 +1,1 @@
+ALTER TABLE signals ALTER COLUMN acao_sinal TYPE VARCHAR(1000)
