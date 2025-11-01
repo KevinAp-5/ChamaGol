@@ -10,7 +10,10 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,14 +21,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../../App";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
-import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 import Logo from "../components/logo";
 import Footer from "../components/footer";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RequestPassword">;
 
-export default function RequestPasswordReset({ navigation }: Props) {
+function RequestPasswordResetContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
+  const { showAlert } = useCustomAlert();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [counter, setCounter] = useState(60);
@@ -108,12 +112,12 @@ export default function RequestPasswordReset({ navigation }: Props) {
 
   const handlePasswordRecovery = async () => {
     if (!email) {
-      showCustomAlert("Por favor, insira um e-mail válido.", "Campo obrigatório");
+      showAlert("Por favor, insira um e-mail válido.", { title: "Campo obrigatório" });
       return;
     }
 
     if (!validateEmail(email)) {
-      showCustomAlert("Por favor, insira um e-mail válido.", "E-mail inválido");
+      showAlert("Por favor, insira um e-mail válido.", { title: "E-mail inválido" });
       return;
     }
 
@@ -128,7 +132,7 @@ export default function RequestPasswordReset({ navigation }: Props) {
         throw new Error(response.data?.message || "Erro ao enviar solicitação.");
       }
       
-      showCustomAlert("Verifique sua caixa de entrada e confirme o e-mail.", "E-mail enviado!");
+      showAlert("Verifique sua caixa de entrada e confirme o e-mail.", { title: "E-mail enviado!" });
       await AsyncStorage.setItem("email", email);
 
       // 2. Start polling to check if email was confirmed
@@ -149,25 +153,21 @@ export default function RequestPasswordReset({ navigation }: Props) {
     while (attempts < maxAttempts) {
       try {
         const response = await api.post("auth/email/confirmed", { email });
-        // Backend returns { message: "email activated." } if confirmed
-        if (
-          response.status === 200 &&
-          typeof response.data?.message === "string" &&
-          response.data.message.trim().toLowerCase() === "email activated."
-        ) {
+        // Se status 200, está confirmado!
+        if (response.status === 200) {
           navigation.navigate("PasswordResetEmailConfirmed");
           return;
         }
       } catch (error: any) {
-        // If not confirmed, ignore and try again
+        // Ignore and try again
       }
       await delay(5000);
       attempts++;
     }
     
-    showCustomAlert(
+    showAlert(
       "Confirmação de e-mail não concluída a tempo. Tente novamente.",
-      "Tempo esgotado"
+      { title: "Tempo esgotado" }
     );
   };
 
@@ -175,9 +175,9 @@ export default function RequestPasswordReset({ navigation }: Props) {
 
   const handleError = (error: any) => {
     if (!error.response) {
-      showCustomAlert(
+      showAlert(
         error.message || "Erro desconhecido. Tente novamente.",
-        "Erro"
+        { title: "Erro" }
       );
       return;
     }
@@ -187,12 +187,12 @@ export default function RequestPasswordReset({ navigation }: Props) {
     
     switch (status) {
       case 400:
-        showCustomAlert(message, "Erro de Validação");
+        showAlert(message, { title: "Erro de Validação" });
         break;
       default:
-        showCustomAlert(
+        showAlert(
           `Status: ${status || "N/A"} - ${message}`,
-          "Erro Desconhecido"
+          { title: "Erro Desconhecido" }
         );
         break;
     }
@@ -204,23 +204,22 @@ export default function RequestPasswordReset({ navigation }: Props) {
   };
 
   return (
-    <CustomAlertProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-        <LinearGradient
-          colors={[colors.primary, '#222222']}
-          style={styles.gradientBackground}
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <LinearGradient
+        colors={[colors.primary, '#222222']}
+        style={styles.gradientBackground}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={styles.container}>
-            <Animated.View 
-              style={[
-                styles.logoContainer, 
-                { 
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }]
-                }
-              ]}
-            >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.logoContainer}>
               <Logo source={require("../assets/logo_white_label.png")} />
               <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
                 CHAMAGOL
@@ -228,7 +227,7 @@ export default function RequestPasswordReset({ navigation }: Props) {
               <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
                 Seu universo esportivo
               </Text>
-            </Animated.View>
+            </View>
             
             <Animated.View 
               style={[
@@ -360,9 +359,17 @@ export default function RequestPasswordReset({ navigation }: Props) {
             </Animated.View>
             
             <Footer />
-          </View>
-        </LinearGradient>
-      </SafeAreaView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+export default function RequestPasswordReset(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <RequestPasswordResetContent {...props} />
     </CustomAlertProvider>
   );
 }
@@ -372,9 +379,9 @@ const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
     padding: 16,
   },
@@ -404,6 +411,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     alignItems: "center",
+    marginBottom: 24,
   },
   title: {
     fontSize: 22,
