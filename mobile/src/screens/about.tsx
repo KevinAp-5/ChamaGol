@@ -14,10 +14,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../theme/theme";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from "../../App";
 
-export default function AboutScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, "About">;
+
+function AboutContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
-  
+  const { showAlert } = useCustomAlert();
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -26,9 +32,8 @@ export default function AboutScreen() {
     new Animated.Value(0),
     new Animated.Value(0)
   ])[0];
-  
+
   useEffect(() => {
-    // Run entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -41,8 +46,7 @@ export default function AboutScreen() {
         useNativeDriver: true
       })
     ]).start();
-    
-    // Animate stats with sequence
+
     Animated.stagger(200, [
       Animated.timing(statsAnim[0], {
         toValue: 1,
@@ -191,15 +195,14 @@ export default function AboutScreen() {
           <TouchableOpacity
             style={[styles.contactButton, { backgroundColor: colors.secondary }]}
             activeOpacity={0.8}
-            // onPress={""}  // adicionar contato para o chamagol;
+            onPress={() => showAlert("Whatsapp: ", {
+              title: "Suporte",
+              confirmText: "Sair"
+            })}
           >
-            <MaterialCommunityIcons 
-              name="email-outline" 
-              size={20} 
-              color="#FFF" 
-            />
+            <MaterialCommunityIcons name="logout" size={20} color="#FFF" />
             <Text style={[styles.contactButtonText, { color: '#FFF', fontFamily: fonts.bold }]}>
-              ENTRE EM CONTATO
+              ENTRAR EM CONTATO
             </Text>
           </TouchableOpacity>
 
@@ -214,6 +217,14 @@ export default function AboutScreen() {
         </ScrollView>
       </Animated.View>
     </View>
+  );
+}
+
+export default function AboutScreen(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <AboutContent {...props} />
+    </CustomAlertProvider>
   );
 }
 
