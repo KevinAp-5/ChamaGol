@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import SockJS from "sockjs-client";
 import FireGif from "../components/fire";
 import * as SecureStore from "expo-secure-store";
@@ -42,6 +43,39 @@ type Message = {
 
 type Props = NativeStackScreenProps<RootStackParamList, "Timeline">;
 
+// Componente de Badge de Status
+const StatusBadge = ({ isActive, colors, fonts }: any) => (
+  <View 
+    style={[
+      styles.statusBadge,
+      { 
+        backgroundColor: isActive 
+          ? 'rgba(52, 199, 89, 0.15)' 
+          : 'rgba(117, 117, 117, 0.15)',
+        borderColor: isActive ? '#34C759' : '#757575',
+      }
+    ]}
+  >
+    <View 
+      style={[
+        styles.statusDot,
+        { backgroundColor: isActive ? '#34C759' : '#757575' }
+      ]} 
+    />
+    <Text 
+      style={[
+        styles.statusText,
+        { 
+          color: isActive ? '#34C759' : '#757575',
+          fontFamily: fonts.semibold 
+        }
+      ]}
+    >
+      {isActive ? 'ATIVO' : 'ENCERRADO'}
+    </Text>
+  </View>
+);
+
 // Componente memoizado para cada mensagem
 const MessageCard = React.memo(function MessageCard({
   item,
@@ -59,176 +93,354 @@ const MessageCard = React.memo(function MessageCard({
   const isVIPSignal = item.tipoEvento === "VIP";
   const isLast = index === messagesLength - 1;
 
-  // VIP bloqueado
+  // VIP bloqueado - Card chamativo para usuários FREE
   if (isVIPSignal && userSubscription !== "VIP") {
     return (
-      <Animated.View
+      <View
         style={[
-          styles.messageContainer,
+          styles.messageCard,
+          styles.lockedCard,
           {
-            backgroundColor: colors.card,
-            borderLeftColor: colors.secondary,
-            borderLeftWidth: 5,
             marginBottom: isLast ? spacing.xl : spacing.md,
-            ...shadows.medium,
+            ...shadows.large,
           },
         ]}
       >
         <LinearGradient
-          colors={['rgba(229, 57, 53, 0.05)', 'rgba(229, 57, 53, 0.1)']}
-          style={styles.proGradient}
-        />
-        <View style={styles.lockIconContainer}>
-          <MaterialCommunityIcons
-            name="lock"
-            size={32}
-            color={colors.secondary}
-          />
-        </View>
-        <Text
-          style={{
-            color: colors.secondary,
-            fontFamily: fonts.bold,
-            fontSize: 18,
-            marginBottom: spacing.sm,
-            textAlign: 'center',
-          }}
+          colors={['#1a1a1a', '#0a0a0a']}
+          style={styles.lockedCardGradient}
         >
-          Sinal exclusivo para assinantes VIP!
-        </Text>
-        <Text
-          style={{
-            color: colors.muted,
-            fontFamily: fonts.regular,
-            fontSize: 14,
-            marginBottom: spacing.md,
-            textAlign: 'center',
-          }}
-        >
-          Desbloqueie acesso a sinais exclusivos e análises premium
-        </Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: colors.secondary,
-            borderRadius: borderRadius.md,
-            padding: spacing.md,
-            marginTop: spacing.sm,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-          }}
-          onPress={() => {
-            navigation.navigate("PROSubscription");
-          }}
-        >
-          <Text style={{ color: colors.card, fontFamily: fonts.bold, marginRight: spacing.sm }}>
-            ASSINAR AGORA
-          </Text>
-          <MaterialCommunityIcons name="star" size={18} color={colors.card} />
-        </TouchableOpacity>
-      </Animated.View>
+          {/* Efeito de brilho VIP */}
+          <View style={styles.vipShineEffect}>
+            <LinearGradient
+              colors={['transparent', 'rgba(255, 215, 0, 0.1)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.shineGradient}
+            />
+          </View>
+
+          {/* Badge VIP Premium */}
+          <View style={styles.vipPremiumBadge}>
+            <LinearGradient
+              colors={['#FFD700', '#FFA500', '#FF8C00']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.vipPremiumGradient}
+            >
+              <MaterialCommunityIcons name="crown" size={16} color="#000" />
+              <Text style={[styles.vipPremiumText, { fontFamily: fonts.extrabold }]}>
+                SINAL VIP
+              </Text>
+            </LinearGradient>
+          </View>
+
+          {/* Conteúdo bloqueado */}
+          <View style={styles.lockedContent}>
+            <View style={styles.lockIconContainer}>
+              <View style={styles.lockIconGlow}>
+                <LinearGradient
+                  colors={['rgba(229, 57, 53, 0.3)', 'rgba(229, 57, 53, 0)']}
+                  style={styles.glowCircle}
+                />
+              </View>
+              <View style={styles.lockIconWrapper}>
+                <MaterialCommunityIcons
+                  name="lock"
+                  size={48}
+                  color="#FFD700"
+                />
+              </View>
+            </View>
+
+            <Text
+              style={[
+                styles.lockedTitle,
+                {
+                  color: '#FFFFFF',
+                  fontFamily: fonts.bold,
+                }
+              ]}
+            >
+              Sinal Exclusivo VIP
+            </Text>
+            
+            <Text
+              style={[
+                styles.lockedDescription,
+                {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontFamily: fonts.regular,
+                }
+              ]}
+            >
+              Desbloqueie sinais premium, análises exclusivas e aumente seus lucros
+            </Text>
+
+            {/* Features VIP */}
+            <View style={styles.vipFeatures}>
+              <View style={styles.vipFeatureItem}>
+                <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
+                <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>
+                  Sinais em tempo real
+                </Text>
+              </View>
+              <View style={styles.vipFeatureItem}>
+                <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
+                <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>
+                  Análises detalhadas
+                </Text>
+              </View>
+              <View style={styles.vipFeatureItem}>
+                <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
+                <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>
+                  Suporte prioritário
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.unlockButton}
+              onPress={() => navigation.navigate("PROSubscription")}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#E53935', '#B71C1C']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.unlockButtonGradient}
+              >
+                <MaterialCommunityIcons name="crown" size={22} color="#FFD700" />
+                <Text style={[styles.unlockButtonText, { fontFamily: fonts.bold }]}>
+                  ASSINAR AGORA
+                </Text>
+                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </View>
     );
   }
 
   // Mensagem normal
   return (
-    <Animated.View
+    <View
       style={[
-        styles.messageContainer,
+        styles.messageCard,
         {
           backgroundColor: colors.card,
-          borderLeftColor: isActive ? colors.secondary : colors.muted,
-          borderLeftWidth: 5,
           marginBottom: isLast ? spacing.xl : spacing.md,
           ...shadows.medium,
         },
-        item.isNew && {
-          transform: [{ scale: 1.02 }],
-          shadowOpacity: 0.3,
-          shadowRadius: 15,
-          elevation: 8,
-        },
       ]}
     >
+      {/* Border lateral colorida */}
+      <View 
+        style={[
+          styles.colorBorder,
+          { backgroundColor: isActive ? colors.secondary : colors.muted }
+        ]} 
+      />
+
+      {/* Badge VIP - Melhorado */}
       {isVIPSignal && (
-        <View style={styles.proBadge}>
+        <View style={styles.vipBadgeCard}>
           <LinearGradient
-            colors={[colors.secondary, colors.highlight]}
+            colors={['#FFD700', '#FFA500', '#FF8C00']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.proBadgeGradient}
+            end={{ x: 1, y: 1 }}
+            style={styles.vipBadgeCardGradient}
           >
-            <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>VIP</Text>
+            <MaterialCommunityIcons name="crown" size={14} color="#000" />
+            <Text style={[styles.vipBadgeCardText, { fontFamily: fonts.extrabold }]}>
+              VIP
+            </Text>
           </LinearGradient>
         </View>
       )}
 
-      <View style={styles.header}>
-        <Text style={[styles.campeonato, { color: colors.accent, fontFamily: fonts.bold }]}>
-          {item.campeonato}
-        </Text>
-        <Text style={[styles.createdAt, { color: colors.muted, fontFamily: fonts.regular }]}>
-          {moment(item.createdAt).format("DD/MM HH:mm")}
-        </Text>
+      {/* Header do Card */}
+      <View style={styles.cardHeader}>
+        <View style={styles.cardHeaderLeft}>
+          <MaterialCommunityIcons 
+            name="soccer" 
+            size={20} 
+            color={colors.secondary} 
+          />
+          <Text 
+            style={[
+              styles.championship,
+              { color: colors.secondary, fontFamily: fonts.bold }
+            ]}
+          >
+            {item.campeonato}
+          </Text>
+        </View>
+        <StatusBadge isActive={isActive} colors={colors} fonts={fonts} />
       </View>
 
-      <View style={styles.rowWithIcon}>
+      {/* Times */}
+      <View style={styles.teamsContainer}>
         <Text 
           style={[
-            styles.nomeTimes, 
-            { 
-              color: colors.primary, 
-              fontFamily: fonts.semibold,
-              flex: 1 
-            }
+            styles.teams,
+            { color: colors.primary, fontFamily: fonts.bold }
           ]}
         >
           {item.nomeTimes}
         </Text>
-        {item.isNew && <FireGif />}
+        {item.isNew && (
+          <View style={styles.newIndicator}>
+            <FireGif />
+            <Text style={[styles.newText, { fontFamily: fonts.bold }]}>
+              NOVO
+            </Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.matchInfo}>
-        <View style={styles.matchInfoItem}>
-          <MaterialCommunityIcons name="clock-outline" size={16} color={colors.muted} />
-          <Text style={[styles.tempoPartida, { color: colors.primary, fontFamily: fonts.medium }]}>
-            {item.tempoPartida}
-          </Text>
+      {/* Info do Jogo */}
+      <View style={styles.matchDetails}>
+        <View style={styles.detailItem}>
+          <View style={[styles.detailIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
+            <MaterialCommunityIcons 
+              name="clock-outline" 
+              size={18} 
+              color={colors.secondary} 
+            />
+          </View>
+          <View>
+            <Text style={[styles.detailLabel, { color: colors.muted, fontFamily: fonts.regular }]}>
+              Tempo
+            </Text>
+            <Text style={[styles.detailValue, { color: colors.primary, fontFamily: fonts.semibold }]}>
+              {item.tempoPartida}
+            </Text>
+          </View>
         </View>
-        <View style={styles.matchInfoItem}>
-          <MaterialCommunityIcons name="scoreboard-outline" size={16} color={colors.muted} />
-          <Text style={[styles.placar, { color: colors.primary, fontFamily: fonts.medium }]}>
-            {item.placar}
-          </Text>
+
+        <View style={styles.divider} />
+
+        <View style={styles.detailItem}>
+          <View style={[styles.detailIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
+            <MaterialCommunityIcons 
+              name="scoreboard-outline" 
+              size={18} 
+              color={colors.secondary} 
+            />
+          </View>
+          <View>
+            <Text style={[styles.detailLabel, { color: colors.muted, fontFamily: fonts.regular }]}>
+              Placar
+            </Text>
+            <Text style={[styles.detailValue, { color: colors.primary, fontFamily: fonts.semibold }]}>
+              {item.placar}
+            </Text>
+          </View>
         </View>
       </View>
 
+      {/* Ação do Sinal - Border mais grosso */}
       <View 
         style={[
-          styles.acaoSinalContainer, 
-          { backgroundColor: isActive ? 'rgba(229, 57, 53, 0.1)' : 'rgba(117, 117, 117, 0.1)' }
+          styles.signalAction,
+          { 
+            backgroundColor: isActive 
+              ? 'rgba(229, 57, 53, 0.1)' 
+              : 'rgba(117, 117, 117, 0.1)',
+            borderColor: isActive ? colors.secondary : colors.muted,
+          }
         ]}
       >
-        <MaterialCommunityIcons 
-          name={isActive ? "lightning-bolt" : "information-outline"} 
-          size={20} 
-          color={isActive ? colors.secondary : colors.muted} 
-        />
+        <View style={[styles.signalIcon, { backgroundColor: isActive ? 'rgba(229, 57, 53, 0.15)' : 'rgba(117, 117, 117, 0.15)' }]}>
+          <MaterialCommunityIcons 
+            name="lightning-bolt" 
+            size={24} 
+            color={isActive ? colors.secondary : colors.muted} 
+          />
+        </View>
         <Text 
           style={[
-            styles.acaoSinal, 
+            styles.signalActionText,
             { 
               color: isActive ? colors.secondary : colors.muted,
-              fontFamily: fonts.semibold
+              fontFamily: fonts.bold
             }
           ]}
         >
           {item.acaoSinal}
         </Text>
       </View>
-    </Animated.View>
+
+      {/* Timestamp */}
+      <View style={styles.timestamp}>
+        <MaterialCommunityIcons 
+          name="clock-time-four-outline" 
+          size={12} 
+          color={colors.muted} 
+        />
+        <Text 
+          style={[
+            styles.timestampText,
+            { color: colors.muted, fontFamily: fonts.regular }
+          ]}
+        >
+          {moment(item.createdAt).format("DD/MM/YYYY • HH:mm")}
+        </Text>
+      </View>
+    </View>
   );
 });
+
+// Componente de indicador de conexão
+const ConnectionIndicator = ({ isConnected, colors, fonts }: any) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isConnected) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [isConnected]);
+
+  return (
+    <View style={styles.connectionIndicator}>
+      <Animated.View 
+        style={[
+          styles.connectionDot,
+          { 
+            backgroundColor: isConnected ? '#34C759' : '#FF3B30',
+            transform: [{ scale: isConnected ? pulseAnim : 1 }]
+          }
+        ]} 
+      />
+      <Text 
+        style={[
+          styles.connectionText,
+          { 
+            color: 'rgba(255, 255, 255, 0.9)',
+            fontFamily: fonts.medium 
+          }
+        ]}
+      >
+        {isConnected ? 'Conectado' : 'Desconectado'}
+      </Text>
+    </View>
+  );
+};
 
 export default function SinaisScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
@@ -239,8 +451,9 @@ export default function SinaisScreen({ navigation }: Props) {
   const [isTokenLoaded, setIsTokenLoaded] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  
   const flatListRef = useRef<FlatList>(null);
-
   const newMessageAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -250,12 +463,12 @@ export default function SinaisScreen({ navigation }: Props) {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 400,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 600,
+        duration: 400,
         useNativeDriver: true,
       }),
     ]).start();
@@ -264,9 +477,7 @@ export default function SinaisScreen({ navigation }: Props) {
   useEffect(() => {
     const getUserSubscription = async () => {
       try {
-        const storedUserSubscription = await AsyncStorage.getItem(
-          "subscription"
-        );
+        const storedUserSubscription = await AsyncStorage.getItem("subscription");
         if (storedUserSubscription) {
           setUserSubscription(storedUserSubscription);
         }
@@ -294,7 +505,6 @@ export default function SinaisScreen({ navigation }: Props) {
         setIsTokenLoaded(true);
       }
     };
-
     getToken();
   }, []);
 
@@ -330,24 +540,25 @@ export default function SinaisScreen({ navigation }: Props) {
 
     setIsConnecting(true);
     
-    // const socket = new SockJS(`https://chamagol-9gfb.onrender.com/ws/chat?token=${token}`);
-    // const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
     const socket = new SockJS(`http://192.168.0.103:8080/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
         setStompClient(client);
         setIsConnecting(false);
+        setIsConnected(true);
         console.log("Conectado ao WebSocket");
       },
       onDisconnect: () => {
         setStompClient(null);
+        setIsConnected(false);
         console.log("Desconectado do WebSocket");
       },
       onStompError: (frame) => {
         console.error("Erro reportado pelo broker: " + frame.headers["message"]);
         console.error("Detalhes adicionais: " + frame.body);
         setIsConnecting(false);
+        setIsConnected(false);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -377,19 +588,20 @@ export default function SinaisScreen({ navigation }: Props) {
         
         // Animate new message notification
         Animated.sequence([
-          Animated.timing(newMessageAnim, {
+          Animated.spring(newMessageAnim, {
             toValue: 1,
-            duration: 300,
+            friction: 8,
+            tension: 40,
             useNativeDriver: true,
           }),
-          Animated.delay(2000),
+          Animated.delay(2500),
           Animated.timing(newMessageAnim, {
             toValue: 0,
-            duration: 300,
+            duration: 250,
             useNativeDriver: true,
           }),
         ]).start();
-
+        
         // Remove isNew flag after animation completes
         setTimeout(() => {
           setMessages((prev) =>
@@ -398,7 +610,7 @@ export default function SinaisScreen({ navigation }: Props) {
             )
           );
         }, 3000);
-
+        
         // Scroll to bottom
         setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
@@ -413,14 +625,11 @@ export default function SinaisScreen({ navigation }: Props) {
 
   const onRefresh = async () => {
     setIsRefreshing(true);
-    // Here you would typically fetch latest messages from an API
-    // For now, we'll just simulate a refresh delay
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1500);
   };
 
-  // Memoize renderItem para não recriar a função a cada render
   const renderItem = React.useCallback(
     ({ item, index }: { item: Message; index: number }) => (
       <MessageCard
@@ -439,46 +648,47 @@ export default function SinaisScreen({ navigation }: Props) {
     [userSubscription, navigation, colors, fonts, spacing, borderRadius, shadows, messages.length]
   );
 
-  // Se os cards têm altura fixa, use getItemLayout:
-  const ITEM_HEIGHT = 180; // ajuste conforme o real
-  const getItemLayout = React.useCallback(
-    (_data: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
-
   // New message notification bubble
   const newMessageNotification = (
     <Animated.View 
       style={[
-        styles.newMessageNotification,
+        styles.floatingNotification,
         {
           opacity: newMessageAnim,
           transform: [
             { 
               translateY: newMessageAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [20, 0]
+                outputRange: [100, 0]
               })
+            },
+            {
+              scale: newMessageAnim
             }
           ]
         }
       ]}
     >
-      <MaterialCommunityIcons name="bell-ring" size={18} color="#FFF" />
-      <Text style={styles.newMessageText}>Novo sinal recebido!</Text>
+      <LinearGradient
+        colors={[colors.secondary, colors.highlight]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.notificationGradient}
+      >
+        <MaterialCommunityIcons name="bell-ring" size={20} color="#FFFFFF" />
+        <Text style={[styles.notificationText, { fontFamily: fonts.bold }]}>
+          Novo sinal disponível!
+        </Text>
+      </LinearGradient>
     </Animated.View>
   );
 
   const renderEmptyState = () => {
     if (!isTokenLoaded) {
       return (
-        <View style={styles.emptyContainer}>
+        <View style={styles.emptyState}>
           <ActivityIndicator size="large" color={colors.secondary} />
-          <Text style={[styles.emptyText, { color: colors.muted, fontFamily: fonts.regular }]}>
+          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.semibold }]}>
             Carregando...
           </Text>
         </View>
@@ -487,16 +697,25 @@ export default function SinaisScreen({ navigation }: Props) {
     
     if (!token) {
       return (
-        <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.muted} />
-          <Text style={[styles.emptyText, { color: colors.muted, fontFamily: fonts.regular }]}>
-            Erro ao recuperar token. Faça login novamente.
+        <View style={styles.emptyState}>
+          <View style={[styles.emptyIcon, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}>
+            <MaterialCommunityIcons 
+              name="alert-circle-outline" 
+              size={48} 
+              color="#FF3B30" 
+            />
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.bold }]}>
+            Erro ao recuperar sessão
+          </Text>
+          <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
+            Por favor, faça login novamente para continuar
           </Text>
           <TouchableOpacity
             style={[styles.emptyButton, { backgroundColor: colors.secondary }]}
             onPress={() => navigation.navigate("Login")}
           >
-            <Text style={{ color: "#FFF", fontFamily: fonts.bold }}>
+            <Text style={[styles.emptyButtonText, { fontFamily: fonts.bold }]}>
               IR PARA LOGIN
             </Text>
           </TouchableOpacity>
@@ -506,54 +725,70 @@ export default function SinaisScreen({ navigation }: Props) {
     
     if (isConnecting) {
       return (
-        <View style={styles.emptyContainer}>
+        <View style={styles.emptyState}>
           <ActivityIndicator size="large" color={colors.secondary} />
-          <Text style={[styles.emptyText, { color: colors.muted, fontFamily: fonts.regular }]}>
-            Conectando ao serviço de sinais...
+          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.semibold }]}>
+            Conectando ao serviço...
+          </Text>
+          <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
+            Aguarde enquanto estabelecemos a conexão
           </Text>
         </View>
       );
     }
     
     return (
-      <View style={styles.emptyContainer}>
-        <MaterialCommunityIcons name="signal-variant" size={64} color={colors.muted} />
-        <Text style={[styles.emptyText, { color: colors.muted, fontFamily: fonts.regular }]}>
-          Nenhum sinal disponível no momento.
+      <View style={styles.emptyState}>
+        <View style={[styles.emptyIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
+          <MaterialCommunityIcons 
+            name="signal-variant" 
+            size={48} 
+            color={colors.secondary} 
+          />
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.bold }]}>
+          Nenhum sinal disponível
         </Text>
-        <Text style={[styles.emptySubText, { color: colors.muted, fontFamily: fonts.regular }]}>
-          Novos sinais aparecerão aqui automaticamente.
+        <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
+          Novos sinais aparecerão aqui automaticamente em tempo real
         </Text>
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+    <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       
-      {/* Header (não contido na SafeAreaView para melhor design) */}
-      <View style={{ backgroundColor: colors.primary }}>
-        <LinearGradient
-          colors={[colors.primary, colors.highlight]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.headerGradient}
-        >
-          <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
-            <View style={styles.headerContent}>
-              <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-                Sinais
-              </Text>
-              <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-                Sinais em tempo real
-              </Text>
+      {/* Header */}
+      <LinearGradient
+        colors={['#000000', '#1a1a1a', '#B71C1C']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTop}>
+              <View>
+                <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
+                  Sinais ao Vivo
+                </Text>
+                <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
+                  Acompanhe em tempo real
+                </Text>
+              </View>
+              <ConnectionIndicator 
+                isConnected={isConnected} 
+                colors={colors} 
+                fonts={fonts} 
+              />
             </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
       
-      {/* Conteúdo principal */}
+      {/* Content */}
       <Animated.View 
         style={[
           styles.content,
@@ -577,8 +812,8 @@ export default function SinaisScreen({ navigation }: Props) {
                 contentContainerStyle={{
                   flexGrow: 1,
                   paddingTop: spacing.lg,
-                  paddingBottom: spacing.xl,
-                  paddingHorizontal: spacing.sm,
+                  paddingBottom: spacing.xl + 60,
+                  paddingHorizontal: spacing.md,
                 }}
                 onContentSizeChange={() =>
                   flatListRef.current?.scrollToEnd({ animated: true })
@@ -595,8 +830,7 @@ export default function SinaisScreen({ navigation }: Props) {
                 initialNumToRender={10}
                 maxToRenderPerBatch={10}
                 windowSize={7}
-                getItemLayout={getItemLayout}
-                removeClippedSubviews={true}
+                removeClippedSubviews={Platform.OS === 'android'}
               />
               {newMessageNotification}
             </>
@@ -610,155 +844,403 @@ export default function SinaisScreen({ navigation }: Props) {
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  headerGradient: {
-    paddingBottom: 60, // Aumentado para criar espaço para o conteúdo sobrepor
+  header: {
+    paddingBottom: 40,
     zIndex: 1,
   },
   headerContent: {
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     color: '#FFFFFF',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  connectionIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  connectionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  connectionText: {
+    fontSize: 12,
   },
   content: {
     flex: 1,
-    marginTop: -30, // Negativo para sobrepor ao header e criar efeito arredondado
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    marginTop: -20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     overflow: 'hidden',
     zIndex: 2,
   },
-  messageContainer: {
+  messageCard: {
     width: width - 32,
     alignSelf: "center",
-    padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
+    padding: 20,
   },
-  proGradient: {
+  colorBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
+  vipBadgeCard: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  vipBadgeCardGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 5,
+  },
+  vipBadgeCardText: {
+    color: "#000000",
+    fontSize: 12,
+    letterSpacing: 0.8,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  championship: {
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  teamsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  teams: {
+    fontSize: 18,
+    flex: 1,
+    lineHeight: 24,
+  },
+  newIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  newText: {
+    fontSize: 10,
+    color: '#FF5722',
+    letterSpacing: 1,
+  },
+  matchDetails: {
+    flexDirection: "row",
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    padding: 12,
+    borderRadius: 12,
+  },
+  detailItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  detailIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailLabel: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 15,
+  },
+  divider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    marginHorizontal: 16,
+  },
+  signalAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2.5,
+    gap: 12,
+  },
+  signalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signalActionText: {
+    fontSize: 16,
+    flex: 1,
+    lineHeight: 22,
+  },
+  timestamp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timestampText: {
+    fontSize: 11,
+  },
+  // Estilos para card VIP bloqueado (usuários FREE)
+  lockedCard: {
+    minHeight: 420,
+    overflow: 'hidden',
+  },
+  lockedCardGradient: {
+    flex: 1,
+    borderRadius: 16,
+    position: 'relative',
+  },
+  vipShineEffect: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    height: 4,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
+  shineGradient: {
+    flex: 1,
   },
-  campeonato: {
-    fontSize: 16,
+  vipPremiumBadge: {
+    alignSelf: 'center',
+    marginTop: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  createdAt: {
-    fontSize: 12,
+  vipPremiumGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    gap: 8,
   },
-  rowWithIcon: {
-    flexDirection: "row",
-    alignItems: "center",
+  vipPremiumText: {
+    color: "#000000",
+    fontSize: 14,
+    letterSpacing: 1.2,
+  },
+  lockedContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 28,
+  },
+  lockIconContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  lockIconGlow: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  glowCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  lockIconWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  lockedTitle: {
+    fontSize: 22,
     marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  nomeTimes: {
-    fontSize: 18,
-  },
-  matchInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  matchInfoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  tempoPartida: {
+  lockedDescription: {
     fontSize: 14,
-    marginLeft: 6,
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 22,
+    maxWidth: 280,
   },
-  placar: {
-    fontSize: 14,
-    marginLeft: 6,
+  vipFeatures: {
+    width: '100%',
+    marginBottom: 28,
+    gap: 12,
   },
-  acaoSinalContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
+  vipFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
-    marginTop: 4,
   },
-  acaoSinal: {
+  vipFeatureText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 13,
+  },
+  unlockButton: {
+    width: '100%',
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: "#E53935",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  unlockButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    gap: 10,
+  },
+  unlockButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    marginLeft: 8,
+    letterSpacing: 1,
   },
-  emptyContainer: {
+  // Empty States
+  emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 32,
   },
-  emptyText: {
-    fontSize: 18,
+  emptyIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
     marginTop: 16,
     textAlign: "center",
+    marginBottom: 8,
   },
-  emptySubText: {
+  emptyDescription: {
     fontSize: 14,
-    marginTop: 8,
     textAlign: "center",
-    opacity: 0.7,
+    lineHeight: 20,
+    maxWidth: 280,
   },
   emptyButton: {
     marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
   },
-  proBadge: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    zIndex: 1,
+  emptyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
-  proBadgeGradient: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderBottomLeftRadius: 8,
-  },
-  proBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-  },
-  newMessageNotification: {
+  // Floating Notification
+  floatingNotification: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 24,
     alignSelf: 'center',
-    backgroundColor: '#E53935',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 24,
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  notificationGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    gap: 10,
   },
-  newMessageText: {
+  notificationText: {
     color: '#FFFFFF',
-    marginLeft: 8,
-    fontWeight: 'bold',
-  },
-  lockIconContainer: {
-    alignItems: 'center',
-    marginVertical: 10,
+    fontSize: 15,
   },
 });
