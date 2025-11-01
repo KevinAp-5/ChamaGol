@@ -21,7 +21,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../config/Api';
-import { showCustomAlert } from '../components/CustomAlert';
+import { CustomAlertProvider, useCustomAlert } from '../components/CustomAlert';
 import { StatusBar } from 'expo-status-bar';
 import MaskedView from '@react-native-masked-view/masked-view';
 import LottieView from 'lottie-react-native';
@@ -30,9 +30,24 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ProSubscription'>;
 
 const { width } = Dimensions.get('window');
 
-export default function ProSubscriptionScreen({ navigation }: Props) {
-  
-  // Lista de benefícios da assinatura PRO
+interface SaleData {
+  name: string;
+  salePrice: number;
+  userAmount: number;
+  usedAmount: number;
+  userUnlimited: boolean;
+  saleExpiration: string | null;
+  userSubscriptionTime: number;
+}
+
+interface TimeRemaining {
+  days: number;
+  hours: number;
+  minutes: number;
+  total: number;
+}
+
+function ProSubscriptionContent({ navigation }: Props) {
   const benefits = [
     { 
       icon: 'crown', 
@@ -61,9 +76,20 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
   ];
 
   const { colors, fonts } = useTheme();
+  const { showAlert } = useCustomAlert();
+  
+  // Estados
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSale, setIsLoadingSale] = useState(true);
   const [error, setError] = useState('');
+  const [saleData, setSaleData] = useState<SaleData | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
+  
+  // Valores padrão caso não haja oferta ativa
+  const defaultPrice = 29.90;
+  const defaultOldPrice = 39.90;
+  const defaultSubscriptionTime = 30;
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -74,20 +100,95 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(-width)).current;
   const priceScaleAnim = useRef(new Animated.Value(1)).current;
+  const urgencyPulseAnim = useRef(new Animated.Value(1)).current;
   const confettiAnim = useRef<LottieView>(null);
 
-  // Configuração do esquema do deep link
   const scheme = Linking.createURL('/');
 
-  // Função para iniciar a animação de entrada
+  // Calcula tempo restante da oferta
+  const calculateTimeRemaining = (expirationDate: string): TimeRemaining => {
+    const now = new Date().getTime();
+    const expiration = new Date(expirationDate).getTime();
+    const difference = expiration - now;
+
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, total: 0 };
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { days, hours, minutes, total: difference };
+  };
+
+  // Busca dados da oferta ativa
+  const fetchActiveSale = async () => {
+    try {
+      setIsLoadingSale(true);
+      const response = await api.get('sale');
+      
+      if (response.status === 200) {
+        console.log("teste" + response.data);
+        setSaleData(response.data);
+        
+        // Se houver data de expiração, inicia o countdown
+        if (response.data.saleExpiration) {
+          const remaining = calculateTimeRemaining(response.data.saleExpiration);
+          setTimeRemaining(remaining);
+        }
+      }
+    } catch (err) {
+      console.log('Nenhuma oferta ativa encontrada, usando valores padrão');
+      setSaleData(null);
+    } finally {
+      setIsLoadingSale(false);
+    }
+  };
+
+  // Atualiza countdown a cada minuto
+  useEffect(() => {
+    if (saleData?.saleExpiration) {
+      const interval = setInterval(() => {
+        const remaining = calculateTimeRemaining(saleData.saleExpiration!);
+        setTimeRemaining(remaining);
+        
+        // Se a oferta expirou, busca novamente
+        if (remaining.total <= 0) {
+          fetchActiveSale();
+        }
+      }, 60000); // Atualiza a cada minuto
+
+      return () => clearInterval(interval);
+    }
+  }, [saleData]);
+
+  // Animação de urgência para indicadores de escassez
+  const startUrgencyAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(urgencyPulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(urgencyPulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
   const startEntryAnimations = () => {
-    // Reset animation values
     fadeAnim.setValue(0);
     scaleAnim.setValue(0.9);
     translateYAnim.setValue(50);
     benefitsAnimArray.forEach(anim => anim.setValue(0));
-    
-    // Sequence of animations
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -99,7 +200,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
         toValue: 1,
         duration: 800,
         useNativeDriver: true,
-        easing: Easing.out(Easing.back(0)),
+        easing: Easing.out(Easing.back(1.5)),
       }),
       Animated.timing(translateYAnim, {
         toValue: 0,
@@ -109,7 +210,6 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
       }),
     ]).start();
 
-    // Staggered animation for benefits
     Animated.stagger(
       150,
       benefitsAnimArray.map(anim =>
@@ -121,11 +221,9 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
         })
       )
     ).start();
-    
-    // Start the shimmer effect animation
+
     startShimmerAnimation();
     
-    // Spin logo on mount
     Animated.timing(logoRotateAnim, {
       toValue: 1,
       duration: 1500,
@@ -133,8 +231,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
       useNativeDriver: true,
     }).start();
   };
-  
-  // Pulsing animation for the price
+
   const startPriceAnimation = () => {
     Animated.sequence([
       Animated.timing(priceScaleAnim, {
@@ -150,12 +247,10 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
         easing: Easing.inOut(Easing.cubic),
       }),
     ]).start(() => {
-      // Repeat the animation every 5 seconds
       setTimeout(startPriceAnimation, 5000);
     });
   };
-  
-  // Shimmer effect animation
+
   const startShimmerAnimation = () => {
     shimmerAnim.setValue(-width);
     Animated.timing(shimmerAnim, {
@@ -165,19 +260,17 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
       useNativeDriver: true,
       isInteraction: false,
     }).start(() => {
-      // Repeat the animation every 3 seconds
       setTimeout(startShimmerAnimation, 3000);
     });
   };
 
   useEffect(() => {
-    // Listener para deep links que retornam do checkout Mercado Pago
     const subscription = Linking.addEventListener('url', handleDeepLink);
-    
-    // Initialize animations
+    fetchActiveSale();
     startEntryAnimations();
     startPriceAnimation();
-    
+    startUrgencyAnimation();
+
     return () => subscription.remove();
   }, []);
 
@@ -185,31 +278,31 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
     const url = event.url;
     
     if (url.includes('success')) {
-      setShowConfetti(true); // Mostra a animação
-      setTimeout(() => setShowConfetti(false), 2500); // Esconde após 2.5s (ajuste conforme a duração do seu confetti)
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2500);
+      
       if (confettiAnim.current) {
         confettiAnim.current.play();
       }
-      showCustomAlert(
-        'Parabéns! Sua assinatura VIP foi ativada com sucesso. Aproveite todos os benefícios exclusivos agora mesmo!',
-        '✅ Pagamento Aprovado'
+      
+      showAlert(
+        `Parabéns! Seu acesso VIP de ${saleData?.userSubscriptionTime || defaultSubscriptionTime} dias foi ativado com sucesso. Aproveite todos os benefícios exclusivos agora mesmo!`,
+        { title: 'Pagamento Aprovado' }
       );
-      // Aqui você poderia navegar para uma tela de sucesso ou atualizar o status do usuário
     } else if (url.includes('failure')) {
-      showCustomAlert(
+      showAlert(
         'Houve um problema ao processar seu pagamento. Por favor, tente novamente ou entre em contato com o suporte.',
-        '❌ Pagamento Não Concluído'
+        { title: 'Pagamento Não Concluído' }
       );
     } else if (url.includes('pending')) {
-      showCustomAlert(
-        'Seu pagamento está em análise. Assim que for aprovado, sua assinatura será ativada automaticamente.',
-        '⏳ Pagamento Pendente',
+      showAlert(
+        'Seu pagamento está em análise. Assim que for aprovado, seu acesso VIP será ativado automaticamente.',
+        { title: 'Pagamento Pendente' }
       );
     }
   };
 
   const handleSubscription = async () => {
-    // Button press animation
     Animated.sequence([
       Animated.timing(buttonScaleAnim, {
         toValue: 0.95,
@@ -224,49 +317,126 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
         easing: Easing.out(Easing.cubic),
       }),
     ]).start();
-    
+
     setIsLoading(true);
     setError('');
+
     try {
-      // Solicita o preferenceId ao backend
       const response = await api.post('payment/create');
-      if (response.status !== 200) throw new Error('Erro ao criar assinatura');
+      
+      if (response.status !== 200) throw new Error('Erro ao criar pagamento');
 
       const preferenceId = response.data;
-
-      // Monta a URL do checkout Mercado Pago
       const checkoutUrl = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${preferenceId}`;
 
-      // Abre o navegador nativo integrado
       await WebBrowser.openBrowserAsync(checkoutUrl);
-
     } catch (err) {
       setError('Erro ao processar pagamento. Tente novamente.');
-      console.error('Erro no pagamento:', err);
+      showAlert('Erro ao processar pagamento. Tente novamente.', { title: 'Erro' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Renderiza ícones de diferentes bibliotecas
   const renderIcon = (benefit) => {
     if (benefit.iconType === 'font-awesome') {
       return <FontAwesome5 name={benefit.icon} size={24} color="#FFD700" />;
     }
     return <MaterialCommunityIcons name={benefit.icon} size={28} color="#FFD700" />;
   };
-  
-  // Interpolate logoRotateAnim to rotation
+
   const logoSpin = logoRotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  
-  // Create shimmer effect with linear gradient
+
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [-width, width],
     outputRange: [-width * 2, width * 2],
   });
+
+  // Calcula informações da oferta
+  const currentPrice = saleData?.salePrice || defaultPrice;
+  const subscriptionDays = saleData?.userSubscriptionTime || defaultSubscriptionTime;
+  const remainingSlots = saleData && !saleData.userUnlimited 
+    ? saleData.userAmount - saleData.usedAmount 
+    : null;
+  const hasTimeLimit = !!saleData?.saleExpiration && timeRemaining && timeRemaining.total > 0;
+  const hasUserLimit = remainingSlots !== null && remainingSlots > 0;
+
+  // Renderiza indicadores de escassez
+  const renderUrgencyIndicators = () => {
+    if (!hasTimeLimit && !hasUserLimit) return null;
+
+    return (
+      <Animated.View 
+        style={[
+          styles.urgencyContainer,
+          { 
+            opacity: fadeAnim,
+            transform: [{ scale: urgencyPulseAnim }]
+          }
+        ]}
+      >
+        {hasTimeLimit && timeRemaining && (
+          <View style={styles.urgencyBadge}>
+            <LinearGradient
+              colors={['#FF3B30', '#FF6B6B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.urgencyBadgeGradient}
+            >
+              <MaterialCommunityIcons name="clock-alert-outline" size={16} color="#FFF" />
+              <Text style={[styles.urgencyText, { fontFamily: fonts.bold }]}>
+                {timeRemaining.days > 0 
+                  ? `Termina em ${timeRemaining.days}d ${timeRemaining.hours}h`
+                  : `Termina em ${timeRemaining.hours}h ${timeRemaining.minutes}m`
+                }
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+
+        {hasUserLimit && remainingSlots && (
+          <View style={styles.urgencyBadge}>
+            <LinearGradient
+              colors={['#FF3B30', '#FF6B6B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.urgencyBadgeGradient}
+            >
+              <MaterialCommunityIcons name="account-group" size={16} color="#FFF" />
+              <Text style={[styles.urgencyText, { fontFamily: fonts.bold }]}>
+                {remainingSlots === 1 
+                  ? 'Última vaga!'
+                  : `Apenas ${remainingSlots} vagas`
+                }
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+      </Animated.View>
+    );
+  };
+
+  if (isLoadingSale) {
+    return (
+      <LinearGradient
+        colors={['#000000', '#141428', '#1A1A35', '#141428', '#000000']}
+        style={styles.container}
+      >
+        <StatusBar style="light" backgroundColor="transparent" translucent />
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FFD700" />
+            <Text style={[styles.loadingText, { fontFamily: fonts.regular }]}>
+              Carregando ofertas...
+            </Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -280,7 +450,6 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
           contentContainerStyle={styles.scrollContent}
           bounces={true}
         >
-          {/* Hidden confetti animation that plays on successful purchase */}
           {showConfetti && (
             <View style={styles.confettiContainer} pointerEvents="none">
               <LottieView
@@ -293,8 +462,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
               />
             </View>
           )}
-          
-          {/* Header com logo e título PRO */}
+
           <Animated.View 
             style={[
               styles.header,
@@ -314,7 +482,9 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
             <MaskedView
               maskElement={
                 <View style={styles.proBadgeMask}>
-                  <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>ACESSO VIP</Text>
+                  <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>
+                    {saleData?.name || 'ACESSO VIP'}
+                  </Text>
                 </View>
               }
             >
@@ -333,12 +503,15 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                     transform: [{ translateX: shimmerTranslate }]
                   }}
                 />
-                <Text style={[styles.proBadgeText, { opacity: 0, fontFamily: fonts.bold }]}>ACESSO VIP</Text>
+                <Text style={[styles.proBadgeText, { opacity: 0, fontFamily: fonts.bold }]}>
+                  {saleData?.name || 'ACESSO VIP'}
+                </Text>
               </LinearGradient>
             </MaskedView>
           </Animated.View>
 
-          {/* Seção principal com título e subtítulo */}
+          {renderUrgencyIndicators()}
+
           <Animated.View 
             style={[
               styles.heroSection,
@@ -376,11 +549,10 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
             </View>
             
             <Text style={[styles.heroDescription, { fontFamily: fonts.regular }]}>
-              Desbloqueie recursos exclusivos e maximize seus resultados com nossa assinatura premium
+              Desbloqueie recursos exclusivos e maximize seus resultados com {subscriptionDays} dias de acesso premium
             </Text>
           </Animated.View>
 
-          {/* Seção de benefícios */}
           <View style={styles.benefitsSection}>
             <Animated.Text 
               style={[
@@ -429,7 +601,6 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
             ))}
           </View>
 
-          {/* Cartão de preço com CTA */}
           <Animated.View 
             style={[
               styles.pricingSection,
@@ -446,19 +617,26 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
               colors={['rgba(40, 40, 80, 0.9)', 'rgba(30, 30, 60, 0.9)']}
               style={styles.pricingCard}
             >
-              <View style={styles.ribbon}>
-                <LinearGradient
-                  colors={['#FFD700', '#FFA500']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.ribbonGradient}
-                >
-                  <Text style={[styles.ribbonText, { fontFamily: fonts.bold }]}>OFERTA ESPECIAL</Text>
-                </LinearGradient>
-              </View>
+              {saleData && (
+                <View style={styles.ribbon}>
+                  <LinearGradient
+                    colors={['#FFD700', '#FFA500']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.ribbonGradient}
+                  >
+                    <Text style={[styles.ribbonText, { fontFamily: fonts.bold }]}>OFERTA ESPECIAL</Text>
+                  </LinearGradient>
+                </View>
+              )}
               
               <View style={styles.priceContainer}>
-                <Text style={[styles.oldPrice, { fontFamily: fonts.regular }]}>DE R$39,90</Text>
+                {saleData && (
+                  <Text style={[styles.oldPrice, { fontFamily: fonts.regular }]}>
+                    DE R${defaultOldPrice.toFixed(2)}
+                  </Text>
+                )}
+                
                 <Animated.View 
                   style={[
                     styles.currentPriceRow,
@@ -468,14 +646,41 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                   ]}
                 >
                   <Text style={[styles.currency, { fontFamily: fonts.bold }]}>R$</Text>
-                  <Text style={[styles.price, { fontFamily: fonts.extraBold }]}>29,90</Text>
-                  <View style={styles.periodContainer}>
-                    <Text style={[styles.period, { fontFamily: fonts.regular }]}>/mês</Text>
-                  </View>
+                  <Text style={[styles.price, { fontFamily: fonts.extraBold }]}>
+                    {currentPrice.toFixed(2)}
+                  </Text>
                 </Animated.View>
-                <Text style={[styles.billingInfo, { fontFamily: fonts.regular }]}>Sem compromisso, cancele quando quiser</Text>
+                
+                <View style={styles.subscriptionInfo}>
+                  <MaterialCommunityIcons name="calendar-check" size={18} color="#FFD700" />
+                  <Text style={[styles.subscriptionDays, { fontFamily: fonts.semibold }]}>
+                    {subscriptionDays} dias de acesso VIP
+                  </Text>
+                </View>
+                
+                <Text style={[styles.billingInfo, { fontFamily: fonts.regular }]}>
+                  Pagamento único • Acesso imediato após aprovação
+                </Text>
               </View>
-              
+
+              <View style={styles.paymentMethodsContainer}>
+                <View style={styles.pixBadge}>
+                  <MaterialCommunityIcons name="qrcode" size={20} color="#32BCAD" />
+                  <Text style={[styles.pixText, { fontFamily: fonts.semibold }]}>Pagamento via PIX</Text>
+                </View>
+                
+                <View style={styles.mercadoPagoContainer}>
+                  <Text style={[styles.securePaymentText, { fontFamily: fonts.regular }]}>
+                    Pagamento seguro em parceria com
+                  </Text>
+                  <View style={styles.mercadoPagoLogo}>
+                    <Text style={[styles.mercadoPagoText, { fontFamily: fonts.bold }]}>
+                      mercado pago
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
               <View style={styles.featuresContainer}>
                 {[
                   'Todos os benefícios listados',
@@ -504,7 +709,7 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                   </Animated.View>
                 ))}
               </View>
-              
+
               <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
                 <TouchableOpacity
                   style={styles.ctaButton}
@@ -537,20 +742,21 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
                     ) : (
                       <View style={styles.ctaButtonContent}>
                         <MaterialCommunityIcons name="rocket" size={18} color="#000" />
-                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>COMEÇAR AGORA</Text>
+                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>
+                          GARANTIR ACESSO VIP
+                        </Text>
                       </View>
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
-              
+
               {error ? (
                 <Text style={[styles.errorText, { fontFamily: fonts.medium }]}>{error}</Text>
               ) : null}
             </LinearGradient>
           </Animated.View>
-          
-          {/* Garantia */}
+
           <Animated.View 
             style={[
               styles.guaranteeSection,
@@ -561,14 +767,13 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
             ]}
           >
             <View style={styles.guaranteeBadge}>
-              <MaterialCommunityIcons name="shield-check" size={22} color="#FFD700" />
+              <MaterialCommunityIcons name="shield-check" size={22} color="#0000" />
             </View>
             <Text style={[styles.guaranteeText, { fontFamily: fonts.regular }]}>
               7 dias de garantia de satisfação ou seu dinheiro de volta
             </Text>
           </Animated.View>
-          
-          {/* Botão de voltar */}
+
           <Animated.View 
             style={{ 
               opacity: fadeAnim,
@@ -577,7 +782,6 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
           >
             <TouchableOpacity 
               onPress={() => {
-                // Saída com animação
                 Animated.parallel([
                   Animated.timing(fadeAnim, {
                     toValue: 0,
@@ -606,6 +810,14 @@ export default function ProSubscriptionScreen({ navigation }: Props) {
   );
 }
 
+export default function ProSubscriptionScreen(props: Props) {
+  return (
+    <CustomAlertProvider>
+      <ProSubscriptionContent {...props} />
+    </CustomAlertProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -614,315 +826,377 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 32,
+    alignItems: 'center',
   },
-  confettiContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-    pointerEvents: 'none',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  confettiAnimation: {
-    width: '100%',
-    height: '100%',
+  loadingText: {
+    fontSize: 16,
+    color: '#FFD700',
+    marginTop: 16,
   },
   header: {
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 30,
+    marginTop: 24,
+    marginBottom: 12,
   },
   logo: {
-    width: width * 0.4,
-    height: width * 0.4,
+    width: 72,
+    height: 72,
     resizeMode: 'contain',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   proBadge: {
-    paddingHorizontal: 20,
+    borderRadius: 16,
+    paddingHorizontal: 24,
     paddingVertical: 8,
-    borderRadius: 20,
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+    minWidth: 120,
   },
   proBadgeMask: {
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    minWidth: 120,
+    minHeight: 32,
   },
   proBadgeText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
+    color: '#FFD700',
     letterSpacing: 1,
+  },
+  urgencyContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  urgencyBadge: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  urgencyBadgeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  urgencyText: {
+    fontSize: 14,
+    color: '#FFF',
+    letterSpacing: 0.5,
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   heroSubtitle: {
     fontSize: 16,
-    color: '#ccc',
-    marginBottom: 8,
+    color: '#FFD700',
+    marginBottom: 2,
     letterSpacing: 1,
   },
   heroTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5,
+    fontSize: 32,
+    color: '#FFF',
+    marginBottom: 4,
+    letterSpacing: 1,
   },
   separator: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '80%',
-    marginBottom: 16,
+    marginVertical: 8,
   },
   separatorLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    height: 1.5,
+    backgroundColor: '#FFD700',
+    marginHorizontal: 8,
+    opacity: 0.5,
   },
   heroDescription: {
-    fontSize: 16,
-    color: '#ccc',
+    fontSize: 15,
+    color: '#DDD',
     textAlign: 'center',
-    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 4,
     lineHeight: 22,
   },
   benefitsSection: {
-    marginBottom: 40,
+    width: '100%',
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 20,
+    color: '#FFD700',
+    marginBottom: 12,
     textAlign: 'center',
     letterSpacing: 1,
   },
   benefitCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#FFD700',
+    alignItems: 'center',
+    backgroundColor: '#1A1A35',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.07,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   benefitIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
-    marginRight: 16,
+    justifyContent: 'center',
+    marginRight: 12,
   },
   benefitContent: {
     flex: 1,
   },
   benefitTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 6,
+    color: '#FFD700',
+    marginBottom: 2,
   },
   benefitDescription: {
     fontSize: 14,
-    color: '#ccc',
-    lineHeight: 20,
+    color: '#FFF',
+    opacity: 0.8,
   },
   pricingSection: {
-    marginBottom: 24,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   pricingCard: {
-    borderRadius: 16,
+    width: '100%',
+    borderRadius: 24,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    overflow: 'hidden',
+    alignItems: 'center',
     shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 8,
+    backgroundColor: 'rgba(30,30,60,0.95)',
   },
   ribbon: {
     position: 'absolute',
-    top: 20,
-    right: -30,
-    transform: [{ rotate: '45deg' }],
-    zIndex: 1,
+    top: -18,
+    left: 24,
+    zIndex: 2,
   },
   ribbonGradient: {
-    paddingHorizontal: 40,
-    paddingVertical: 6,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ribbonText: {
+    fontSize: 13,
     color: '#000',
-    fontWeight: 'bold',
-    fontSize: 10,
+    letterSpacing: 1,
   },
   priceContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginBottom: 16,
+    marginTop: 8,
   },
   oldPrice: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#FFD700',
     textDecorationLine: 'line-through',
-    marginBottom: 4,
+    marginBottom: 2,
+    opacity: 0.7,
   },
   currentPriceRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
+    marginBottom: 8,
   },
   currency: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
     color: '#FFD700',
-    marginTop: 8,
+    marginRight: 2,
   },
   price: {
-    fontSize: 64,
-    fontWeight: 'bold',
+    fontSize: 32,
     color: '#FFD700',
-    lineHeight: 64,
-    textShadowColor: 'rgba(255, 215, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
-  periodContainer: {
-    marginLeft: 4,
-    alignSelf: 'center',
+  subscriptionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 12,
   },
-  period: {
-    fontSize: 16,
-    color: '#ccc',
+  subscriptionDays: {
+    fontSize: 15,
+    color: '#FFD700',
   },
   billingInfo: {
+    fontSize: 13,
+    color: '#FFD700',
+    opacity: 0.8,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  paymentMethodsContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  pixBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(50, 188, 173, 0.15)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
+  pixText: {
+    fontSize: 15,
+    color: '#32BCAD',
+  },
+  mercadoPagoContainer: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  securePaymentText: {
     fontSize: 12,
-    color: '#ccc',
-    marginTop: 8,
+    color: '#DDD',
+    opacity: 0.8,
+  },
+  mercadoPagoLogo: {
+    backgroundColor: '#009EE3',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  mercadoPagoText: {
+    fontSize: 14,
+    color: '#FFF',
+    letterSpacing: 0.5,
   },
   featuresContainer: {
-    marginBottom: 24,
+    width: '100%',
+    marginTop: 10,
+    marginBottom: 10,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   featureText: {
     fontSize: 14,
-    color: '#fff',
+    color: '#FFD700',
     marginLeft: 8,
   },
   ctaButton: {
-    marginVertical: 8,
-    borderRadius: 30,
+    width: '100%',
+    marginTop: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
   },
   ctaButtonGradient: {
     paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    flexDirection: 'row',
   },
   ctaButtonContent: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   ctaButtonText: {
-    color: '#000',
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#000',
     marginLeft: 8,
+    letterSpacing: 1,
   },
   errorText: {
-    color: '#FF6B6B',
+    color: '#FFD700',
+    fontSize: 14,
+    marginTop: 8,
     textAlign: 'center',
-    marginTop: 16,
   },
   guaranteeSection: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
-    guaranteeBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+  guaranteeBadge: {
+    backgroundColor: '#FFD700',
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 6,
   },
   guaranteeText: {
-    color: '#ccc',
     fontSize: 14,
-    flex: 1,
+    color: '#FFD700',
+    textAlign: 'center',
+    opacity: 0.8,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    opacity: 0.8,
+    marginTop: 16,
+    alignSelf: 'center',
+    padding: 8,
   },
   backButtonText: {
+    fontSize: 15,
     color: '#ccc',
-    marginLeft: 4,
-    fontSize: 14,
+    marginLeft: 8,
   },
-  // Estilos para animações de brilho (shimmer)
-  shimmerContainer: {
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  shimmerEffect: {
+  confettiContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    right: 0,
+    height: 200,
+    zIndex: 10,
+    pointerEvents: 'none',
   },
-  // Estilos para tablets e telas maiores
-  ...(width > 600 && {
-    scrollContent: {
-      padding: 40,
-      paddingBottom: 60,
-      maxWidth: 600,
-      alignSelf: 'center',
-      width: '100%',
-    },
-    heroTitle: {
-      fontSize: 48,
-    },
-    benefitCard: {
-      marginHorizontal: 16,
-    },
-    pricingCard: {
-      marginHorizontal: 16,
-    },
-  }),
+  confettiAnimation: {
+    width: '100%',
+    height: 200,
+  },
 });
