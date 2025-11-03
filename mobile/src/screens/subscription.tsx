@@ -673,11 +673,13 @@ function ProSubscriptionContent({ navigation }: Props) {
                   <Text style={[styles.securePaymentText, { fontFamily: fonts.regular }]}>
                     Pagamento seguro em parceria com
                   </Text>
-                  <View style={styles.mercadoPagoLogo}>
-                    <Text style={[styles.mercadoPagoText, { fontFamily: fonts.bold }]}>
-                      mercado pago
-                    </Text>
-                  </View>
+                    <View style={styles.mercadoPagoLogo}>
+                      <Image
+                        source={require('../assets/mercadopago.png')}
+                        style={styles.mercadoPagoImage}
+                      />
+                      <Text style={[styles.mercadoPagoText, { fontFamily: fonts.bold }]}>mercado pago</Text>
+                    </View>
                 </View>
               </View>
 
@@ -738,11 +740,14 @@ function ProSubscriptionContent({ navigation }: Props) {
                     style={styles.ctaButtonGradient}
                   >
                     {isLoading ? (
-                      <ActivityIndicator color="#000" size="small" />
+                      // wrap loader in the same content container so it stays centered
+                      <View style={styles.ctaButtonContent}>
+                        <ActivityIndicator color="#000" size="small" />
+                      </View>
                     ) : (
                       <View style={styles.ctaButtonContent}>
                         <MaterialCommunityIcons name="rocket" size={18} color="#000" />
-                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>
+                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>\
                           GARANTIR ACESSO VIP
                         </Text>
                       </View>
@@ -1094,7 +1099,7 @@ const styles = StyleSheet.create({
   },
   mercadoPagoContainer: {
     alignItems: 'center',
-    gap: 6,
+    gap: 3,
   },
   securePaymentText: {
     fontSize: 12,
@@ -1103,14 +1108,31 @@ const styles = StyleSheet.create({
   },
   mercadoPagoLogo: {
     backgroundColor: '#009EE3',
-    paddingHorizontal: 14,
+    paddingLeft: 126,
+    paddingRight: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   mercadoPagoText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#FFF',
     letterSpacing: 0.5,
+    marginLeft: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+    alignSelf: 'center',
+  },
+  mercadoPagoImage: {
+    width: 110,
+    height: 28,
+    resizeMode: 'contain',
+    position: 'absolute',
+    left: 8,
+    zIndex: 2,
   },
   featuresContainer: {
     width: '100%',
@@ -1132,6 +1154,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     overflow: 'hidden',
+    // keep the button a fixed height so content swaps (text <-> loader) won't resize it
+    minHeight: 56,
   },
   ctaButtonGradient: {
     paddingVertical: 16,
@@ -1139,11 +1163,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 16,
     flexDirection: 'row',
+    // ensure gradient fills the full width of the touchable so it doesn't shrink
+    width: '100%',
+    minHeight: 56,
   },
   ctaButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    // keep content centered and full width so ActivityIndicator stays centered
+    width: '100%',
   },
   ctaButtonText: {
     fontSize: 16,
