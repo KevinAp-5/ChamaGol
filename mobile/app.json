@@ -15,12 +15,12 @@
     "newArchEnabled": true,
     "expo-splash-screen": {
       "backgroundColor": "#FFFFFF",
-      "image": "./src/assets/images/splash-icon.png",
+      "image": "./src/assets/images/logo.png",
       "dark": {
-        "image": "./src/assets/images/splash-icon-dark.png",
+        "image": "./src/assets/images/logo_white_label.png",
         "backgroundColor": "#000000"
       },
-      "imageWidth": 200
+      "resideMode": "contain"
     },
     "ios": {
       "supportsTablet": true,
