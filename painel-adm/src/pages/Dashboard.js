@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../config/api";
+import { api, getActiveSale } from "../config/api";
 import "./css/Dashboard.css";
 
 export default function Dashboard() {
@@ -12,6 +12,7 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [isAnimated, setIsAnimated] = useState(false);
+  const [activeSale, setActiveSale] = useState(null);
 
   useEffect(() => {
     // Animação de entrada
@@ -46,6 +47,15 @@ export default function Dashboard() {
     }
     
     fetchStats();
+
+    (async () => {
+      try {
+        const sale = await api.get("/api/sale");
+        setActiveSale(sale);
+      } catch (e) {
+        // ignore
+      }
+    })();
   }, []);
 
   const StatCard = ({ title, value, link, linkText, icon, color = "default" }) => (
@@ -194,6 +204,23 @@ export default function Dashboard() {
               }
             />
           </div>
+        </section>
+
+        <section className="dashboard-sales-card">
+          <h3>Oferta Ativa</h3>
+          {activeSale ? (
+            <div className="card">
+              <div><strong>{activeSale.name}</strong></div>
+              <div>Valor: {activeSale.salePrice}</div>
+              <div>Duração VIP: {activeSale.userSubscriptionTime} dias</div>
+              <Link to="/sales"><button>Gerenciar Ofertas</button></Link>
+            </div>
+          ) : (
+            <div>
+              <div>Nenhuma oferta ativa</div>
+              <Link to="/sales"><button>Criar Oferta</button></Link>
+            </div>
+          )}
         </section>
       </div>
     </div>
