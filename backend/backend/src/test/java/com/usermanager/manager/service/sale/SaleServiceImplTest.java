@@ -43,7 +43,7 @@ class SaleServiceImplTest {
             "Oferta Teste",
             new BigDecimal("99.90"),
             10,
-            ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")),
+            5, // saleExpiration in days
             30,
             false
         );
@@ -77,7 +77,7 @@ class SaleServiceImplTest {
             "Oferta Teste",
             new BigDecimal("99.90"),
             10,
-            ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")),
+            5, // saleExpiration in days
             30,
             false
         );
