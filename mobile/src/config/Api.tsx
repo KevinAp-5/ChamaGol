@@ -31,7 +31,7 @@ type HttpMethod = Method;
 // Constantes
 // const BASE_URL = 'https://chamagol-9gfb.onrender.com/api';
 const BASE_URL = 'https://chamagol.com/api';
-// const BASE_URL = 'http://192.168.1.10:8080/api';
+// const BASE_URL = 'http://192.168.0.103:8080/api';
 const TOKEN_KEYS = {
   ACCESS: 'accessToken',
   REFRESH: 'refreshToken',

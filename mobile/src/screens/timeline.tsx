@@ -98,11 +98,9 @@ const MessageCard = React.memo(function MessageCard({
     return (
       <View
         style={[
-          styles.messageCard,
           styles.lockedCard,
           {
             marginBottom: isLast ? spacing.xl : spacing.md,
-            ...shadows.large,
           },
         ]}
       >
@@ -201,7 +199,7 @@ const MessageCard = React.memo(function MessageCard({
 
             <TouchableOpacity
               style={styles.unlockButton}
-              onPress={() => navigation.navigate("PROSubscription")}
+              onPress={() => navigation.navigate("ProSubscription")}
               activeOpacity={0.8}
             >
               <LinearGradient
@@ -1052,12 +1050,15 @@ const styles = StyleSheet.create({
   },
   // Estilos para card VIP bloqueado (usuários FREE)
   lockedCard: {
+    width: width - 32,
+    alignSelf: "center",
     minHeight: 420,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   lockedCardGradient: {
     flex: 1,
-    borderRadius: 16,
+    minHeight: 420,
     position: 'relative',
   },
   vipShineEffect: {
@@ -1219,7 +1220,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.5,
   },
-  // Floating Notification
   floatingNotification: {
     position: 'absolute',
     bottom: 24,
