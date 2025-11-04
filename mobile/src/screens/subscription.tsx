@@ -9,22 +9,19 @@ import {
   ActivityIndicator,
   Dimensions,
   Animated,
-  Easing,
   Platform,
 } from 'react-native';
 import { useTheme } from '../theme/theme';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../config/Api';
 import { CustomAlertProvider, useCustomAlert } from '../components/CustomAlert';
 import { StatusBar } from 'expo-status-bar';
-import MaskedView from '@react-native-masked-view/masked-view';
-import LottieView from 'lottie-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProSubscription'>;
 
@@ -48,33 +45,6 @@ interface TimeRemaining {
 }
 
 function ProSubscriptionContent({ navigation }: Props) {
-  const benefits = [
-    { 
-      icon: 'crown', 
-      title: 'Sinais Exclusivos VIP', 
-      description: 'Acesse sinais premium com alta taxa de acerto',
-      iconType: 'font-awesome'
-    },
-    { 
-      icon: 'bell-ring-outline', 
-      title: 'Alertas em Tempo Real', 
-      description: 'Seja notificado antes de todos os outros usuários',
-      iconType: 'material'
-    },
-    { 
-      icon: 'chart-line-variant', 
-      title: 'Análises Avançadas', 
-      description: 'Gráficos e indicadores exclusivos para VIP',
-      iconType: 'material'
-    },
-    { 
-      icon: 'headset', 
-      title: 'Suporte Prioritário', 
-      description: 'Atendimento exclusivo em canal dedicado',
-      iconType: 'font-awesome'
-    }
-  ];
-
   const { colors, fonts } = useTheme();
   const { showAlert } = useCustomAlert();
   
@@ -83,29 +53,23 @@ function ProSubscriptionContent({ navigation }: Props) {
   const [isLoadingSale, setIsLoadingSale] = useState(true);
   const [error, setError] = useState('');
   const [saleData, setSaleData] = useState<SaleData | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
   
-  // Valores padrão caso não haja oferta ativa
+  // Valores padrão
   const defaultPrice = 29.90;
   const defaultOldPrice = 39.90;
   const defaultSubscriptionTime = 30;
   
-  // Animation values
+  // Animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  const translateYAnim = useRef(new Animated.Value(50)).current;
-  const benefitsAnimArray = useRef(benefits.map(() => new Animated.Value(0))).current;
-  const logoRotateAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
-  const shimmerAnim = useRef(new Animated.Value(-width)).current;
-  const priceScaleAnim = useRef(new Animated.Value(1)).current;
-  const urgencyPulseAnim = useRef(new Animated.Value(1)).current;
-  const confettiAnim = useRef<LottieView>(null);
+  const successSlideAnim = useRef(new Animated.Value(-100)).current;
+  const successOpacityAnim = useRef(new Animated.Value(0)).current;
 
-  const scheme = Linking.createURL('/');
-
-  // Calcula tempo restante da oferta
+  // Calcula tempo restante
   const calculateTimeRemaining = (expirationDate: string): TimeRemaining => {
     const now = new Date().getTime();
     const expiration = new Date(expirationDate).getTime();
@@ -122,154 +86,106 @@ function ProSubscriptionContent({ navigation }: Props) {
     return { days, hours, minutes, total: difference };
   };
 
-  // Busca dados da oferta ativa
+  // Busca dados da oferta
   const fetchActiveSale = async () => {
     try {
       setIsLoadingSale(true);
       const response = await api.get('sale');
       
       if (response.status === 200) {
-        console.log("teste" + response.data);
         setSaleData(response.data);
         
-        // Se houver data de expiração, inicia o countdown
         if (response.data.saleExpiration) {
           const remaining = calculateTimeRemaining(response.data.saleExpiration);
           setTimeRemaining(remaining);
         }
       }
     } catch (err) {
-      console.log('Nenhuma oferta ativa encontrada, usando valores padrão');
+      console.log('Nenhuma oferta ativa, usando valores padrão');
       setSaleData(null);
     } finally {
       setIsLoadingSale(false);
     }
   };
 
-  // Atualiza countdown a cada minuto
+  // Atualiza countdown
   useEffect(() => {
     if (saleData?.saleExpiration) {
       const interval = setInterval(() => {
         const remaining = calculateTimeRemaining(saleData.saleExpiration!);
         setTimeRemaining(remaining);
         
-        // Se a oferta expirou, busca novamente
         if (remaining.total <= 0) {
           fetchActiveSale();
         }
-      }, 60000); // Atualiza a cada minuto
+      }, 60000);
 
       return () => clearInterval(interval);
     }
   }, [saleData]);
 
-  // Animação de urgência para indicadores de escassez
-  const startUrgencyAnimation = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(urgencyPulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(urgencyPulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  };
-
-  const startEntryAnimations = () => {
-    fadeAnim.setValue(0);
-    scaleAnim.setValue(0.9);
-    translateYAnim.setValue(50);
-    benefitsAnimArray.forEach(anim => anim.setValue(0));
-
+  // Animação de entrada
+  const startEntryAnimation = () => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 700,
+        useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
-        easing: Easing.out(Easing.back(1.5)),
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
       }),
     ]).start();
+  };
 
-    Animated.stagger(
-      150,
-      benefitsAnimArray.map(anim =>
-        Animated.timing(anim, {
+  // Animação de sucesso
+  const showSuccessAnimation = () => {
+    setShowSuccess(true);
+    
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(successSlideAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(successOpacityAnim, {
           toValue: 1,
           duration: 500,
           useNativeDriver: true,
-          easing: Easing.out(Easing.cubic),
-        })
-      )
-    ).start();
-
-    startShimmerAnimation();
-    
-    Animated.timing(logoRotateAnim, {
-      toValue: 1,
-      duration: 1500,
-      easing: Easing.elastic(1.2),
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const startPriceAnimation = () => {
-    Animated.sequence([
-      Animated.timing(priceScaleAnim, {
-        toValue: 1.15,
-        duration: 300,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
-      }),
-      Animated.timing(priceScaleAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-        easing: Easing.inOut(Easing.cubic),
-      }),
+        }),
+      ]),
+      Animated.delay(2500),
+      Animated.parallel([
+        Animated.timing(successSlideAnim, {
+          toValue: -100,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(successOpacityAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start(() => {
-      setTimeout(startPriceAnimation, 5000);
-    });
-  };
-
-  const startShimmerAnimation = () => {
-    shimmerAnim.setValue(-width);
-    Animated.timing(shimmerAnim, {
-      toValue: width,
-      duration: 2500,
-      easing: Easing.linear,
-      useNativeDriver: true,
-      isInteraction: false,
-    }).start(() => {
-      setTimeout(startShimmerAnimation, 3000);
+      setShowSuccess(false);
+      successSlideAnim.setValue(-100);
+      successOpacityAnim.setValue(0);
     });
   };
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', handleDeepLink);
     fetchActiveSale();
-    startEntryAnimations();
-    startPriceAnimation();
-    startUrgencyAnimation();
+    startEntryAnimation();
 
     return () => subscription.remove();
   }, []);
@@ -278,43 +194,36 @@ function ProSubscriptionContent({ navigation }: Props) {
     const url = event.url;
     
     if (url.includes('success')) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 2500);
-      
-      if (confettiAnim.current) {
-        confettiAnim.current.play();
-      }
-      
+      showSuccessAnimation();
       showAlert(
-        `Parabéns! Seu acesso VIP de ${saleData?.userSubscriptionTime || defaultSubscriptionTime} dias foi ativado com sucesso. Aproveite todos os benefícios exclusivos agora mesmo!`,
+        `Parabéns! Seu acesso VIP de ${saleData?.userSubscriptionTime || defaultSubscriptionTime} dias foi ativado com sucesso!`,
         { title: 'Pagamento Aprovado' }
       );
     } else if (url.includes('failure')) {
       showAlert(
-        'Houve um problema ao processar seu pagamento. Por favor, tente novamente ou entre em contato com o suporte.',
+        'Houve um problema ao processar seu pagamento. Tente novamente.',
         { title: 'Pagamento Não Concluído' }
       );
     } else if (url.includes('pending')) {
       showAlert(
-        'Seu pagamento está em análise. Assim que for aprovado, seu acesso VIP será ativado automaticamente.',
+        'Seu pagamento está em análise. Aguarde a aprovação.',
         { title: 'Pagamento Pendente' }
       );
     }
   };
 
   const handleSubscription = async () => {
+    // Animação do botão
     Animated.sequence([
       Animated.timing(buttonScaleAnim, {
         toValue: 0.95,
         duration: 100,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
       }),
       Animated.timing(buttonScaleAnim, {
         toValue: 1,
         duration: 100,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
       }),
     ]).start();
 
@@ -328,7 +237,7 @@ function ProSubscriptionContent({ navigation }: Props) {
 
       const preferenceId = response.data;
       const checkoutUrl = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${preferenceId}`;
-
+      
       await WebBrowser.openBrowserAsync(checkoutUrl);
     } catch (err) {
       setError('Erro ao processar pagamento. Tente novamente.');
@@ -338,24 +247,7 @@ function ProSubscriptionContent({ navigation }: Props) {
     }
   };
 
-  const renderIcon = (benefit) => {
-    if (benefit.iconType === 'font-awesome') {
-      return <FontAwesome5 name={benefit.icon} size={24} color="#FFD700" />;
-    }
-    return <MaterialCommunityIcons name={benefit.icon} size={28} color="#FFD700" />;
-  };
-
-  const logoSpin = logoRotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const shimmerTranslate = shimmerAnim.interpolate({
-    inputRange: [-width, width],
-    outputRange: [-width * 2, width * 2],
-  });
-
-  // Calcula informações da oferta
+  // Dados da oferta atual
   const currentPrice = saleData?.salePrice || defaultPrice;
   const subscriptionDays = saleData?.userSubscriptionTime || defaultSubscriptionTime;
   const remainingSlots = saleData && !saleData.userUnlimited 
@@ -364,65 +256,10 @@ function ProSubscriptionContent({ navigation }: Props) {
   const hasTimeLimit = !!saleData?.saleExpiration && timeRemaining && timeRemaining.total > 0;
   const hasUserLimit = remainingSlots !== null && remainingSlots > 0;
 
-  // Renderiza indicadores de escassez
-  const renderUrgencyIndicators = () => {
-    if (!hasTimeLimit && !hasUserLimit) return null;
-
-    return (
-      <Animated.View 
-        style={[
-          styles.urgencyContainer,
-          { 
-            opacity: fadeAnim,
-            transform: [{ scale: urgencyPulseAnim }]
-          }
-        ]}
-      >
-        {hasTimeLimit && timeRemaining && (
-          <View style={styles.urgencyBadge}>
-            <LinearGradient
-              colors={['#FF3B30', '#FF6B6B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.urgencyBadgeGradient}
-            >
-              <MaterialCommunityIcons name="clock-alert-outline" size={16} color="#FFF" />
-              <Text style={[styles.urgencyText, { fontFamily: fonts.bold }]}>
-                {timeRemaining.days > 0 
-                  ? `Termina em ${timeRemaining.days}d ${timeRemaining.hours}h`
-                  : `Termina em ${timeRemaining.hours}h ${timeRemaining.minutes}m`
-                }
-              </Text>
-            </LinearGradient>
-          </View>
-        )}
-
-        {hasUserLimit && remainingSlots && (
-          <View style={styles.urgencyBadge}>
-            <LinearGradient
-              colors={['#FF3B30', '#FF6B6B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.urgencyBadgeGradient}
-            >
-              <MaterialCommunityIcons name="account-group" size={16} color="#FFF" />
-              <Text style={[styles.urgencyText, { fontFamily: fonts.bold }]}>
-                {remainingSlots === 1 
-                  ? 'Última vaga!'
-                  : `Apenas ${remainingSlots} vagas`
-                }
-              </Text>
-            </LinearGradient>
-          </View>
-        )}
-      </Animated.View>
-    );
-  };
-
   if (isLoadingSale) {
     return (
       <LinearGradient
-        colors={['#000000', '#141428', '#1A1A35', '#141428', '#000000']}
+        colors={['#000000', '#0a0a0a', '#000000']}
         style={styles.container}
       >
         <StatusBar style="light" backgroundColor="transparent" translucent />
@@ -440,7 +277,7 @@ function ProSubscriptionContent({ navigation }: Props) {
 
   return (
     <LinearGradient
-      colors={['#000000', '#141428', '#1A1A35', '#141428', '#000000']}
+      colors={['#000000', '#0a0a0a', '#000000']}
       style={styles.container}
     >
       <StatusBar style="light" backgroundColor="transparent" translucent />
@@ -448,188 +285,143 @@ function ProSubscriptionContent({ navigation }: Props) {
         <ScrollView 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          bounces={true}
         >
-          {showConfetti && (
-            <View style={styles.confettiContainer} pointerEvents="none">
-              <LottieView
-                ref={confettiAnim}
-                source={require('../assets/confetti.json')}
-                style={styles.confettiAnimation}
-                loop={false}
-                autoPlay
-                resizeMode="cover"
-              />
-            </View>
+          {/* Toast de Sucesso */}
+          {showSuccess && (
+            <Animated.View 
+              style={[
+                styles.successToast,
+                {
+                  opacity: successOpacityAnim,
+                  transform: [{ translateY: successSlideAnim }]
+                }
+              ]}
+            >
+              <LinearGradient
+                colors={['#34C759', '#28a745']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.successToastGradient}
+              >
+                <MaterialCommunityIcons name="check-circle" size={20} color="#FFF" />
+                <Text style={[styles.successToastText, { fontFamily: fonts.bold }]}>
+                  Pagamento aprovado! Acesso VIP ativado
+                </Text>
+              </LinearGradient>
+            </Animated.View>
           )}
 
+          {/* Header Compacto */}
           <Animated.View 
             style={[
               styles.header,
               {
                 opacity: fadeAnim,
-                transform: [
-                  { scale: scaleAnim },
-                  { translateY: translateYAnim }
-                ]
+                transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
               }
             ]}
           >
-            <Animated.View style={{ transform: [{ rotate: logoSpin }] }}>
-              <Image source={require('../assets/logo_white_label.png')} style={styles.logo} />
-            </Animated.View>
-            
-            <MaskedView
-              maskElement={
-                <View style={styles.proBadgeMask}>
-                  <Text style={[styles.proBadgeText, { fontFamily: fonts.bold }]}>
-                    {saleData?.name || 'ACESSO VIP'}
-                  </Text>
-                </View>
-              }
-            >
+            <View style={styles.logoContainer}>
               <LinearGradient
-                colors={['#FFD700', '#FFA500', '#FFD700']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.proBadge}
+                colors={['#FFD700', '#FFA500']}
+                style={styles.logoGradient}
               >
-                <Animated.View 
-                  style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                    transform: [{ translateX: shimmerTranslate }]
-                  }}
-                />
-                <Text style={[styles.proBadgeText, { opacity: 0, fontFamily: fonts.bold }]}>
-                  {saleData?.name || 'ACESSO VIP'}
-                </Text>
+                <MaterialCommunityIcons name="crown" size={32} color="#000" />
               </LinearGradient>
-            </MaskedView>
+            </View>
+            
+            <LinearGradient
+              colors={['#FFD700', '#FFED4E', '#FFD700']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.proBadge}
+            >
+              <Text style={[styles.proBadgeText, { fontFamily: fonts.extraBold }]}>
+                ACESSO VIP
+              </Text>
+            </LinearGradient>
           </Animated.View>
 
-          {renderUrgencyIndicators()}
-
+          {/* Hero Statement */}
           <Animated.View 
             style={[
               styles.heroSection,
               {
                 opacity: fadeAnim,
-                transform: [
-                  { scale: scaleAnim },
-                  { translateY: translateYAnim }
-                ]
+                transform: [{ translateY: slideAnim }]
               }
             ]}
           >
-            <Text style={[styles.heroSubtitle, { fontFamily: fonts.medium }]}>ELEVE SUA EXPERIÊNCIA</Text>
             <Text style={[styles.heroTitle, { fontFamily: fonts.extraBold }]}>
-              TORNE-SE <Text style={{color: '#FFD700'}}>VIP</Text>
+              Maximize Seus{'\n'}
+              <Text style={{ color: '#FFD700' }}>Resultados</Text>
             </Text>
-            
-            <View style={styles.separator}>
-              <View style={styles.separatorLine} />
-              <Animated.View
-                style={{
-                  transform: [
-                    { 
-                      rotate: logoRotateAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '180deg']
-                      }) 
-                    }
-                  ]
-                }}
-              >
-                <MaterialCommunityIcons name="star" size={20} color="#FFD700" />
-              </Animated.View>
-              <View style={styles.separatorLine} />
-            </View>
-            
-            <Text style={[styles.heroDescription, { fontFamily: fonts.regular }]}>
-              Desbloqueie recursos exclusivos e maximize seus resultados com {subscriptionDays} dias de acesso premium
+            <Text style={[styles.heroSubtitle, { fontFamily: fonts.regular }]}>
+              Acesso premium com tudo que você precisa para vencer
             </Text>
           </Animated.View>
 
-          <View style={styles.benefitsSection}>
-            <Animated.Text 
+          {/* Urgência Sutil */}
+          {(hasTimeLimit || hasUserLimit) && (
+            <Animated.View 
               style={[
-                styles.sectionTitle, 
-                { 
-                  fontFamily: fonts.bold,
+                styles.urgencyContainer,
+                {
                   opacity: fadeAnim,
-                  transform: [{ translateY: translateYAnim }]
+                  transform: [{ translateY: slideAnim }]
                 }
               ]}
             >
-              BENEFÍCIOS EXCLUSIVOS
-            </Animated.Text>
-            
-            {benefits.map((benefit, index) => (
-              <Animated.View 
-                key={index} 
-                style={[
-                  styles.benefitCard,
-                  {
-                    opacity: benefitsAnimArray[index],
-                    transform: [
-                      { 
-                        translateX: benefitsAnimArray[index].interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [50, 0]
-                        }) 
-                      }
-                    ]
-                  }
-                ]}
-              >
-                <LinearGradient
-                  colors={['rgba(255, 215, 0, 0.2)', 'rgba(255, 215, 0, 0.05)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.benefitIconContainer}
-                >
-                  {renderIcon(benefit)}
-                </LinearGradient>
-                <View style={styles.benefitContent}>
-                  <Text style={[styles.benefitTitle, { fontFamily: fonts.semibold }]}>{benefit.title}</Text>
-                  <Text style={[styles.benefitDescription, { fontFamily: fonts.regular }]}>{benefit.description}</Text>
+              {hasTimeLimit && timeRemaining && (
+                <View style={styles.urgencyBadge}>
+                  <MaterialCommunityIcons name="clock-outline" size={14} color="#FF3B30" />
+                  <Text style={[styles.urgencyText, { fontFamily: fonts.semibold }]}>
+                    Termina em {timeRemaining.hours}h {timeRemaining.minutes}m
+                  </Text>
                 </View>
-              </Animated.View>
-            ))}
-          </View>
+              )}
+              {hasUserLimit && remainingSlots && (
+                <View style={styles.urgencyBadge}>
+                  <MaterialCommunityIcons name="account-group" size={14} color="#FF3B30" />
+                  <Text style={[styles.urgencyText, { fontFamily: fonts.semibold }]}>
+                    {remainingSlots} {remainingSlots === 1 ? 'vaga restante' : 'vagas restantes'}
+                  </Text>
+                </View>
+              )}
+            </Animated.View>
+          )}
 
+          {/* Card de Preço DOMINANTE */}
           <Animated.View 
             style={[
               styles.pricingSection,
               {
                 opacity: fadeAnim,
-                transform: [
-                  { scale: scaleAnim },
-                  { translateY: translateYAnim }
-                ]
+                transform: [{ scale: scaleAnim }]
               }
             ]}
           >
+            {/* Ribbon */}
+            {saleData && (
+              <View style={styles.ribbon}>
+                <LinearGradient
+                  colors={['#FFD700', '#FFA500']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.ribbonGradient}
+                >
+                  <Text style={[styles.ribbonText, { fontFamily: fonts.bold }]}>
+                    OFERTA ESPECIAL
+                  </Text>
+                </LinearGradient>
+              </View>
+            )}
+
             <LinearGradient
-              colors={['rgba(40, 40, 80, 0.9)', 'rgba(30, 30, 60, 0.9)']}
+              colors={['rgba(26, 26, 26, 0.95)', 'rgba(15, 15, 15, 0.95)']}
               style={styles.pricingCard}
             >
-              {saleData && (
-                <View style={styles.ribbon}>
-                  <LinearGradient
-                    colors={['#FFD700', '#FFA500']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.ribbonGradient}
-                  >
-                    <Text style={[styles.ribbonText, { fontFamily: fonts.bold }]}>OFERTA ESPECIAL</Text>
-                  </LinearGradient>
-                </View>
-              )}
-              
+              {/* Preço */}
               <View style={styles.priceContainer}>
                 {saleData && (
                   <Text style={[styles.oldPrice, { fontFamily: fonts.regular }]}>
@@ -637,118 +429,42 @@ function ProSubscriptionContent({ navigation }: Props) {
                   </Text>
                 )}
                 
-                <Animated.View 
-                  style={[
-                    styles.currentPriceRow,
-                    {
-                      transform: [{ scale: priceScaleAnim }]
-                    }
-                  ]}
-                >
+                <View style={styles.currentPriceRow}>
                   <Text style={[styles.currency, { fontFamily: fonts.bold }]}>R$</Text>
                   <Text style={[styles.price, { fontFamily: fonts.extraBold }]}>
                     {currentPrice.toFixed(2)}
                   </Text>
-                </Animated.View>
+                </View>
                 
                 <View style={styles.subscriptionInfo}>
-                  <MaterialCommunityIcons name="calendar-check" size={18} color="#FFD700" />
+                  <MaterialCommunityIcons name="check-circle" size={16} color="#FFD700" />
                   <Text style={[styles.subscriptionDays, { fontFamily: fonts.semibold }]}>
                     {subscriptionDays} dias de acesso VIP
                   </Text>
                 </View>
-                
-                <Text style={[styles.billingInfo, { fontFamily: fonts.regular }]}>
-                  Pagamento único • Acesso imediato após aprovação
-                </Text>
               </View>
 
-              <View style={styles.paymentMethodsContainer}>
-                <View style={styles.pixBadge}>
-                  <MaterialCommunityIcons name="qrcode" size={20} color="#32BCAD" />
-                  <Text style={[styles.pixText, { fontFamily: fonts.semibold }]}>Pagamento via PIX</Text>
-                </View>
-                
-                <View style={styles.mercadoPagoContainer}>
-                  <Text style={[styles.securePaymentText, { fontFamily: fonts.regular }]}>
-                    Pagamento seguro em parceria com
-                  </Text>
-                    <View style={styles.mercadoPagoLogo}>
-                      <Image
-                        source={require('../assets/mercadopago.png')}
-                        style={styles.mercadoPagoImage}
-                      />
-                      <Text style={[styles.mercadoPagoText, { fontFamily: fonts.bold }]}>mercado pago</Text>
-                    </View>
-                </View>
-              </View>
-
-              <View style={styles.featuresContainer}>
-                {[
-                  'Todos os benefícios listados',
-                  'Atualizações exclusivas',
-                  'Prioridade em novos recursos'
-                ].map((feature, index) => (
-                  <Animated.View 
-                    key={index} 
-                    style={[
-                      styles.featureRow,
-                      {
-                        opacity: benefitsAnimArray[index],
-                        transform: [
-                          { 
-                            translateX: benefitsAnimArray[index].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [20, 0]
-                            }) 
-                          }
-                        ]
-                      }
-                    ]}
-                  >
-                    <MaterialCommunityIcons name="check-circle" size={18} color="#FFD700" />
-                    <Text style={[styles.featureText, { fontFamily: fonts.regular }]}>{feature}</Text>
-                  </Animated.View>
-                ))}
-              </View>
-
+              {/* CTA GIGANTE */}
               <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
                 <TouchableOpacity
                   style={styles.ctaButton}
                   onPress={handleSubscription}
                   disabled={isLoading}
-                  activeOpacity={0.8}
-                  onPressIn={() => {
-                    Animated.timing(buttonScaleAnim, {
-                      toValue: 0.95,
-                      duration: 100,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
-                  onPressOut={() => {
-                    Animated.timing(buttonScaleAnim, {
-                      toValue: 1,
-                      duration: 100,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
+                  activeOpacity={0.9}
                 >
                   <LinearGradient
-                    colors={['#FFD700', '#FFA500']}
+                    colors={['#FFD700', '#FFED4E', '#FFD700']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.ctaButtonGradient}
                   >
                     {isLoading ? (
-                      // wrap loader in the same content container so it stays centered
-                      <View style={styles.ctaButtonContent}>
-                        <ActivityIndicator color="#000" size="small" />
-                      </View>
+                      <ActivityIndicator color="#000" size="small" />
                     ) : (
                       <View style={styles.ctaButtonContent}>
-                        <MaterialCommunityIcons name="rocket" size={18} color="#000" />
-                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>\
-                          GARANTIR ACESSO VIP
+                        <MaterialCommunityIcons name="rocket-launch" size={20} color="#000" />
+                        <Text style={[styles.ctaButtonText, { fontFamily: fonts.extraBold }]}>
+                          GARANTIR ACESSO VIP AGORA
                         </Text>
                       </View>
                     )}
@@ -759,56 +475,124 @@ function ProSubscriptionContent({ navigation }: Props) {
               {error ? (
                 <Text style={[styles.errorText, { fontFamily: fonts.medium }]}>{error}</Text>
               ) : null}
+
+              {/* Info Pagamento */}
+              <View style={styles.paymentInfo}>
+                <View style={styles.paymentRow}>
+                  <View style={styles.pixDot} />
+                  <Text style={[styles.paymentText, { fontFamily: fonts.regular }]}>
+                    Pagamento via PIX
+                  </Text>
+                  <View style={styles.separator} />
+                  <Text style={[styles.paymentText, { fontFamily: fonts.regular }]}>
+                    Acesso imediato
+                  </Text>
+                </View>
+                <View style={styles.mercadoPagoRow}>
+                  <Text style={[styles.secureText, { fontFamily: fonts.regular }]}>
+                    Pagamento seguro com{' '}
+                  </Text>
+                  <Text style={[styles.mercadoPagoText, { fontFamily: fonts.bold }]}>
+                    Mercado Pago
+                  </Text>
+                </View>
+              </View>
             </LinearGradient>
           </Animated.View>
 
+          {/* Benefícios Compactos */}
+          <Animated.View 
+            style={[
+              styles.benefitsGrid,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            {[
+              { icon: 'signal-variant', text: 'Sinais VIP' },
+              { icon: 'lightning-bolt', text: 'Alertas Tempo Real' },
+              { icon: 'chart-line', text: 'Análises Avançadas' },
+              { icon: 'headset', text: 'Suporte Priority' },
+            ].map((benefit, index) => (
+              <View key={index} style={styles.benefitCard}>
+                <LinearGradient
+                  colors={['rgba(255, 215, 0, 0.15)', 'rgba(255, 165, 0, 0.05)']}
+                  style={styles.benefitIconContainer}
+                >
+                  <MaterialCommunityIcons 
+                    name={benefit.icon as any} 
+                    size={20} 
+                    color="#FFD700" 
+                  />
+                </LinearGradient>
+                <Text style={[styles.benefitText, { fontFamily: fonts.semibold }]}>
+                  {benefit.text}
+                </Text>
+              </View>
+            ))}
+          </Animated.View>
+
+          {/* O que está incluído */}
+          <Animated.View 
+            style={[
+              styles.includedSection,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <View style={styles.includedCard}>
+              {[
+                'Sinais exclusivos com alta taxa de acerto',
+                'Notificações prioritárias em tempo real',
+                'Análises e estatísticas avançadas',
+                'Suporte dedicado e prioritário'
+              ].map((item, index) => (
+                <View key={index} style={styles.includedRow}>
+                  <MaterialCommunityIcons 
+                    name="check-circle" 
+                    size={16} 
+                    color="#FFD700" 
+                  />
+                  <Text style={[styles.includedText, { fontFamily: fonts.regular }]}>
+                    {item}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Garantia */}
           <Animated.View 
             style={[
               styles.guaranteeSection,
               {
                 opacity: fadeAnim,
-                transform: [{ translateY: translateYAnim }]
+                transform: [{ translateY: slideAnim }]
               }
             ]}
           >
             <View style={styles.guaranteeBadge}>
-              <MaterialCommunityIcons name="shield-check" size={22} color="#0000" />
+              <MaterialCommunityIcons name="shield-check" size={20} color="#FFD700" />
             </View>
             <Text style={[styles.guaranteeText, { fontFamily: fonts.regular }]}>
-              7 dias de garantia de satisfação ou seu dinheiro de volta
+              7 dias de garantia ou seu dinheiro de volta
             </Text>
           </Animated.View>
 
-          <Animated.View 
-            style={{ 
-              opacity: fadeAnim,
-              transform: [{ translateY: translateYAnim }]
-            }}
+          {/* Botão Voltar */}
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={styles.backButton}
           >
-            <TouchableOpacity 
-              onPress={() => {
-                Animated.parallel([
-                  Animated.timing(fadeAnim, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: true,
-                  }),
-                  Animated.timing(scaleAnim, {
-                    toValue: 0.9,
-                    duration: 300,
-                    useNativeDriver: true,
-                  }),
-                ]).start(() => {
-                  navigation.goBack();
-                });
-              }} 
-              style={styles.backButton}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="arrow-left" size={18} color="#ccc" />
-              <Text style={[styles.backButtonText, { fontFamily: fonts.regular }]}>Voltar</Text>
-            </TouchableOpacity>
-          </Animated.View>
+            <MaterialCommunityIcons name="arrow-left" size={16} color="#666" />
+            <Text style={[styles.backButtonText, { fontFamily: fonts.regular }]}>
+              Voltar
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -833,6 +617,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -844,388 +629,363 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginTop: 16,
   },
+  
+  // Success Toast
+  successToast: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    zIndex: 1000,
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#34C759',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  successToastGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  successToastText: {
+    fontSize: 14,
+    color: '#FFF',
+  },
+
+  // Header
   header: {
     alignItems: 'center',
     marginTop: 24,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  logo: {
-    width: 72,
-    height: 72,
-    resizeMode: 'contain',
-    marginBottom: 8,
+  logoContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#FFD700',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  logoGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   proBadge: {
-    borderRadius: 16,
+    borderRadius: 20,
     paddingHorizontal: 24,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: 8,
-    minWidth: 120,
-  },
-  proBadgeMask: {
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 120,
-    minHeight: 32,
+    paddingVertical: 6,
   },
   proBadgeText: {
-    fontSize: 16,
-    color: '#FFD700',
-    letterSpacing: 1,
-  },
-  urgencyContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  urgencyBadge: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#FF3B30',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  urgencyBadgeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 6,
-  },
-  urgencyText: {
     fontSize: 14,
-    color: '#FFF',
-    letterSpacing: 0.5,
+    color: '#000',
+    letterSpacing: 1.5,
   },
+
+  // Hero
   heroSection: {
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#FFD700',
-    marginBottom: 2,
-    letterSpacing: 1,
+    marginBottom: 20,
   },
   heroTitle: {
     fontSize: 32,
     color: '#FFF',
-    marginBottom: 4,
-    letterSpacing: 1,
-  },
-  separator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  separatorLine: {
-    flex: 1,
-    height: 1.5,
-    backgroundColor: '#FFD700',
-    marginHorizontal: 8,
-    opacity: 0.5,
-  },
-  heroDescription: {
-    fontSize: 15,
-    color: '#DDD',
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 4,
-    lineHeight: 22,
+    lineHeight: 38,
+    marginBottom: 8,
   },
-  benefitsSection: {
-    width: '100%',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    color: '#FFD700',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  benefitCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A35',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  benefitIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  benefitContent: {
-    flex: 1,
-  },
-  benefitTitle: {
-    fontSize: 16,
-    color: '#FFD700',
-    marginBottom: 2,
-  },
-  benefitDescription: {
+  heroSubtitle: {
     fontSize: 14,
-    color: '#FFF',
-    opacity: 0.8,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 20,
   },
+
+  // Urgência
+  urgencyContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 24,
+  },
+  urgencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 59, 48, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  urgencyText: {
+    fontSize: 12,
+    color: '#FF3B30',
+  },
+
+  // Pricing
   pricingSection: {
     width: '100%',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  ribbon: {
+    position: 'absolute',
+    top: -12,
+    left: '50%',
+    transform: [{ translateX: -60 }],
+    zIndex: 10,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  ribbonGradient: {
     paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  ribbonText: {
+    fontSize: 11,
+    color: '#000',
+    letterSpacing: 1,
   },
   pricingCard: {
     width: '100%',
     borderRadius: 24,
     padding: 24,
-    alignItems: 'center',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
-    backgroundColor: 'rgba(30,30,60,0.95)',
-  },
-  ribbon: {
-    position: 'absolute',
-    top: -18,
-    left: 24,
-    zIndex: 2,
-  },
-  ribbonGradient: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ribbonText: {
-    fontSize: 13,
-    color: '#000',
-    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#FFD700',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
   },
   priceContainer: {
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 24,
   },
   oldPrice: {
     fontSize: 14,
-    color: '#FFD700',
+    color: '#666',
     textDecorationLine: 'line-through',
-    marginBottom: 2,
-    opacity: 0.7,
+    marginBottom: 4,
   },
   currentPriceRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   currency: {
-    fontSize: 18,
+    fontSize: 24,
     color: '#FFD700',
-    marginRight: 2,
+    marginRight: 4,
   },
   price: {
-    fontSize: 32,
+    fontSize: 56,
     color: '#FFD700',
+    lineHeight: 56,
   },
   subscriptionInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 4,
-    marginBottom: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 12,
   },
   subscriptionDays: {
-    fontSize: 15,
-    color: '#FFD700',
-  },
-  billingInfo: {
-    fontSize: 13,
-    color: '#FFD700',
-    opacity: 0.8,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  paymentMethodsContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
-  },
-  pixBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(50, 188, 173, 0.15)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  pixText: {
-    fontSize: 15,
-    color: '#32BCAD',
-  },
-  mercadoPagoContainer: {
-    alignItems: 'center',
-    gap: 3,
-  },
-  securePaymentText: {
-    fontSize: 12,
-    color: '#DDD',
-    opacity: 0.8,
-  },
-  mercadoPagoLogo: {
-    backgroundColor: '#009EE3',
-    paddingLeft: 126,
-    paddingRight: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  mercadoPagoText: {
-    fontSize: 16,
-    color: '#FFF',
-    letterSpacing: 0.5,
-    marginLeft: 0,
-    paddingHorizontal: 8,
-    textAlign: 'center',
-    alignSelf: 'center',
-  },
-  mercadoPagoImage: {
-    width: 110,
-    height: 28,
-    resizeMode: 'contain',
-    position: 'absolute',
-    left: 8,
-    zIndex: 2,
-  },
-  featuresContainer: {
-    width: '100%',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  featureText: {
     fontSize: 14,
     color: '#FFD700',
-    marginLeft: 8,
   },
+
+  // CTA Button
   ctaButton: {
     width: '100%',
-    marginTop: 12,
     borderRadius: 16,
     overflow: 'hidden',
-    // keep the button a fixed height so content swaps (text <-> loader) won't resize it
-    minHeight: 56,
+    marginBottom: 16,
   },
   ctaButtonGradient: {
-    paddingVertical: 16,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
-    flexDirection: 'row',
-    // ensure gradient fills the full width of the touchable so it doesn't shrink
-    width: '100%',
-    minHeight: 56,
   },
   ctaButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    // keep content centered and full width so ActivityIndicator stays centered
-    width: '100%',
+    gap: 8,
   },
   ctaButtonText: {
     fontSize: 16,
     color: '#000',
-    marginLeft: 8,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   errorText: {
-    color: '#FFD700',
+    color: '#FF3B30',
     fontSize: 14,
-    marginTop: 8,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+
+  // Payment Info
+  paymentInfo: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  paymentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pixDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#32BCAD',
+  },
+  paymentText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  separator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#444',
+  },
+  mercadoPagoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  secureText: {
+    fontSize: 11,
+    color: '#666',
+  },
+  mercadoPagoText: {
+    fontSize: 11,
+    color: '#009EE3',
+  },
+
+  // Benefits Grid
+  benefitsGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  benefitCard: {
+    width: '48%',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  benefitIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benefitText: {
+    fontSize: 12,
+    color: '#CCC',
     textAlign: 'center',
   },
-  guaranteeSection: {
+
+  // Included Section
+  includedSection: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  includedCard: {
+    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 20,
+    padding: 20,
+    gap: 12,
+  },
+  includedRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    gap: 10,
+  },
+  includedText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#CCC',
+    lineHeight: 20,
+  },
+
+  // Guarantee
+  guaranteeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 24,
   },
   guaranteeBadge: {
-    backgroundColor: '#FFD700',
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    padding: 8,
-    marginBottom: 6,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   guaranteeText: {
-    fontSize: 14,
-    color: '#FFD700',
-    textAlign: 'center',
-    opacity: 0.8,
+    fontSize: 13,
+    color: '#999',
+    maxWidth: 240,
   },
+
+  // Back Button
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    alignSelf: 'center',
-    padding: 8,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
   },
   backButtonText: {
-    fontSize: 15,
-    color: '#ccc',
-    marginLeft: 8,
-  },
-  confettiContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 200,
-    zIndex: 10,
-    pointerEvents: 'none',
-  },
-  confettiAnimation: {
-    width: '100%',
-    height: 200,
+    fontSize: 14,
+    color: '#666',
   },
 });
