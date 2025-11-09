@@ -8,7 +8,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
@@ -41,7 +40,7 @@ public class TimelineController {
     }
 
     @Operation(summary = "Agendamento de envio de sinais automáticos", description = "Envia sinais automáticos a cada 7 segundos para o tópico de sinais.")
-    @Scheduled(fixedRate = 7000)
+    // @Scheduled(fixedRate = 7000)
     public void scheduleMessage() {
         long id = counter.getAndIncrement();
         TipoEvento evento = TipoEvento.DICA;
