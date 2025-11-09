@@ -154,7 +154,7 @@ function LoginContent({ navigation }: Props) {
       });
       return;
     }
-    
+    getUserInfo(); 
     setLoading(true);
     try {
       const response = await api.post(
