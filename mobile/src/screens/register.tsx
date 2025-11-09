@@ -53,7 +53,6 @@ function RegisterContent({ navigation }: Props) {
         title: "Confirmação de idade",
         confirmText: "Sim",
         cancelText: "Não",
-        showCancel: true,
         onConfirm: () => {},
         onCancel: () => { navigation.navigate("Login"); }
       }
@@ -105,6 +104,13 @@ function RegisterContent({ navigation }: Props) {
   };
 
   const handleRegister = async () => {
+    // length constraints
+    const NAME_MIN = 3;
+    const NAME_MAX = 50;
+    const PASSWORD_MIN = 6;
+    const PASSWORD_MAX = 128;
+    const EMAIL_MAX = 100;
+
     if (!isTermAccepted) {
       showAlert("Aceite os termos de uso para prosseguir.", {
         title: "Termos de Uso"
@@ -119,6 +125,20 @@ function RegisterContent({ navigation }: Props) {
       return;
     }
 
+    if (name.length < NAME_MIN || name.length > NAME_MAX) {
+      showAlert(`O nome deve conter entre ${NAME_MIN} e ${NAME_MAX} caracteres.`, {
+        title: "Nome inválido"
+      });
+      return;
+    }
+
+    if (email.length > EMAIL_MAX) {
+      showAlert(`O e-mail deve ter no máximo ${EMAIL_MAX} caracteres.`, {
+        title: "E-mail inválido"
+      });
+      return;
+    }
+
     if (!validateEmail(email)) {
       showAlert("Por favor, insira um e-mail válido.", {
         title: "E-mail Inválido"
@@ -126,8 +146,8 @@ function RegisterContent({ navigation }: Props) {
       return;
     }
 
-    if (password.length < 6) {
-      showAlert("A senha deve ter pelo menos 6 caracteres.", {
+    if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+      showAlert(`A senha deve ter entre ${PASSWORD_MIN} e ${PASSWORD_MAX} caracteres.`, {
         title: "Senha Inválida"
       });
       return;
@@ -232,6 +252,7 @@ function RegisterContent({ navigation }: Props) {
                       styles.input,
                       { color: colors.primary, fontFamily: fonts.regular }
                     ]}
+                    maxLength={50}
                   />
                 </View>
                 
@@ -259,6 +280,7 @@ function RegisterContent({ navigation }: Props) {
                       styles.input,
                       { color: colors.primary, fontFamily: fonts.regular }
                     ]}
+                    maxLength={100}
                   />
                 </View>
                 
@@ -286,6 +308,7 @@ function RegisterContent({ navigation }: Props) {
                       styles.input,
                       { color: colors.primary, fontFamily: fonts.regular }
                     ]}
+                    maxLength={128}
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
