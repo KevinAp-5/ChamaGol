@@ -16,7 +16,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../config/Api";
-import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
+import { useCustomAlert } from "../components/CustomAlert";
 
 const RESEND_TIMEOUT = 60; // segundos
 
@@ -152,137 +152,135 @@ const EmailVerificationScreen = ({ navigation }: any) => {
   };
 
   return (
-    <CustomAlertProvider>
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        
-        {/* Header com gradiente - fica atrás do conteúdo */}
-        <SafeAreaView style={styles.safeAreaHeader}>
-          <LinearGradient
-            colors={["#000000", "#B71C1C"]}
-            style={styles.headerGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.headerContent}>
-              <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-                CHAMAGOL
-              </Text>
-              <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-                Confirmação de E-mail
-              </Text>
-            </View>
-          </LinearGradient>
-        </SafeAreaView>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      
+      {/* Header com gradiente - fica atrás do conteúdo */}
+      <SafeAreaView style={styles.safeAreaHeader}>
+        <LinearGradient
+          colors={["#000000", "#B71C1C"]}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.headerContent}>
+            <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
+              CHAMAGOL
+            </Text>
+            <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
+              Confirmação de E-mail
+            </Text>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
 
-        {/* Conteúdo principal com cantos arredondados na parte superior */}
-        <View style={styles.mainContent}>
-          {/* Card principal */}
-          <Animated.View
+      {/* Conteúdo principal com cantos arredondados na parte superior */}
+      <View style={styles.mainContent}>
+        {/* Card principal */}
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              backgroundColor: "#fff",
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 5,
+            },
+          ]}
+        >
+          <View style={styles.iconCircle}>
+            <Image
+              source={require("../assets/mail.png")}
+              style={styles.icon}
+            />
+          </View>
+          <Text
             style={[
-              styles.card,
-              {
-                backgroundColor: "#fff",
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
-                elevation: 5,
-              },
+              styles.title,
+              { color: "#E53935", fontFamily: fonts.bold },
             ]}
           >
-            <View style={styles.iconCircle}>
-              <Image
-                source={require("../assets/mail.png")}
-                style={styles.icon}
-              />
-            </View>
-            <Text
-              style={[
-                styles.title,
-                { color: "#E53935", fontFamily: fonts.bold },
-              ]}
-            >
-              Verifique seu e-mail!
-            </Text>
-            <Text
-              style={[
-                styles.subtitle,
-                { color: "#757575", fontFamily: fonts.regular },
-              ]}
-            >
-              Enviamos um link de confirmação para o seu e-mail.
-            </Text>
-            <Text
-              style={[
-                styles.info,
-                { color: "#757575", fontFamily: fonts.regular },
-              ]}
-            >
-              Não encontrou? Olhe na sua caixa de spam ou lixo eletrônico.
-            </Text>
-            <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: canResend ? "#E53935" : "#E0E0E0",
-                  },
-                ]}
-                onPress={handleResend}
-                disabled={!canResend}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons
-                  name="email-sync"
-                  size={20}
-                  color={canResend ? "#fff" : "#BDBDBD"}
-                  style={{ marginRight: 8 }}
-                />
-                <Text
-                  style={[
-                    styles.buttonText,
-                    {
-                      color: canResend ? "#fff" : "#BDBDBD",
-                      fontFamily: fonts.bold,
-                    },
-                  ]}
-                >
-                  {canResend
-                    ? "Reenviar e-mail"
-                    : `Reenviar em ${timer}s`}
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
+            Verifique seu e-mail!
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              { color: "#757575", fontFamily: fonts.regular },
+            ]}
+          >
+            Enviamos um link de confirmação para o seu e-mail.
+          </Text>
+          <Text
+            style={[
+              styles.info,
+              { color: "#757575", fontFamily: fonts.regular },
+            ]}
+          >
+            Não encontrou? Olhe na sua caixa de spam ou lixo eletrônico.
+          </Text>
+          <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.7}
+              style={[
+                styles.button,
+                {
+                  backgroundColor: canResend ? "#E53935" : "#E0E0E0",
+                },
+              ]}
+              onPress={handleResend}
+              disabled={!canResend}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              activeOpacity={0.8}
             >
+              <MaterialCommunityIcons
+                name="email-sync"
+                size={20}
+                color={canResend ? "#fff" : "#BDBDBD"}
+                style={{ marginRight: 8 }}
+              />
               <Text
                 style={[
-                  styles.secondaryButtonText,
-                  { color: "#E53935", fontFamily: fonts.bold },
+                  styles.buttonText,
+                  {
+                    color: canResend ? "#fff" : "#BDBDBD",
+                    fontFamily: fonts.bold,
+                  },
                 ]}
               >
-                Trocar e-mail
+                {canResend
+                  ? "Reenviar e-mail"
+                  : `Reenviar em ${timer}s`}
               </Text>
             </TouchableOpacity>
           </Animated.View>
-          
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: "#757575" }]}>
-              © 2025 CHAMAGOL. Todos os direitos reservados.
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.secondaryButtonText,
+                { color: "#E53935", fontFamily: fonts.bold },
+              ]}
+            >
+              Trocar e-mail
             </Text>
-          </View>
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: "#757575" }]}>
+            © 2025 CHAMAGOL. Todos os direitos reservados.
+          </Text>
         </View>
       </View>
-    </CustomAlertProvider>
+    </View>
   );
 };
 
