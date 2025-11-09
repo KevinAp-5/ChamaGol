@@ -80,8 +80,8 @@ function HomeContent({ navigation }: Props) {
       if (response.status === 200) {
         setSubscriptionAlert(response.data);
 
-        // Só mostra se o alerta estiver ativo E o usuário tem assinatura
-        if (response.data && currentSubscription !== "FREE" && currentSubscription !== null) {
+        // Só mostra se o alerta estiver ativo (usuário já foi filtrado por assinatura)
+        if (response.data) {
           showAlert(
             "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
             { title: "Sua assinatura vai expirar em breve" }
