@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
+import { Modal, View, Text, Pressable, StyleSheet, Alert as RNAlert } from "react-native";
 
 const COLORS = {
   background: "#FFF",
@@ -14,6 +14,10 @@ type AlertOptions = {
   title?: string;
   confirmText?: string;
   onConfirm?: () => void;
+  // added cancel options (backwards compatible)
+  cancelText?: string;
+  onCancel?: () => void;
+  showCancel?: boolean;
 };
 
 type AlertContextType = {
@@ -24,7 +28,29 @@ const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
 export const useCustomAlert = () => {
   const context = useContext(AlertContext);
-  if (!context) throw new Error("useCustomAlert deve ser usado dentro de CustomAlertProvider");
+  if (!context) {
+    return {
+      showAlert: (message: string, options?: AlertOptions) => {
+        const title = options?.title || "Atenção";
+        const confirmText = options?.confirmText || "OK";
+        const cancelText = options?.cancelText;
+        const buttons = [];
+        if (options?.showCancel || cancelText) {
+          buttons.push({
+            text: cancelText || "Cancelar",
+            onPress: options?.onCancel,
+            style: "cancel" as const,
+          });
+        }
+        buttons.push({
+          text: confirmText,
+          onPress: options?.onConfirm,
+        });
+        RNAlert.alert(title, message, buttons);
+        console.warn("CustomAlertProvider não encontrado. Usando Alert nativo como fallback.", { message, options });
+      },
+    } as AlertContextType;
+  }
   return context;
 };
 
@@ -34,31 +60,48 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
     message: string;
     title: string;
     confirmText: string;
+    // new cancel state
+    cancelText?: string;
+    showCancel?: boolean;
     onConfirm?: () => void;
+    onCancel?: () => void;
   }>({
     visible: false,
     message: "",
     title: "Atenção",
     confirmText: "OK",
+    cancelText: undefined,
+    showCancel: false,
     onConfirm: undefined,
+    onCancel: undefined,
   });
 
   const showAlert = (
     message: string,
     options?: AlertOptions
   ) => {
+    const cancelText = options?.cancelText?.trim();
+    const showCancel = options?.showCancel ?? !!cancelText;
     setAlert({
       visible: true,
       message,
       title: options?.title || "Atenção",
       confirmText: options?.confirmText?.trim() || "OK",
+      cancelText: cancelText,
+      showCancel,
       onConfirm: options?.onConfirm,
+      onCancel: options?.onCancel,
     });
   };
 
   const handleConfirm = () => {
     setAlert((prev) => ({ ...prev, visible: false }));
     alert.onConfirm?.();
+  };
+
+  const handleCancel = () => {
+    setAlert((prev) => ({ ...prev, visible: false }));
+    alert.onCancel?.();
   };
 
   return (
@@ -74,12 +117,31 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
           <View style={styles.container}>
             <Text style={styles.title}>{alert.title}</Text>
             <Text style={styles.message}>{alert.message}</Text>
-            <Pressable
-              style={styles.confirmButton}
-              onPress={handleConfirm}
-            >
-              <Text style={styles.confirmText}>{alert.confirmText}</Text>
-            </Pressable>
+
+            {alert.showCancel ? (
+              <View style={styles.buttonRow}>
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={handleCancel}
+                >
+                  <Text style={styles.cancelText}>{alert.cancelText || "Cancelar"}</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.confirmButton, { flex: 1 }]}
+                  onPress={handleConfirm}
+                >
+                  <Text style={styles.confirmText}>{alert.confirmText}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+              >
+                <Text style={styles.confirmText}>{alert.confirmText}</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </Modal>
@@ -121,6 +183,25 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
     lineHeight: 22,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    width: "100%",
+  },
+  cancelButton: {
+    backgroundColor: "#EFEFEF",
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    marginRight: 8,
+    minWidth: 80,
+    flex: 1,
+  },
+  cancelText: {
+    color: "#111",
+    fontSize: 16,
+    fontWeight: "700",
   },
   confirmButton: {
     backgroundColor: COLORS.confirm,
