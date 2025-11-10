@@ -59,8 +59,11 @@ public class SaleController {
 
     @GetMapping
     public ResponseEntity<Sale> getActiveSale() {
-        Sale activeSale = saleService.getActiveSale().orElse(null);
-        return ResponseEntity.ok(activeSale);
+        Optional<Sale> activeSale = saleService.getActiveSale();
+        if (activeSale.isPresent())
+            return ResponseEntity.ok(activeSale.get());
+        return ResponseEntity.notFound().build();
+        
     }
 
     @GetMapping
