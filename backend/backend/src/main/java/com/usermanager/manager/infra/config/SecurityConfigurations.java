@@ -49,7 +49,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws/**", "/api/ws/**", "/ws/chat/**", "/ws/chat/info/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
