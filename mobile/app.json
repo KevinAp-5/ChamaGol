@@ -13,15 +13,6 @@
     "icon": "./src/assets/apk_icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "expo-splash-screen": {
-      "backgroundColor": "#FFFFFF",
-      "image": "./src/assets/images/logo.png",
-      "dark": {
-        "image": "./src/assets/images/logo_white_label.png",
-        "backgroundColor": "#000000"
-      },
-      "resideMode": "contain"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kevenap5.ChamaGol",
