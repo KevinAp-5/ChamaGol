@@ -6,10 +6,11 @@ import './css/Sales.css';
 const SaleForm = ({ sale, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     name: sale?.name || '',
-    value: sale?.value || '',
-    userLimit: sale?.userLimit || '',
-    expiresAt: sale?.expiresAt || '',
-    description: sale?.description || ''
+    salePrice: sale?.salePrice || sale?.value || '',
+    userAmount: sale?.userAmount || sale?.userLimit || '',
+    saleExpiration: sale?.saleExpiration || sale?.expiresAt || '',
+    description: sale?.description || '',
+    userSubscriptionTime: sale?.userSubscriptionTime || 30
   });
 
   const handleChange = (e) => {
@@ -55,8 +56,8 @@ const SaleForm = ({ sale, onSubmit, onCancel }) => {
                 <DollarSign size={20} />
                 <input
                   type="number"
-                  name="value"
-                  value={formData.value}
+                  name="salePrice"
+                  value={formData.salePrice}
                   onChange={handleChange}
                   placeholder="99.90"
                   step="0.01"
@@ -71,8 +72,8 @@ const SaleForm = ({ sale, onSubmit, onCancel }) => {
                 <Users size={20} />
                 <input
                   type="number"
-                  name="userLimit"
-                  value={formData.userLimit}
+                  name="userAmount"
+                  value={formData.userAmount}
                   onChange={handleChange}
                   placeholder="100"
                   required
@@ -86,8 +87,8 @@ const SaleForm = ({ sale, onSubmit, onCancel }) => {
                 <Calendar size={20} />
                 <input
                   type="datetime-local"
-                  name="expiresAt"
-                  value={formData.expiresAt}
+                  name="saleExpiration"
+                  value={formData.saleExpiration}
                   onChange={handleChange}
                   required
                 />
@@ -131,6 +132,18 @@ const Sales = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
+  // Função para mapear dados da API para o formato do componente
+  const mapSaleData = (sale) => {
+    if (!sale) return null;
+    return {
+      ...sale,
+      value: sale.salePrice,
+      userLimit: sale.userAmount,
+      expiresAt: sale.saleExpiration,
+      isActive: sale.status === 'ACTIVE'
+    };
+  };
+
   const loadSales = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -140,8 +153,16 @@ const Sales = () => {
         api.get("/api/sale/all")
       ]);
       
-      setActiveSale(activeRes.data);
-      setSales(Array.isArray(allRes.data) ? allRes.data : []);
+      const mappedActiveSale = mapSaleData(activeRes.data);
+      setActiveSale(mappedActiveSale);
+      
+      const mappedSales = Array.isArray(allRes.data) 
+        ? allRes.data.map(mapSaleData) 
+        : [];
+      setSales(mappedSales);
+      
+      console.log('Oferta ativa mapeada:', mappedActiveSale);
+      console.log('Todas ofertas mapeadas:', mappedSales);
     } catch (e) {
       setError(e.message || "Erro ao carregar ofertas");
       setSales([]);
@@ -208,6 +229,7 @@ const Sales = () => {
   });
 
   const formatDate = (date) => {
+    if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -218,6 +240,7 @@ const Sales = () => {
   };
 
   const formatCurrency = (value) => {
+    if (value === null || value === undefined) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
@@ -303,6 +326,15 @@ const Sales = () => {
                   <p>{activeSale.description}</p>
                 </div>
               )}
+              <div className="sale-card-actions">
+                <button
+                  className="btn-icon-text danger"
+                  onClick={() => handleDeactivate()}
+                >
+                  <Lock size={18} />
+                  Desativar Oferta
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -407,7 +439,7 @@ const Sales = () => {
                     {sale.isActive && (
                       <button
                         className="btn-icon-text danger"
-                        onClick={() => handleDeactivate(sale.id)}
+                        onClick={() => handleDeactivate()}
                       >
                         <Lock size={18} />
                         Desativar
