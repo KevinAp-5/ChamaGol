@@ -23,7 +23,7 @@ import * as SecureStore from "expo-secure-store";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api } from "../config/Api";
+import { api, BASE_URL } from "../config/Api";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -538,7 +538,9 @@ export default function SinaisScreen({ navigation }: Props) {
 
     setIsConnecting(true);
     
-    const socket = new SockJS(`http://192.168.0.103:8080/ws/chat?token=${token}`);
+    // const socket = new SockJS(`http://192.168.0.103:8080/ws/chat?token=${token}`);
+    // const socket = new SockJS(`${BASE_URL}/ws/chat?token=${token}`);
+    const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Modal, View, Text, Pressable, StyleSheet, Alert as RNAlert } from "react-native";
 
 const COLORS = {
@@ -14,7 +14,6 @@ type AlertOptions = {
   title?: string;
   confirmText?: string;
   onConfirm?: () => void;
-  // added cancel options (backwards compatible)
   cancelText?: string;
   onCancel?: () => void;
   showCancel?: boolean;
@@ -26,30 +25,48 @@ type AlertContextType = {
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
-export const useCustomAlert = () => {
+// module-level global handler (registered by provider)
+let globalShowAlert: ((message: string, options?: AlertOptions) => void) | null = null;
+
+/**
+ * showCustomAlert - callable outside React tree
+ */
+export function showCustomAlert(message: string, options?: AlertOptions) {
+  if (globalShowAlert) {
+    globalShowAlert(message, options);
+    return;
+  }
+
+  // fallback to native alert if provider not present
+  const title = options?.title || "Atenção";
+  const confirmText = options?.confirmText || "OK";
+  const cancelText = options?.cancelText;
+  const buttons: any[] = [];
+
+  if (options?.showCancel || cancelText) {
+    buttons.push({
+      text: cancelText || "Cancelar",
+      onPress: options?.onCancel,
+      style: "cancel" as const,
+    });
+  }
+
+  buttons.push({
+    text: confirmText,
+    onPress: options?.onConfirm,
+  });
+
+  RNAlert.alert(title, message, buttons);
+  console.warn("CustomAlertProvider não encontrado. Usando Alert nativo como fallback.", { message, options });
+}
+
+export const useCustomAlert = (): AlertContextType => {
   const context = useContext(AlertContext);
   if (!context) {
+    // return wrapper that forwards to module-level showCustomAlert (safe, no crash)
     return {
-      showAlert: (message: string, options?: AlertOptions) => {
-        const title = options?.title || "Atenção";
-        const confirmText = options?.confirmText || "OK";
-        const cancelText = options?.cancelText;
-        const buttons = [];
-        if (options?.showCancel || cancelText) {
-          buttons.push({
-            text: cancelText || "Cancelar",
-            onPress: options?.onCancel,
-            style: "cancel" as const,
-          });
-        }
-        buttons.push({
-          text: confirmText,
-          onPress: options?.onConfirm,
-        });
-        RNAlert.alert(title, message, buttons);
-        console.warn("CustomAlertProvider não encontrado. Usando Alert nativo como fallback.", { message, options });
-      },
-    } as AlertContextType;
+      showAlert: (message: string, options?: AlertOptions) => showCustomAlert(message, options),
+    };
   }
   return context;
 };
@@ -60,7 +77,6 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
     message: string;
     title: string;
     confirmText: string;
-    // new cancel state
     cancelText?: string;
     showCancel?: boolean;
     onConfirm?: () => void;
@@ -76,10 +92,7 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
     onCancel: undefined,
   });
 
-  const showAlert = (
-    message: string,
-    options?: AlertOptions
-  ) => {
+  const showAlert = useCallback((message: string, options?: AlertOptions) => {
     const cancelText = options?.cancelText?.trim();
     const showCancel = options?.showCancel ?? !!cancelText;
     setAlert({
@@ -92,7 +105,16 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
       onConfirm: options?.onConfirm,
       onCancel: options?.onCancel,
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    // register global handler while mounted
+    globalShowAlert = showAlert;
+    return () => {
+      // unregister only if it's the same reference
+      if (globalShowAlert === showAlert) globalShowAlert = null;
+    };
+  }, [showAlert]);
 
   const handleConfirm = () => {
     setAlert((prev) => ({ ...prev, visible: false }));
