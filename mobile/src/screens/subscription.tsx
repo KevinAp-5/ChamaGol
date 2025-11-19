@@ -235,8 +235,7 @@ function ProSubscriptionContent({ navigation }: Props) {
       
       if (response.status !== 200) throw new Error('Erro ao criar pagamento');
 
-      const preferenceId = response.data;
-      const checkoutUrl = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${preferenceId}`;
+      const checkoutUrl = response.data;
       
       await WebBrowser.openBrowserAsync(checkoutUrl);
     } catch (err) {
