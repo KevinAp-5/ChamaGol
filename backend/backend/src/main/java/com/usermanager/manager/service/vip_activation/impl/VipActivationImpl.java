@@ -2,6 +2,7 @@ package com.usermanager.manager.service.vip_activation.impl;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -46,24 +47,29 @@ public class VipActivationImpl implements VipActivationService {
     }
 
     @Transactional
-    public VipActivation nextVipActivation() {
-        VipActivation vipActivation = vipActivationRepository.findFirstByProcessedFalseOrderByCreationDateAsc();
-        if (vipActivation == null)
-            return null;
-        User user = vipActivation.getUserId();
-        Sale sale = vipActivation.getSaleId();
+    public List<VipActivation> nextVipActivation() {
+        List<VipActivation> vipActivationList = vipActivationRepository.findAllByProcessedFalseOrderByCreationDateAsc();
+        if (vipActivationList.isEmpty()) {
+            return vipActivationList;
+        }
 
-        user.setSubscription(Subscription.VIP);
-        user.setUpdatedAt(ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")));
-        if (sale != null)
-            saleService.useSale();
+        for (VipActivation vipActivation: vipActivationList) {
+            User user = vipActivation.getUserId();
+            Sale sale = vipActivation.getSaleId();
+    
+            user.setSubscription(Subscription.VIP);
+            user.setUpdatedAt(ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")));
+            if (sale != null)
+                saleService.useSale();
+    
+            Integer subscriptionTime = (sale != null) ? sale.getUserSubscriptionTime() : 30;
+            createSubscriptionControl(user, subscriptionTime);
+            userService.save(user);
+    
+            vipActivation.setProcessed(true);
+        }
 
-        Integer subscriptionTime = (sale != null) ? sale.getUserSubscriptionTime() : Integer.valueOf(30);
-        createSubscriptionControl(user, subscriptionTime);
-        userService.save(user);
-
-        vipActivation.setProcessed(true);
-        return vipActivationRepository.save(vipActivation);
+        return vipActivationRepository.saveAll(vipActivationList);
     }
 
     @Transactional
