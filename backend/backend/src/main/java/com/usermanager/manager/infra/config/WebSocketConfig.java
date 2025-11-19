@@ -31,14 +31,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws/chat")
+        // registra ambos os caminhos para compatibilidade com cliente que usa /api prefix
+        registry.addEndpoint("/ws/chat", "/api/ws/chat")
                 .setAllowedOriginPatterns("*")
-                .addInterceptors(new WebSocketAuthInterceptor(tokenService, userService))
                 .withSockJS();
     }
 
     @Override
-    public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        // se já tiver interceptores, mantenha-os
         registration.interceptors(new WebSocketAuthInterceptor(tokenService, userService));
     }
 
