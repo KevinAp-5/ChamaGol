@@ -50,7 +50,8 @@ public class WebhookService {
     @Value("${mercadopago.webhook.secret:}")
     private String webhookSecret;
 
-    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService, VipActivationService vipActivationService, MailService mailService) {
+    public WebhookService(WebhookEventsRepository webhookRepository, UserService userService,
+            VipActivationService vipActivationService, MailService mailService) {
         this.webhookRepository = webhookRepository;
         this.userService = userService;
         this.paymentClient = new PaymentClient();
@@ -205,9 +206,11 @@ public class WebhookService {
         }
     }
 
+    @Transactional
     private void updateUserSubscription(User user, String paymentStatus) {
         if (STATUS_APPROVED.equalsIgnoreCase(paymentStatus)) {
-            vipActivationService.createVipActivation(user);            
+            vipActivationService.createVipActivation(user);
+            vipActivationService.nextVipActivation();
             log.info("Vip activation created updated for: {}", user.getLogin());
         } else {
             log.info("Payment not approved for user {}, status: {}", user.getLogin(), paymentStatus);
