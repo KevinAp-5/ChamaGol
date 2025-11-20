@@ -66,32 +66,37 @@ function HomeContent({ navigation }: Props) {
 
     try {
       const alertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
+      // se já mostramos o alerta, garante estado e não chama a API novamente
       if (alertFlag === "1") {
+        setSubscriptionAlert(false);
         return;
       }
 
       const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) return;
+      if (!token) {
+        setSubscriptionAlert(false);
+        return;
+      }
 
       const response = await api.get("users/subscription/alert", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.status === 200) {
-        setSubscriptionAlert(response.data);
+      // garante que subscriptionAlert seja booleano
+      const serverAlert = !!(response.status === 200 && response.data === true);
+      setSubscriptionAlert(serverAlert);
 
-        // Só mostra se o alerta estiver ativo (usuário já foi filtrado por assinatura)
-        if (response.data) {
-          showAlert(
-            "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
-            { title: "Sua assinatura vai expirar em breve" }
-          );
-          await AsyncStorage.setItem("subscriptionAlertFlag", "1");
-        }
+      // apenas mostra o alerta e grava o flag se a API indicar true e não tivermos mostrado antes
+      if (serverAlert && alertFlag !== "1") {
+        showAlert(
+          "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
+          { title: "Sua assinatura vai expirar em breve" }
+        );
+        await AsyncStorage.setItem("subscriptionAlertFlag", "1");
       }
     } catch (error) {
-      // Apenas loga, não mostra alerta para quem não tem assinatura
       console.log("Erro ao recuperar alerta de assinatura do usuário", error);
+      setSubscriptionAlert(false);
     }
   };
 
@@ -99,24 +104,28 @@ function HomeContent({ navigation }: Props) {
   const fetchSubscription = async () => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) return;
+      if (!token) {
+        setSubscription(null);
+        return;
+      }
 
       const response = await api.get("users/subscription", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       let userSubscription: SubscriptionType = null;
-      if (response.status === 200 && response.data.userSubscription) {
-        userSubscription = response.data.userSubscription as SubscriptionType;
+      if (response.status === 200 && response.data?.userSubscription) {
+        userSubscription = String(response.data.userSubscription) as SubscriptionType;
+        // armazena string segura
         await AsyncStorage.setItem("subscription", userSubscription);
         setSubscription(userSubscription);
       } else {
         setSubscription(null);
+        await AsyncStorage.removeItem("subscription");
       }
 
       // Só chama o alerta depois de saber a assinatura
       await fetchSubscriptionAlert(userSubscription);
-
     } catch (error) {
       setSubscription(null);
       console.log("Erro ao recuperar assinatura do usuário", error);
