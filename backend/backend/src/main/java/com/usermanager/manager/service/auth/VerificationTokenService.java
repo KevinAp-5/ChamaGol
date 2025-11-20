@@ -39,7 +39,7 @@ public class VerificationTokenService {
     @Transactional
     public void cleanUsedTokens() {
         Instant date = Instant.now().minusSeconds(86400);
-            verificationRepository.deleteAllActivatedAndExpired(date);
+        verificationRepository.deleteAllActivatedAndExpired(date);
         log.info("VerificationToken database cleaning.");
     }
 
@@ -95,7 +95,7 @@ public class VerificationTokenService {
         if (verificationToken.getExpirationDate().isBefore(ZonedDateTime.now().toInstant())) {
             throw new TokenInvalidException("Token is expired, please try again.");
         }
-        return verificationToken;             
+        return verificationToken;
     }
 
     @Transactional

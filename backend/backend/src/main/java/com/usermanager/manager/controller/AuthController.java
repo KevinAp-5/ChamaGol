@@ -103,6 +103,7 @@ public class AuthController {
     public String confirmUser(
             @Parameter(description = "Token de confirmação enviado por e-mail", required = true) @RequestParam("token") @NotBlank String token,
             Model model) {
+        log.info("token: {}", token);
         boolean validated = authService.confirmVerificationToken(convertStringToUUID(token));
         model.addAttribute("confirmed", validated);
         return "account_confirmed";
