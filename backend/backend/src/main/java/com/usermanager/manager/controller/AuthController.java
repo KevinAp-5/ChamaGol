@@ -262,6 +262,7 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(
             @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) {
+        log.info("User: {}", user);
         ZonedDateTime expirationDate = authService.getExpirationDate(user);
         return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(),
                 user.getSubscription().getValue(), expirationDate));
