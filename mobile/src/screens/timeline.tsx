@@ -537,34 +537,53 @@ export default function SinaisScreen({ navigation }: Props) {
     }
 
     setIsConnecting(true);
-    
-    // const socket = new SockJS(`http://192.168.0.103:8080/ws/chat?token=${token}`);
-    // const socket = new SockJS(`${BASE_URL}/ws/chat?token=${token}`);
-    const socket = new SockJS(`https://chamagol.com/ws/chat?token=${token}`);
+
+    // Always create a fresh SockJS instance via factory and enable debug logs
+    const wsUrl = `${BASE_URL}/ws/chat?token=${token}`;
     const client = new Client({
-      webSocketFactory: () => socket,
-      onConnect: () => {
-        setStompClient(client);
-        setIsConnecting(false);
-        setIsConnected(true);
-        console.log("Conectado ao WebSocket");
-      },
-      onDisconnect: () => {
-        setStompClient(null);
-        setIsConnected(false);
-        console.log("Desconectado do WebSocket");
-      },
-      onStompError: (frame) => {
-        console.error("Erro reportado pelo broker: " + frame.headers["message"]);
-        console.error("Detalhes adicionais: " + frame.body);
-        setIsConnecting(false);
-        setIsConnected(false);
-      },
+      // create a new SockJS per connection (recommended)
+      webSocketFactory: () => new SockJS(wsUrl),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      // STOMP callbacks
+      onConnect: () => {
+        console.log("[STOMP] onConnect");
+        setStompClient(client);
+        setIsConnecting(false);
+        setIsConnected(true);
+      },
+      onDisconnect: () => {
+        console.log("[STOMP] onDisconnect");
+        setStompClient(null);
+        setIsConnected(false);
+      },
+      onStompError: (frame) => {
+        console.error("[STOMP] broker error:", frame?.headers?.message, frame?.body);
+        setIsConnecting(false);
+        setIsConnected(false);
+      },
     });
 
+    // Debug logging for raw/STOMP events
+    // (some versions use client.debug, others accept debug in constructor)
+    try {
+      (client as any).debug = (msg: string) => console.log("[STOMP DEBUG]", msg);
+    } catch (e) {}
+
+    // Optional low-level websocket event hooks (SockJS doesn't expose directly here,
+    // but Client provides onWebSocketClose/onUnhandledMessage/onUnhandledFrame)
+    client.onWebSocketClose = (evt: any) => {
+      console.warn("[STOMP] websocket closed", evt);
+      setIsConnected(false);
+    };
+    client.onWebSocketError = (evt: any) => {
+      console.error("[STOMP] websocket error", evt);
+      setIsConnecting(false);
+      setIsConnected(false);
+    };
+
+    console.log("[STOMP] activating client ->", wsUrl);
     client.activate();
 
     return () => {
