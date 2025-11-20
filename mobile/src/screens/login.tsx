@@ -154,7 +154,7 @@ function LoginContent({ navigation }: Props) {
       });
       return;
     }
-    getUserInfo(); 
+
     setLoading(true);
     try {
       const response = await api.post(
@@ -165,16 +165,31 @@ function LoginContent({ navigation }: Props) {
       if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
         const accessToken = response.data.token || response.data.accessToken;
         const refreshToken = response.data.refreshToken;
-        await SecureStore.setItemAsync('accessToken', accessToken);
-        if (refreshToken) {
-          await SecureStore.setItemAsync('refreshToken', refreshToken);
+        console.log("accessToken: " + accessToken);
+
+        try {
+          // sempre atualiza o accessToken (sobrescreve)
+          await SecureStore.setItemAsync('accessToken', accessToken);
+          console.log("guardado: " + await SecureStore.getItemAsync("accessToken"))
+          // atualiza ou remove o refreshToken conforme resposta
+          if (refreshToken) {
+            await SecureStore.setItemAsync('refreshToken', refreshToken);
+          } else {
+            await SecureStore.deleteItemAsync('refreshToken');
+          }
+        } catch (storageErr) {
+          console.warn("Erro ao salvar tokens no SecureStore:", storageErr);
         }
-        
+
+        // salva flags locais
         await Promise.all([
           AsyncStorage.setItem("subscriptionFlag", "0"),
           AsyncStorage.setItem("termFlag", "0")
         ]);
-        
+
+        // Agora que os tokens foram gravados, busca info do usuário com token atualizado
+        await getUserInfo();
+
         setTimeout(() => {
           navigation.navigate("Home");
         }, 500);
