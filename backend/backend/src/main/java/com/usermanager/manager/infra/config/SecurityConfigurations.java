@@ -45,6 +45,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/page/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/register/confirm**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/teste/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()

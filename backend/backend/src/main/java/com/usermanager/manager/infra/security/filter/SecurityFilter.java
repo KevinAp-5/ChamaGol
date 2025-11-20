@@ -44,22 +44,6 @@ public class SecurityFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-
-        // Path whitelist: pule o filtro para endpoints públicos (register confirm, auth endpoints, ws handshake, static resources, options)
-        if (method.equalsIgnoreCase("OPTIONS")
-            || path.startsWith("/api/auth/")
-            || path.startsWith("/ws/")
-            || path.startsWith("/api/ws/")
-            || path.startsWith("/images/")
-            || path.startsWith("/css/")
-            || path.startsWith("/swagger-ui")
-            || path.startsWith("/v3/api-docs")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String ip = request.getRemoteAddr();
         log.info("new request with ip: {}", ip);
         Bucket bucket = resolveBucket(ip);
