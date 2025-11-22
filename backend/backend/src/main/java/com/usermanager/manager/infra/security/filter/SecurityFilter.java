@@ -45,8 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String ip = request.getRemoteAddr();
-        log.info("new request with ip: {}", ip);
-        log.info("doFilter")
+        log.info("new request with IP: {}", ip);
         Bucket bucket = resolveBucket(ip);
         try {
             var token = this.recoverToken(request);
