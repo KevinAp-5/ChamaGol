@@ -25,7 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfigurations {
-    private SecurityFilter securityFilter;
+    private final SecurityFilter securityFilter;
 
     public SecurityConfigurations(SecurityFilter securityFilter) {
         this.securityFilter = securityFilter;
@@ -35,37 +35,55 @@ public class SecurityConfigurations {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                // .cors(cors -> cors.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; "))
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; "))
                         .frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(requests -> requests
+                        // recursos públicos gerais
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/page/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/auth/register/confirm**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/teste/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-                        .requestMatchers("/ws/**", "/api/ws/**", "/ws/chat/**", "/ws/chat/info/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/css/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-                        .requestMatchers("/images/**").permitAll()
-                        .requestMatchers("/css/**").permitAll()
+                        // Endpoints de Auth explicitamente públicos (registro, confirmação, login, refresh, reset, ativação, verificação de email)
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/register/confirm").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/token/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/password/forget").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/password/reset/confirmEmail").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/activate").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/email/confirmed").permitAll()
+
+                        // WebSocket / SockJS handshake permissões (permitir handshake, interceptor fará validação)
+                        .requestMatchers("/ws/**", "/api/ws/**", "/ws/chat/**", "/api/ws/chat/**", "/ws/chat/info/**", "/api/ws/chat/info/**").permitAll()
+
+                        // Rotas públicas do produto/payment/signals
                         .requestMatchers("/api/payment/**").permitAll()
+                        .requestMatchers("/api/sale/**").permitAll()
+
+                        // Endpoints do Auth que exigem autenticação (retornam info do usuário)
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/user/info").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/token/validate").authenticated()
+
+                        // Admin / protegidos
+                        .requestMatchers(HttpMethod.GET, "/api/auth/teste/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
-                        .requestMatchers("/api/acceptance/**").permitAll()
-                        .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
 
-                        .requestMatchers("/api/sale/**").permitAll()
+                        // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
 
+                        // qualquer outra requisição precisa de autenticação
+                        .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -73,6 +91,7 @@ public class SecurityConfigurations {
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\": \"Not authorized\"}");
                         }))
+                // seu filtro customizado deve pular rotas públicas internamente (ex.: /api/auth/register/confirm)
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -93,8 +112,8 @@ public class SecurityConfigurations {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedHeader("*");
-        config.addAllowedOriginPattern("*"); // Frontend local
-        config.addAllowedOriginPattern("https://chamagol.com"); // Frontend local
+        config.addAllowedOriginPattern("*");
+        config.addAllowedOriginPattern("https://chamagol.com");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
