@@ -46,6 +46,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         String ip = request.getRemoteAddr();
         log.info("new request with IP: {}", ip);
+        log.info("header: {}", request.getHeader("token"));
         Bucket bucket = resolveBucket(ip);
         try {
             var token = this.recoverToken(request);
