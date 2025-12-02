@@ -33,7 +33,7 @@ public class MailService {
      */
     public void sendVerificationMail(String recipient, String token) {
         String subject = "ChamaGol - Confirme seu email";
-        String verificationLink = API_PREFIX + "register/confirm?token=" + token;
+        String verificationLink = API_PREFIX + "register/confirm?uuid=" + token;
         
         try {
             String htmlBody = loadEmailTemplate("verification_template.html");
@@ -43,7 +43,6 @@ public class MailService {
             mailProvider.sendEmail(recipient, subject, htmlBody);
         } catch (IOException e) {
             log.error("Erro ao carregar template verification_template.html: ", e);
-            // Fallback para texto simples caso o template não seja encontrado
             String fallbackBody = "Olá! Bem-vindo ao ChamaGol!\n\n" +
                     "Para confirmar sua conta, clique no link abaixo:\n" +
                     verificationLink + "\n\n" +
@@ -71,7 +70,6 @@ public class MailService {
             mailProvider.sendEmail(recipient, subject, htmlBody);
         } catch (IOException e) {
             log.error("Erro ao carregar template reset_password_template.html: ", e);
-            // Fallback para texto simples caso o template não seja encontrado
             String fallbackBody = "Olá!\n\n" +
                     "Recebemos uma solicitação para redefinir a senha da sua conta ChamaGol.\n\n" +
                     "Para redefinir sua senha, clique no link abaixo:\n" +
@@ -94,7 +92,6 @@ public class MailService {
         ClassPathResource resource = new ClassPathResource("templates/email/" + templateName);
         
         try (InputStream inputStream = resource.getInputStream()) {
-            // Garante leitura com UTF-8 para preservar emojis e caracteres especiais
             return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
         }
     }
