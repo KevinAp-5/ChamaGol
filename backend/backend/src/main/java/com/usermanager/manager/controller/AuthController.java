@@ -101,10 +101,10 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Conta confirmada (HTML)")
     @GetMapping("register/confirm")
     public String confirmUser(
-            @Parameter(description = "Token de confirmação enviado por e-mail", required = true) @RequestParam("token") @NotBlank String token,
+            @Parameter(description = "Token de confirmação enviado por e-mail", required = true) @RequestParam("uuid") @NotBlank String uuid,
             Model model) {
-        log.info("token: {}", token);
-        boolean validated = authService.confirmVerificationToken(convertStringToUUID(token));
+        log.info("token: {}", uuid);
+        boolean validated = authService.confirmVerificationToken(convertStringToUUID(uuid));
         model.addAttribute("confirmed", validated);
         return "account_confirmed";
     }
