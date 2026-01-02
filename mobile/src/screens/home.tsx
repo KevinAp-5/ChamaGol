@@ -722,8 +722,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   logo: {
-    width: width * 0.4,
-    height: width * 0.4,
+    width: width * 0.48,
+    height: width * 0.48,
     resizeMode: "contain",
     marginBottom: 16,
   },
