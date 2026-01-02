@@ -10,19 +10,29 @@
     "slug": "ChamaGol",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/apk_icon.png",
+    "icon": "./src/assets/splash.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kevenap5.ChamaGol",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "splash": {
+        "image": "./src/assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/apk_icon.png",
+        "foregroundImage": "./src/assets/splash.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.kevenap5.ChamaGol",
@@ -40,10 +50,25 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "splash": {
+        "image": "./src/assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000",
+        "mdpi": "./src/assets/splash.png",
+        "hdpi": "./src/assets/splash.png",
+        "xhdpi": "./src/assets/splash.png",
+        "xxhdpi": "./src/assets/splash.png",
+        "xxxhdpi": "./src/assets/splash.png"
+      }
     },
     "web": {
-      "favicon": "./src/assets/favicon.png"
+      "favicon": "./src/assets/favicon.png",
+      "splash": {
+        "image": "./src/assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000"
+      }
     },
     "extra": {
       "eas": {
