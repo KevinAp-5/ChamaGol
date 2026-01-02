@@ -16,7 +16,6 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import SockJS from "sockjs-client";
 import FireGif from "../components/fire";
 import * as SecureStore from "expo-secure-store";
@@ -28,53 +27,46 @@ import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert"
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+type People = "ALL" | "VIP" | "FREE";
+
 type Message = {
   id: string;
-  campeonato: string;
-  nomeTimes: string;
-  tempoPartida: string;
-  placar: string;
-  acaoSinal: string;
-  createdAt: string;
-  status: "ACTIVE" | "INACTIVE" | string;
+  content: string;
+  created_at: string;
+  people: People;
   isNew?: boolean;
-  tipoEvento?: string;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, "Timeline">;
 
-// Componente de Badge de Status
-const StatusBadge = ({ isActive, colors, fonts }: any) => (
-  <View 
-    style={[
-      styles.statusBadge,
-      { 
-        backgroundColor: isActive 
-          ? 'rgba(52, 199, 89, 0.15)' 
-          : 'rgba(117, 117, 117, 0.15)',
-        borderColor: isActive ? '#34C759' : '#757575',
-      }
-    ]}
-  >
-    <View 
-      style={[
-        styles.statusDot,
-        { backgroundColor: isActive ? '#34C759' : '#757575' }
-      ]} 
-    />
-    <Text 
-      style={[
-        styles.statusText,
-        { 
-          color: isActive ? '#34C759' : '#757575',
-          fontFamily: fonts.semibold 
+// Função para renderizar texto com formatação
+const renderFormattedText = (text: string, colors: any, fonts: any) => {
+  // Regex para detectar **texto** (negrito) e *texto* (itálico)
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  
+  return (
+    <Text style={[styles.messageText, { color: colors.primary, fontFamily: fonts.regular }]}>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Negrito
+          return (
+            <Text key={index} style={{ fontFamily: fonts.bold }}>
+              {part.slice(2, -2)}
+            </Text>
+          );
+        } else if (part.startsWith('*') && part.endsWith('*')) {
+          // Itálico (simulado com opacidade leve)
+          return (
+            <Text key={index} style={{ fontFamily: fonts.medium, opacity: 0.9 }}>
+              {part.slice(1, -1)}
+            </Text>
+          );
         }
-      ]}
-    >
-      {isActive ? 'ATIVO' : 'ENCERRADO'}
+        return part;
+      })}
     </Text>
-  </View>
-);
+  );
+};
 
 // Componente memoizado para cada mensagem
 const MessageCard = React.memo(function MessageCard({
@@ -89,12 +81,11 @@ const MessageCard = React.memo(function MessageCard({
   shadows,
   messagesLength,
 }: any) {
-  const isActive = item.status === "ACTIVE";
-  const isVIPSignal = item.tipoEvento === "VIP";
+  const isVIPMessage = item.people === "VIP";
   const isLast = index === messagesLength - 1;
 
-  // VIP bloqueado - Card chamativo para usuários FREE
-  if (isVIPSignal && userSubscription !== "VIP") {
+  // Usuário FREE vendo mensagem VIP - Card bloqueado
+  if (isVIPMessage && userSubscription !== "VIP") {
     return (
       <View
         style={[
@@ -128,7 +119,7 @@ const MessageCard = React.memo(function MessageCard({
             >
               <MaterialCommunityIcons name="crown" size={16} color="#000" />
               <Text style={[styles.vipPremiumText, { fontFamily: fonts.extrabold }]}>
-                SINAL VIP
+                CONTEÚDO VIP
               </Text>
             </LinearGradient>
           </View>
@@ -160,7 +151,7 @@ const MessageCard = React.memo(function MessageCard({
                 }
               ]}
             >
-              Sinal Exclusivo VIP
+              Mensagem Exclusiva VIP
             </Text>
             
             <Text
@@ -172,7 +163,7 @@ const MessageCard = React.memo(function MessageCard({
                 }
               ]}
             >
-              Desbloqueie sinais premium, análises exclusivas e aumente seus lucros
+              Desbloqueie conteúdo premium, análises exclusivas e muito mais
             </Text>
 
             {/* Features VIP */}
@@ -180,13 +171,13 @@ const MessageCard = React.memo(function MessageCard({
               <View style={styles.vipFeatureItem}>
                 <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
                 <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>
-                  Sinais em tempo real
+                  Acesso a todas as mensagens
                 </Text>
               </View>
               <View style={styles.vipFeatureItem}>
                 <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
                 <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>
-                  Análises detalhadas
+                  Conteúdo exclusivo e análises
                 </Text>
               </View>
               <View style={styles.vipFeatureItem}>
@@ -221,7 +212,7 @@ const MessageCard = React.memo(function MessageCard({
     );
   }
 
-  // Mensagem normal
+  // Mensagem normal (visível)
   return (
     <View
       style={[
@@ -237,12 +228,12 @@ const MessageCard = React.memo(function MessageCard({
       <View 
         style={[
           styles.colorBorder,
-          { backgroundColor: isActive ? colors.secondary : colors.muted }
+          { backgroundColor: isVIPMessage ? '#FFD700' : colors.secondary }
         ]} 
       />
 
-      {/* Badge VIP - Melhorado */}
-      {isVIPSignal && (
+      {/* Badge VIP */}
+      {isVIPMessage && (
         <View style={styles.vipBadgeCard}>
           <LinearGradient
             colors={['#FFD700', '#FFA500', '#FF8C00']}
@@ -258,117 +249,19 @@ const MessageCard = React.memo(function MessageCard({
         </View>
       )}
 
-      {/* Header do Card */}
-      <View style={styles.cardHeader}>
-        <View style={styles.cardHeaderLeft}>
-          <MaterialCommunityIcons 
-            name="soccer" 
-            size={20} 
-            color={colors.secondary} 
-          />
-          <Text 
-            style={[
-              styles.championship,
-              { color: colors.secondary, fontFamily: fonts.bold }
-            ]}
-          >
-            {item.campeonato}
+      {/* Badge de nova mensagem */}
+      {item.isNew && (
+        <View style={styles.newIndicatorTop}>
+          <FireGif />
+          <Text style={[styles.newText, { fontFamily: fonts.bold }]}>
+            NOVO
           </Text>
         </View>
-        <StatusBadge isActive={isActive} colors={colors} fonts={fonts} />
-      </View>
+      )}
 
-      {/* Times */}
-      <View style={styles.teamsContainer}>
-        <Text 
-          style={[
-            styles.teams,
-            { color: colors.primary, fontFamily: fonts.bold }
-          ]}
-        >
-          {item.nomeTimes}
-        </Text>
-        {item.isNew && (
-          <View style={styles.newIndicator}>
-            <FireGif />
-            <Text style={[styles.newText, { fontFamily: fonts.bold }]}>
-              NOVO
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Info do Jogo */}
-      <View style={styles.matchDetails}>
-        <View style={styles.detailItem}>
-          <View style={[styles.detailIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
-            <MaterialCommunityIcons 
-              name="clock-outline" 
-              size={18} 
-              color={colors.secondary} 
-            />
-          </View>
-          <View>
-            <Text style={[styles.detailLabel, { color: colors.muted, fontFamily: fonts.regular }]}>
-              Tempo
-            </Text>
-            <Text style={[styles.detailValue, { color: colors.primary, fontFamily: fonts.semibold }]}>
-              {item.tempoPartida}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.detailItem}>
-          <View style={[styles.detailIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
-            <MaterialCommunityIcons 
-              name="scoreboard-outline" 
-              size={18} 
-              color={colors.secondary} 
-            />
-          </View>
-          <View>
-            <Text style={[styles.detailLabel, { color: colors.muted, fontFamily: fonts.regular }]}>
-              Placar
-            </Text>
-            <Text style={[styles.detailValue, { color: colors.primary, fontFamily: fonts.semibold }]}>
-              {item.placar}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Ação do Sinal - Border mais grosso */}
-      <View 
-        style={[
-          styles.signalAction,
-          { 
-            backgroundColor: isActive 
-              ? 'rgba(229, 57, 53, 0.1)' 
-              : 'rgba(117, 117, 117, 0.1)',
-            borderColor: isActive ? colors.secondary : colors.muted,
-          }
-        ]}
-      >
-        <View style={[styles.signalIcon, { backgroundColor: isActive ? 'rgba(229, 57, 53, 0.15)' : 'rgba(117, 117, 117, 0.15)' }]}>
-          <MaterialCommunityIcons 
-            name="lightning-bolt" 
-            size={24} 
-            color={isActive ? colors.secondary : colors.muted} 
-          />
-        </View>
-        <Text 
-          style={[
-            styles.signalActionText,
-            { 
-              color: isActive ? colors.secondary : colors.muted,
-              fontFamily: fonts.bold
-            }
-          ]}
-        >
-          {item.acaoSinal}
-        </Text>
+      {/* Conteúdo da mensagem */}
+      <View style={styles.messageContent}>
+        {renderFormattedText(item.content, colors, fonts)}
       </View>
 
       {/* Timestamp */}
@@ -384,7 +277,7 @@ const MessageCard = React.memo(function MessageCard({
             { color: colors.muted, fontFamily: fonts.regular }
           ]}
         >
-          {moment(item.createdAt).format("DD/MM/YYYY • HH:mm")}
+          {moment(item.created_at).format("DD/MM/YYYY • HH:mm")}
         </Text>
       </View>
     </View>
@@ -440,7 +333,7 @@ const ConnectionIndicator = ({ isConnected, colors, fonts }: any) => {
   );
 };
 
-export default function SinaisScreen({ navigation }: Props) {
+export default function TimelineScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
   const [userSubscription, setUserSubscription] = useState<String | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -538,15 +431,12 @@ export default function SinaisScreen({ navigation }: Props) {
 
     setIsConnecting(true);
 
-    // Always create a fresh SockJS instance via factory and enable debug logs
     const wsUrl = `${BASE_URL}/ws/chat?token=${token}`;
     const client = new Client({
-      // create a new SockJS per connection (recommended)
       webSocketFactory: () => new SockJS(wsUrl),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      // STOMP callbacks
       onConnect: () => {
         console.log("[STOMP] onConnect");
         setStompClient(client);
@@ -565,18 +455,15 @@ export default function SinaisScreen({ navigation }: Props) {
       },
     });
 
-    // Debug logging for raw/STOMP events
-    // (some versions use client.debug, others accept debug in constructor)
     try {
       (client as any).debug = (msg: string) => console.log("[STOMP DEBUG]", msg);
     } catch (e) {}
 
-    // Optional low-level websocket event hooks (SockJS doesn't expose directly here,
-    // but Client provides onWebSocketClose/onUnhandledMessage/onUnhandledFrame)
     client.onWebSocketClose = (evt: any) => {
       console.warn("[STOMP] websocket closed", evt);
       setIsConnected(false);
     };
+
     client.onWebSocketError = (evt: any) => {
       console.error("[STOMP] websocket error", evt);
       setIsConnecting(false);
@@ -596,51 +483,65 @@ export default function SinaisScreen({ navigation }: Props) {
 
     const subscriptionMsg = stompClient.subscribe("/topic/messages", (msg) => {
       if (msg.body) {
-        const signalMsg: Message = JSON.parse(msg.body);
-        const newMessage = {
-          ...signalMsg,
-          id: signalMsg.id.toString(),
-          isNew: true,
-        };
+        const messageDTO: Message = JSON.parse(msg.body);
+        
+        // Filtrar mensagens baseado na assinatura do usuário
+        const shouldShowMessage = 
+          messageDTO.people === "ALL" || 
+          (messageDTO.people === "VIP" && userSubscription === "VIP") ||
+          (messageDTO.people === "FREE" && userSubscription === "FREE");
 
-        setMessages((prev) => [...prev, newMessage]);
-        
-        // Animate new message notification
-        Animated.sequence([
-          Animated.spring(newMessageAnim, {
-            toValue: 1,
-            friction: 8,
-            tension: 40,
-            useNativeDriver: true,
-          }),
-          Animated.delay(2500),
-          Animated.timing(newMessageAnim, {
-            toValue: 0,
-            duration: 250,
-            useNativeDriver: true,
-          }),
-        ]).start();
-        
-        // Remove isNew flag after animation completes
-        setTimeout(() => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === newMessage.id ? { ...m, isNew: false } : m
-            )
-          );
-        }, 3000);
-        
-        // Scroll to bottom
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+        // Sempre adiciona mensagens VIP para usuários FREE (para mostrar o card bloqueado)
+        const shouldAddMessage = 
+          shouldShowMessage || 
+          (messageDTO.people === "VIP" && userSubscription !== "VIP");
+
+        if (shouldAddMessage) {
+          const newMessage = {
+            ...messageDTO,
+            id: messageDTO.id.toString(),
+            isNew: true,
+          };
+
+          setMessages((prev) => [...prev, newMessage]);
+          
+          // Animate new message notification
+          Animated.sequence([
+            Animated.spring(newMessageAnim, {
+              toValue: 1,
+              friction: 8,
+              tension: 40,
+              useNativeDriver: true,
+            }),
+            Animated.delay(2500),
+            Animated.timing(newMessageAnim, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }),
+          ]).start();
+          
+          // Remove isNew flag after animation completes
+          setTimeout(() => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === newMessage.id ? { ...m, isNew: false } : m
+              )
+            );
+          }, 3000);
+          
+          // Scroll to bottom
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
       }
     });
 
     return () => {
       subscriptionMsg.unsubscribe();
     };
-  }, [stompClient]);
+  }, [stompClient, userSubscription]);
 
   const onRefresh = async () => {
     setIsRefreshing(true);
@@ -696,7 +597,7 @@ export default function SinaisScreen({ navigation }: Props) {
       >
         <MaterialCommunityIcons name="bell-ring" size={20} color="#FFFFFF" />
         <Text style={[styles.notificationText, { fontFamily: fonts.bold }]}>
-          Novo sinal disponível!
+          Nova mensagem disponível!
         </Text>
       </LinearGradient>
     </Animated.View>
@@ -760,16 +661,16 @@ export default function SinaisScreen({ navigation }: Props) {
       <View style={styles.emptyState}>
         <View style={[styles.emptyIcon, { backgroundColor: 'rgba(229, 57, 53, 0.1)' }]}>
           <MaterialCommunityIcons 
-            name="signal-variant" 
+            name="message-text-outline" 
             size={48} 
             color={colors.secondary} 
           />
         </View>
         <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.bold }]}>
-          Nenhum sinal disponível
+          Nenhuma mensagem ainda
         </Text>
         <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
-          Novos sinais aparecerão aqui automaticamente em tempo real
+          Novas mensagens aparecerão aqui automaticamente em tempo real
         </Text>
       </View>
     );
@@ -791,7 +692,7 @@ export default function SinaisScreen({ navigation }: Props) {
             <View style={styles.headerTop}>
               <View>
                 <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>
-                  Sinais ao Vivo
+                  Timeline
                 </Text>
                 <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
                   Acompanhe em tempo real
@@ -952,114 +853,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.8,
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  cardHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  championship: {
-    fontSize: 14,
-    letterSpacing: 0.3,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 4,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  teamsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  teams: {
-    fontSize: 18,
-    flex: 1,
-    lineHeight: 24,
-  },
-  newIndicator: {
+  newIndicatorTop: {
+    position: 'absolute',
+    top: 16,
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    zIndex: 5,
   },
   newText: {
     fontSize: 10,
     color: '#FF5722',
     letterSpacing: 1,
   },
-  matchDetails: {
-    flexDirection: "row",
-    alignItems: 'center',
+  messageContent: {
+    marginTop: 12,
     marginBottom: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-    padding: 12,
-    borderRadius: 12,
   },
-  detailItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  detailIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  detailLabel: {
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 15,
-  },
-  divider: {
-    width: 1,
-    height: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginHorizontal: 16,
-  },
-  signalAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 2.5,
-    gap: 12,
-  },
-  signalIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  signalActionText: {
+  messageText: {
     fontSize: 16,
-    flex: 1,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   timestamp: {
     flexDirection: 'row',
@@ -1110,7 +924,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 8,
   },
-  vipPremiumText: {
+vipPremiumText: {
     color: "#000000",
     fontSize: 14,
     letterSpacing: 1.2,
