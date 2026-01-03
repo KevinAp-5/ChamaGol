@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { Globe, Star, Users, Send, MessageSquare, AlertCircle, CheckCircle } from "lucide-react";
+
 import { api } from "../config/api";
-import "./css/SendSignal.css";
 
 export default function SendSignal() {
   const [form, setForm] = useState({
-    campeonato: "",
-    nomeTimes: "",
-    tempoPartida: "",
-    placar: "",
-    acaoSinal: "",
-    tipoEvento: "DICA",
+    content: "",
+    people: "ALL",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -17,7 +14,6 @@ export default function SendSignal() {
   const [isAnimated, setIsAnimated] = useState(false);
 
   useEffect(() => {
-    // Animação de entrada
     setTimeout(() => setIsAnimated(true), 100);
   }, []);
 
@@ -25,125 +21,60 @@ export default function SendSignal() {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
     
-    // Limpa mensagens ao digitar
     if (error) setError("");
     if (success) setSuccess("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setSuccess("");
     setError("");
 
     // Validação
-    if (
-      !form.campeonato.trim() ||
-      !form.nomeTimes.trim() ||
-      !form.tempoPartida.trim() ||
-      !form.placar.trim() ||
-      !form.acaoSinal.trim() ||
-      !form.tipoEvento.trim()
-    ) {
-      setError("Preencha todos os campos obrigatórios.");
-      
-      // Animação de erro
-      const formElement = e.target;
-      formElement.style.animation = "shake 0.5s";
-      setTimeout(() => {
-        formElement.style.animation = "";
-      }, 500);
+    if (!form.content.trim()) {
+      setError("Por favor, preencha o conteúdo da mensagem.");
+      return;
+    }
+
+    if (form.content.length > 1000) {
+      setError("O conteúdo não pode ter mais de 1000 caracteres.");
       return;
     }
 
     setLoading(true);
 
     try {
-      await api.post("/api/signals", {
-        campeonato: form.campeonato,
-        nomeTimes: form.nomeTimes,
-        tempoPartida: form.tempoPartida,
-        placar: form.placar,
-        acaoSinal: form.acaoSinal,
-        tipoEvento: form.tipoEvento
+      await api.post("/api/message", {
+        content: form.content,
+        people: form.people
       });
 
-      setSuccess("Sinal enviado com sucesso!");
-      
-      // Feedback visual de sucesso
-      const formElement = e.target;
-      formElement.style.transform = "scale(0.98)";
-      setTimeout(() => {
-        formElement.style.transform = "scale(1)";
-      }, 150);
+      setSuccess("Sinal enviado com sucesso! 🚀");
 
-      // Reset do formulário
       setForm({
-        campeonato: "",
-        nomeTimes: "",
-        tempoPartida: "",
-        placar: "",
-        acaoSinal: "",
-        tipoEvento: "DICA",
+        content: "",
+        people: "ALL",
       });
 
-      // Remove mensagem de sucesso após 3 segundos
       setTimeout(() => {
         setSuccess("");
-      }, 3000);
+      }, 5000);
 
     } catch (err) {
       setError(err.message || "Erro ao enviar sinal.");
-      
-      // Animação de erro
-      const formElement = e.target;
-      formElement.style.animation = "shake 0.5s";
-      setTimeout(() => {
-        formElement.style.animation = "";
-      }, 500);
     } finally {
       setLoading(false);
     }
   };
 
-  const getEventTypeIcon = (type) => {
-    switch (type) {
-      case "DICA":
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
-      case "GOL":
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-            <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
-      case "CARTAO":
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
-            <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" strokeWidth="2"/>
-            <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" strokeWidth="2"/>
-          </svg>
-        );
-      case "ALERTA":
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2"/>
-            <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2"/>
-          </svg>
-        );
-      case "VIP":
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="12,2 15.09,8.26 22,9 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9 8.91,8.26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
-      default:
-        return null;
+  const characterCount = form.content.length;
+  const isOverLimit = characterCount > 1000;
+
+  const getAudienceColor = (audience) => {
+    switch (audience) {
+      case 'VIP': return '#8E24AA';
+      case 'FREE': return '#34C759';
+      case 'ALL': return '#E53935';
+      default: return '#E53935';
     }
   };
 
@@ -162,213 +93,602 @@ export default function SendSignal() {
         <div className="send-signal-header">
           <div className="icon-container">
             <div className="icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Send size={24} />
             </div>
           </div>
           <h1 className="send-signal-title">Enviar Sinal</h1>
           <p className="send-signal-subtitle">Configure e envie sinais para os usuários</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="send-signal-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="campeonato" className="form-label">
-                <span className="label-text">Campeonato</span>
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  id="campeonato"
-                  name="campeonato"
-                  value={form.campeonato}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Ex: Brasileirão Série A"
-                  required
-                />
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="nomeTimes" className="form-label">
-                <span className="label-text">Times</span>
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  id="nomeTimes"
-                  name="nomeTimes"
-                  value={form.nomeTimes}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Ex: Flamengo x Palmeiras"
-                  required
-                />
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="tempoPartida" className="form-label">
-                <span className="label-text">Tempo de Partida</span>
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  id="tempoPartida"
-                  name="tempoPartida"
-                  value={form.tempoPartida}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Ex: 75'"
-                  required
-                />
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <polyline points="12,6 12,12 16,14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="placar" className="form-label">
-                <span className="label-text">Placar</span>
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  id="placar"
-                  name="placar"
-                  value={form.placar}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Ex: 2x1"
-                  required
-                />
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 12c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1H3c-.552 0-1 .448-1 1v6c0 .552.448 1 1 1h9l3 3 3-3h3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div className="send-signal-form">
           <div className="form-group full-width">
-            <label htmlFor="tipoEvento" className="form-label">
-              <span className="label-text">Tipo de Evento</span>
-            </label>
-            <div className="select-wrapper">
-              <select
-                id="tipoEvento"
-                name="tipoEvento"
-                value={form.tipoEvento}
-                onChange={handleChange}
-                className="form-select"
-                required
-              >
-                <option value="DICA">💡 DICA</option>
-                <option value="GOL">⚽ GOL</option>
-                <option value="CARTAO">🟨 CARTÃO</option>
-                <option value="ALERTA">⚠️ ALERTA</option>
-                <option value="VIP">⭐ VIP</option>
-              </select>
-              <div className="select-icon">
-                {getEventTypeIcon(form.tipoEvento)}
-              </div>
-            </div>
-          </div>
-
-          <div className="form-group full-width">
-            <label htmlFor="acaoSinal" className="form-label">
-              <span className="label-text">Ação do Sinal</span>
+            <label htmlFor="content" className="form-label">
+              <MessageSquare size={18} />
+              <span className="label-text">Conteúdo da Mensagem</span>
+              <span className="required-indicator">*</span>
             </label>
             <div className="textarea-wrapper">
               <textarea
-                id="acaoSinal"
-                name="acaoSinal"
-                value={form.acaoSinal}
+                id="content"
+                name="content"
+                value={form.content}
                 onChange={handleChange}
-                className="form-textarea"
-                placeholder="Ex: Aposta: Over 2.5 gols na partida. Odds: 1.85. Confiança: Alta."
-                required
-                rows={3}
+                className={`form-textarea ${isOverLimit ? 'over-limit' : ''}`}
+                placeholder="Digite sua mensagem aqui... Emojis são suportados! 🎉⚽🔥
+
+Exemplo:
+🔥 Atenção! Jogo entre Flamengo x Palmeiras está muito quente! Placar 2x1 aos 35' do segundo tempo. Grande oportunidade! ⚽"
+                rows={8}
               />
-              <div className="textarea-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="10,9 9,9 8,9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              <div className={`character-count ${isOverLimit ? 'over-limit' : ''}`}>
+                <span className="count-text">{characterCount} / 1000 caracteres</span>
+                {isOverLimit && (
+                  <span className="warning-text">
+                    <AlertCircle size={14} />
+                    Limite excedido!
+                  </span>
+                )}
               </div>
+            </div>
+            <div className="help-text">
+              💡 Dica: Use emojis para tornar sua mensagem mais atrativa e clara
+            </div>
+          </div>
+
+          <div className="form-group full-width">
+            <label className="form-label">
+              <Users size={18} />
+              <span className="label-text">Público-Alvo</span>
+              <span className="required-indicator">*</span>
+            </label>
+            <div className="audience-options">
+              <label 
+                className={`audience-option ${form.people === 'ALL' ? 'selected' : ''}`}
+                style={form.people === 'ALL' ? {
+                  borderColor: getAudienceColor('ALL'),
+                  background: 'rgba(229, 57, 53, 0.05)'
+                } : {}}
+              >
+                <input
+                  type="radio"
+                  name="people"
+                  value="ALL"
+                  checked={form.people === 'ALL'}
+                  onChange={handleChange}
+                  style={{ accentColor: getAudienceColor('ALL') }}
+                />
+                <div className="option-icon" style={{ background: getAudienceColor('ALL') }}>
+                  <Globe size={20} />
+                </div>
+                <div className="option-content">
+                  <strong>Todos</strong>
+                  <span>Enviar para todos os usuários</span>
+                </div>
+              </label>
+
+              <label 
+                className={`audience-option ${form.people === 'VIP' ? 'selected' : ''}`}
+                style={form.people === 'VIP' ? {
+                  borderColor: getAudienceColor('VIP'),
+                  background: 'rgba(142, 36, 170, 0.05)'
+                } : {}}
+              >
+                <input
+                  type="radio"
+                  name="people"
+                  value="VIP"
+                  checked={form.people === 'VIP'}
+                  onChange={handleChange}
+                  style={{ accentColor: getAudienceColor('VIP') }}
+                />
+                <div className="option-icon" style={{ background: getAudienceColor('VIP') }}>
+                  <Star size={20} />
+                </div>
+                <div className="option-content">
+                  <strong>Apenas VIP</strong>
+                  <span>Somente usuários premium</span>
+                </div>
+              </label>
+
+              <label 
+                className={`audience-option ${form.people === 'FREE' ? 'selected' : ''}`}
+                style={form.people === 'FREE' ? {
+                  borderColor: getAudienceColor('FREE'),
+                  background: 'rgba(52, 199, 89, 0.05)'
+                } : {}}
+              >
+                <input
+                  type="radio"
+                  name="people"
+                  value="FREE"
+                  checked={form.people === 'FREE'}
+                  onChange={handleChange}
+                  style={{ accentColor: getAudienceColor('FREE') }}
+                />
+                <div className="option-icon" style={{ background: getAudienceColor('FREE') }}>
+                  <Users size={20} />
+                </div>
+                <div className="option-content">
+                  <strong>Apenas Free</strong>
+                  <span>Somente usuários gratuitos</span>
+                </div>
+              </label>
             </div>
           </div>
           
           {error && (
             <div className="error-message">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" strokeWidth="2"/>
-                <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" strokeWidth="2"/>
-              </svg>
+              <AlertCircle size={18} />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
             <div className="success-message">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <CheckCircle size={18} />
               <span>{success}</span>
             </div>
           )}
           
           <button
-            type="submit"
-            disabled={loading}
+            onClick={handleSubmit}
+            disabled={loading || !form.content.trim() || isOverLimit}
             className={`submit-button ${loading ? 'loading' : ''}`}
           >
             {loading ? (
               <>
                 <div className="spinner"></div>
-                <span>Enviando...</span>
+                <span>Enviando sinal...</span>
               </>
             ) : (
               <>
+                <Send size={20} />
                 <span>Enviar Sinal</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polygon points="22,2 15,22 11,13 2,9 22,2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
               </>
             )}
           </button>
-        </form>
+        </div>
       </div>
+
+      <style jsx>{`
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        .send-signal-container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 20px;
+          position: relative;
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .send-signal-background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 0;
+          background: linear-gradient(135deg, #000000 0%, #1a1a1a 30%, #B71C1C 100%);
+        }
+
+        .gradient-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 20% 30%, rgba(229, 57, 53, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(255, 87, 34, 0.15) 0%, transparent 50%);
+        }
+
+        .floating-shapes {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          overflow: hidden;
+        }
+
+        .shape {
+          position: absolute;
+          border-radius: 50%;
+          opacity: 0.1;
+          animation: float 20s infinite ease-in-out;
+        }
+
+        .shape-1 {
+          width: 300px;
+          height: 300px;
+          background: #E53935;
+          top: 10%;
+          left: 10%;
+          animation-delay: 0s;
+        }
+
+        .shape-2 {
+          width: 200px;
+          height: 200px;
+          background: #FF5722;
+          top: 60%;
+          right: 15%;
+          animation-delay: 5s;
+        }
+
+        .shape-3 {
+          width: 150px;
+          height: 150px;
+          background: #ffffff;
+          bottom: 20%;
+          left: 50%;
+          animation-delay: 10s;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(50px, -50px) rotate(90deg); }
+          50% { transform: translate(0, -100px) rotate(180deg); }
+          75% { transform: translate(-50px, -50px) rotate(270deg); }
+        }
+
+        .send-signal-card {
+          position: relative;
+          z-index: 1;
+          max-width: 800px;
+          width: 100%;
+          background: white;
+          border-radius: 32px;
+          padding: 48px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .send-signal-card.animated {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+
+        .send-signal-header {
+          text-align: center;
+          margin-bottom: 48px;
+        }
+
+        .icon-container {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 24px;
+        }
+
+        .icon {
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, #E53935, #FF5722);
+          border-radius: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 8px 25px rgba(229, 57, 53, 0.3);
+        }
+
+        .send-signal-title {
+          font-size: 36px;
+          font-weight: 800;
+          color: #000000;
+          margin: 0 0 12px 0;
+          letter-spacing: -1px;
+        }
+
+        .send-signal-subtitle {
+          font-size: 18px;
+          color: #757575;
+          margin: 0;
+          font-weight: 500;
+        }
+
+        .send-signal-form {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .form-group.full-width {
+          width: 100%;
+        }
+
+        .form-label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 700;
+          color: #1f2937;
+          font-size: 16px;
+        }
+
+        .label-text {
+          flex: 1;
+        }
+
+        .required-indicator {
+          color: #E53935;
+          font-weight: 700;
+        }
+
+        .textarea-wrapper {
+          position: relative;
+        }
+
+        .form-textarea {
+          width: 100%;
+          padding: 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 16px;
+          font-family: inherit;
+          font-size: 16px;
+          resize: vertical;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          line-height: 1.6;
+          color: #1f2937;
+        }
+
+        .form-textarea:focus {
+          outline: none;
+          border-color: #E53935;
+          box-shadow: 0 4px 20px rgba(229, 57, 53, 0.15);
+        }
+
+        .form-textarea.over-limit {
+          border-color: #E53935;
+          background: #fef2f2;
+        }
+
+        .character-count {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 12px;
+          padding: 0 4px;
+        }
+
+        .count-text {
+          font-size: 14px;
+          color: #6b7280;
+          font-weight: 600;
+        }
+
+        .character-count.over-limit .count-text {
+          color: #E53935;
+          font-weight: 700;
+        }
+
+        .warning-text {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #E53935;
+          font-weight: 700;
+        }
+
+        .help-text {
+          font-size: 14px;
+          color: #6b7280;
+          padding: 12px 16px;
+          background: #f9fafb;
+          border-radius: 12px;
+          border-left: 4px solid #E53935;
+          margin-top: -8px;
+        }
+
+        .audience-options {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 16px;
+        }
+
+        .audience-option {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px;
+          border: 3px solid #e5e7eb;
+          border-radius: 20px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: white;
+        }
+
+        .audience-option:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .audience-option.selected {
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+          transform: translateY(-4px);
+        }
+
+        .audience-option input[type="radio"] {
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+        }
+
+        .option-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        .option-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .option-content strong {
+          font-size: 16px;
+          color: #1f2937;
+          font-weight: 700;
+        }
+
+        .option-content span {
+          font-size: 13px;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        .error-message,
+        .success-message {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 18px 24px;
+          border-radius: 16px;
+          font-weight: 600;
+          font-size: 15px;
+          animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .error-message {
+          background: #fef2f2;
+          color: #991b1b;
+          border: 2px solid #E53935;
+        }
+
+        .success-message {
+          background: #d1fae5;
+          color: #065f46;
+          border: 2px solid #34C759;
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .submit-button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 22px 32px;
+          background: linear-gradient(135deg, #E53935, #FF5722);
+          color: white;
+          border: none;
+          border-radius: 18px;
+          font-weight: 700;
+          font-size: 18px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 8px 25px rgba(229, 57, 53, 0.3);
+          margin-top: 16px;
+        }
+
+        .submit-button:hover:not(:disabled) {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 35px rgba(229, 57, 53, 0.4);
+        }
+
+        .submit-button:active:not(:disabled) {
+          transform: translateY(-1px) scale(0.98);
+        }
+
+        .submit-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top: 3px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+          .send-signal-card {
+            padding: 32px 24px;
+            border-radius: 24px;
+          }
+
+          .send-signal-title {
+            font-size: 28px;
+          }
+
+          .send-signal-subtitle {
+            font-size: 16px;
+          }
+
+          .icon {
+            width: 64px;
+            height: 64px;
+          }
+
+          .audience-options {
+            grid-template-columns: 1fr;
+          }
+
+          .send-signal-form {
+            gap: 24px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .send-signal-container {
+            padding: 24px 16px;
+          }
+
+          .send-signal-card {
+            padding: 24px 20px;
+          }
+
+          .send-signal-title {
+            font-size: 24px;
+          }
+
+          .submit-button {
+            padding: 18px 24px;
+            font-size: 16px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
