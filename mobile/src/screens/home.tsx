@@ -722,10 +722,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   logo: {
-    width: width * 0.48,
-    height: width * 0.48,
+    width: width * 0.58,
+    height: width * 0.58,
     resizeMode: "contain",
-    marginBottom: 16,
+    marginBottom: 1,
   },
   userInfoContainer: {
     flexDirection: "row",
