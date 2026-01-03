@@ -236,12 +236,12 @@ const MessageCard = React.memo(function MessageCard({
       {isVIPMessage && (
         <View style={styles.vipBadgeCard}>
           <LinearGradient
-            colors={['#FFD700', '#FFA500', '#FF8C00']}
+            colors={['#8E24AA', '#7B1FA2', '#6A1B9A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.vipBadgeCardGradient}
           >
-            <MaterialCommunityIcons name="crown" size={14} color="#000" />
+            <MaterialCommunityIcons name="crown" size={14} color="#FFFF" />
             <Text style={[styles.vipBadgeCardText, { fontFamily: fonts.extrabold }]}>
               VIP
             </Text>
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     borderRadius: 10,
     overflow: 'hidden',
-    shadowColor: "#FFD700",
+    shadowColor: "#8E24AA",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 4,
@@ -849,8 +849,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   vipBadgeCardText: {
-    color: "#000000",
-    fontSize: 12,
+    color: "#FFF",
+    fontSize: 13,
     letterSpacing: 0.8,
   },
   newIndicatorTop: {
