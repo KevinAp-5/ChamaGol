@@ -1,7 +1,7 @@
 import axios from "axios";
 
 /*const BASE_URL = process.env.REACT_APP_API_URL || "https://chamagol.com";*/
-// const BASE_URL = "http://192.168.0.103:8080"
+// const BASE_URL = "http://192.168.0.106:8080"
 const BASE_URL = "https://chamagol.com/"
 const TOKEN_KEY = "chamagol_admin_token";
 const REFRESH_TOKEN_KEY = "chamagol_admin_refresh_token";

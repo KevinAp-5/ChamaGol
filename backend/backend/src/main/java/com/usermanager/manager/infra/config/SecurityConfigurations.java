@@ -48,6 +48,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/auth/teste/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
+                        .requestMatchers("/api/message").permitAll()
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                         .requestMatchers("/ws/**", "/api/ws/**", "/ws/chat/**", "/ws/chat/info/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
@@ -64,7 +65,7 @@ public class SecurityConfigurations {
 
                         .requestMatchers("/api/sale/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated() // Exige autenticação para qualquer outra coisa
+                        .anyRequest().authenticated() 
 
                 )
                 .exceptionHandling(exception -> exception
