@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.usermanager.manager.dto.sale.CreateSale;
-import com.usermanager.manager.mappers.SaleMapper;
 import com.usermanager.manager.model.sale.Sale;
 import com.usermanager.manager.service.sale.SaleService;
 
@@ -26,11 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SaleController {
 
     private SaleService saleService;
-    private SaleMapper saleMapper;
 
-    public SaleController(SaleService saleService, SaleMapper saleMapper) {
+    public SaleController(SaleService saleService) {
         this.saleService = saleService;
-        this.saleMapper = saleMapper;
     }
 
     @PostMapping
@@ -63,7 +60,7 @@ public class SaleController {
         if (activeSale.isPresent())
             return ResponseEntity.ok(activeSale.get());
         return ResponseEntity.notFound().build();
-        
+
     }
 
     @GetMapping
