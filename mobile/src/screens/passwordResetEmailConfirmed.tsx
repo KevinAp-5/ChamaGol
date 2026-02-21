@@ -9,6 +9,9 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,72 +25,73 @@ type Props = NativeStackScreenProps<RootStackParamList, "PasswordResetEmailConfi
 
 function PasswordResetEmailConfirmedContent({ navigation }: Props) {
   const { colors, fonts } = useTheme();
-  
-  // Animation values
+
+  // Animation values — instanciados fora do JSX para não recriar a cada render
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const buttonScale = useState(new Animated.Value(1))[0];
   const checkmarkScale = useState(new Animated.Value(0))[0];
   const pulseAnim = useState(new Animated.Value(1))[0];
-  
+
   useEffect(() => {
-    // Entrada principal com animação
+    // Entrada principal
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 600,
-        useNativeDriver: true
+        useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 600,
-        useNativeDriver: true
-      })
+        useNativeDriver: true,
+      }),
     ]).start();
-    
-    // Animação de entrada do checkmark com efeito bounce
-    setTimeout(() => {
+
+    // Checkmark com bounce após 400ms
+    const timer = setTimeout(() => {
       Animated.spring(checkmarkScale, {
         toValue: 1,
         friction: 4,
         tension: 40,
-        useNativeDriver: true
+        useNativeDriver: true,
       }).start();
-      
-      // Adicionar animação de pulso para o ícone de sucesso
+
       startPulseAnimation();
     }, 400);
+
+    return () => clearTimeout(timer);
   }, []);
-  
-  // Animação de pulso suave para o ícone de sucesso
+
+  // Pulso suave e recursivo no ícone de sucesso
   const startPulseAnimation = () => {
     Animated.sequence([
       Animated.timing(pulseAnim, {
         toValue: 1.05,
         duration: 700,
-        useNativeDriver: true
+        useNativeDriver: true,
       }),
       Animated.timing(pulseAnim, {
         toValue: 1,
         duration: 700,
-        useNativeDriver: true
-      })
+        useNativeDriver: true,
+      }),
     ]).start(() => startPulseAnimation());
   };
-  
+
   const handlePressIn = () => {
     Animated.timing(buttonScale, {
       toValue: 0.95,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
-  
+
   const handlePressOut = () => {
     Animated.timing(buttonScale, {
       toValue: 1,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
@@ -98,103 +102,189 @@ function PasswordResetEmailConfirmedContent({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      
+
       <LinearGradient
         colors={[colors.primary, colors.highlight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
       >
-        {/* Header com Logo */}
-        <Animated.View 
-          style={[
-            styles.headerContainer,
-            { 
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
+        {/*
+          ✅ KeyboardAvoidingView como wrapper externo.
+          Mesmo sem inputs nesta tela, protege caso o SO abra o teclado
+          em algum momento inesperado (ex: acessibilidade, autofill).
+        */}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <Logo source={require("../assets/logo_white_label.png")} />
-          <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.extraBold }]}>
-            CHAMAGOL
-          </Text>
-          <Text style={[styles.tagline, { color: colors.white, fontFamily: fonts.regular }]}>
-            Seu universo esportivo
-          </Text>
-        </Animated.View>
-
-        {/* Conteúdo Principal */}
-        <View style={styles.mainContent}>
-          <Animated.View 
-            style={[
-              styles.contentContainer, 
-              { 
-                backgroundColor: colors.background,
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-                ...styles.cardShadow
-              }
-            ]}
+          {/*
+            ✅ ScrollView com flexGrow: 1 garante que o conteúdo
+            continue centralizado verticalmente quando não há scroll.
+            bounces + alwaysBounceVertical dão a sensação elástica no iOS.
+            overScrollMode="always" ativa o glow de overscroll no Android.
+            As Animated.View internas NÃO são afetadas — o ScrollView
+            apenas envolve o layout, sem interferir nos valores animados.
+          */}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            alwaysBounceVertical={true}
+            overScrollMode="always"
+            keyboardShouldPersistTaps="handled"
           >
-            <Animated.View style={[
-              styles.successIconContainer,
-              {
-                transform: [
-                  { scale: checkmarkScale },
-                  { scale: pulseAnim }
-                ],
-                backgroundColor: colors.success,
-                ...styles.iconShadow
-              }
-            ]}>
-              <MaterialCommunityIcons name="check" size={64} color={colors.white} />
-            </Animated.View>
-            
-            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
-              E-mail Confirmado!
-            </Text>
-            
-            <View style={[styles.divider, { backgroundColor: colors.secondary }]} />
-            
-            <Text style={[styles.message, { color: colors.muted, fontFamily: fonts.regular }]}>
-              Seu e-mail foi confirmado com sucesso. Agora você pode prosseguir e redefinir sua senha para recuperar o acesso à sua conta.
-            </Text>
-            
-            <View style={styles.buttonContainer}>
-              <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
-                <TouchableOpacity
-                  style={[styles.primaryButton, { backgroundColor: colors.secondary }]}
-                  onPress={handleGoToForgotPassword}
-                  onPressIn={handlePressIn}
-                  onPressOut={handlePressOut}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.primaryButtonText, { color: colors.white, fontFamily: fonts.bold }]}>
-                    REDEFINIR SENHA
-                  </Text>
-                  <MaterialCommunityIcons name="lock-reset" size={20} color={colors.white} />
-                </TouchableOpacity>
-              </Animated.View>
-              
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.navigate("Login")}
-                activeOpacity={0.7}
+            {/* Header com Logo */}
+            <Animated.View
+              style={[
+                styles.headerContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <Logo source={require("../assets/logo_white_label.png")} />
+              <Text
+                style={[
+                  styles.appTitle,
+                  { color: colors.secondary, fontFamily: fonts.extraBold },
+                ]}
               >
-                <MaterialCommunityIcons name="arrow-left" size={18} color={colors.secondary} />
-                <Text style={[styles.backButtonText, { color: colors.secondary, fontFamily: fonts.medium }]}>
-                  Voltar para o login
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
+                CHAMAGOL
+              </Text>
+              <Text
+                style={[
+                  styles.tagline,
+                  { color: colors.white, fontFamily: fonts.regular },
+                ]}
+              >
+                Seu universo esportivo
+              </Text>
+            </Animated.View>
 
-        {/* Footer fixo */}
-        <View style={styles.footerContainer}>
-          <Footer />
-        </View>
+            {/* Conteúdo Principal */}
+            <View style={styles.mainContent}>
+              <Animated.View
+                style={[
+                  styles.contentContainer,
+                  styles.cardShadow,
+                  {
+                    backgroundColor: colors.background,
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }],
+                  },
+                ]}
+              >
+                {/*
+                  ✅ Animated.View com duas transforms encadeadas:
+                  checkmarkScale (spring de entrada) + pulseAnim (loop suave).
+                  Funciona normalmente dentro do ScrollView.
+                */}
+                <Animated.View
+                  style={[
+                    styles.successIconContainer,
+                    styles.iconShadow,
+                    {
+                      transform: [
+                        { scale: checkmarkScale },
+                        { scale: pulseAnim },
+                      ],
+                      backgroundColor: colors.success,
+                    },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="check"
+                    size={64}
+                    color={colors.white}
+                  />
+                </Animated.View>
+
+                <Text
+                  style={[
+                    styles.title,
+                    { color: colors.primary, fontFamily: fonts.bold },
+                  ]}
+                >
+                  E-mail Confirmado!
+                </Text>
+
+                <View
+                  style={[styles.divider, { backgroundColor: colors.secondary }]}
+                />
+
+                <Text
+                  style={[
+                    styles.message,
+                    { color: colors.muted, fontFamily: fonts.regular },
+                  ]}
+                >
+                  Seu e-mail foi confirmado com sucesso. Agora você pode
+                  prosseguir e redefinir sua senha para recuperar o acesso à
+                  sua conta.
+                </Text>
+
+                <View style={styles.buttonContainer}>
+                  {/* ✅ Animated.View do botão preservada integralmente */}
+                  <Animated.View
+                    style={{ transform: [{ scale: buttonScale }], width: "100%" }}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryButton,
+                        { backgroundColor: colors.secondary },
+                      ]}
+                      onPress={handleGoToForgotPassword}
+                      onPressIn={handlePressIn}
+                      onPressOut={handlePressOut}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.primaryButtonText,
+                          { color: colors.white, fontFamily: fonts.bold },
+                        ]}
+                      >
+                        REDEFINIR SENHA
+                      </Text>
+                      <MaterialCommunityIcons
+                        name="lock-reset"
+                        size={20}
+                        color={colors.white}
+                      />
+                    </TouchableOpacity>
+                  </Animated.View>
+
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => navigation.navigate("Login")}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons
+                      name="arrow-left"
+                      size={18}
+                      color={colors.secondary}
+                    />
+                    <Text
+                      style={[
+                        styles.backButtonText,
+                        { color: colors.secondary, fontFamily: fonts.medium },
+                      ]}
+                    >
+                      Voltar para o login
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </View>
+
+            {/* Footer dentro do ScrollView para scrollar junto */}
+            <View style={styles.footerContainer}>
+              <Footer />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -208,14 +298,24 @@ export default function PasswordResetEmailConfirmed(props: Props) {
   );
 }
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  flex: {
+    flex: 1,
+  },
   gradientBackground: {
     flex: 1,
+  },
+  // ✅ flexGrow: 1 + justifyContent: "space-between" mantém o layout
+  // centralizado verticalmente mesmo sem scroll real
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "space-between",
+    paddingBottom: 16,
   },
   headerContainer: {
     alignItems: "center",
@@ -247,7 +347,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 32,
     alignItems: "center",
-    marginTop: 32, // afasta do header
+    marginTop: 32,
     backgroundColor: "#FFF",
     zIndex: 1,
   },
@@ -291,7 +391,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 24,
   },
   primaryButton: {
