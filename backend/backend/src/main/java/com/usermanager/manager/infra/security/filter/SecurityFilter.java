@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.usermanager.manager.exception.authentication.TokenInvalid;
@@ -29,6 +30,24 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class SecurityFilter extends OncePerRequestFilter {
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final java.util.List<String> WHITELIST = java.util.Arrays.asList(
+        "/api/auth/register",
+        "/api/auth/register/confirm",
+        "/api/auth/login",
+        "/api/auth/token/refresh",
+        "/api/auth/password/forget",
+        "/api/auth/password/reset",
+        "/api/auth/password/reset/confirmEmail",
+        "/api/auth/activate",
+        "/api/auth/email/confirmed",
+        "/ws/**",
+        "/api/ws/**",
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/images/**",
+        "/css/**"
+    );
 
     private TokenProvider tokenProvider;
     private UserRepository userRepository;
@@ -39,10 +58,24 @@ public class SecurityFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
+    private boolean isWhitelisted(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        for (String pattern : WHITELIST) {
+            if (PATH_MATCHER.match(pattern, path)) return true;
+        }
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+
+        // Pule o filtro para rotas públicas
+        if (isWhitelisted(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String ip = request.getRemoteAddr();
         log.info("new request with IP: {}", ip);
