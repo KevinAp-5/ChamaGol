@@ -9,7 +9,7 @@ export default function Footer() {
     paddingHorizontal: 24,
     }}>
         <Text style={{ fontSize: 12, textAlign: "center",  color: colors.muted,}}>
-            © 2025 CHAMAGOL. All Rights Reserved.
+            © 2026 CHAMAGOL. All Rights Reserved.
         </Text>
         </View>
     );
