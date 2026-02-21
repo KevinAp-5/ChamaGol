@@ -36,14 +36,12 @@ function RequestPasswordResetContent({ navigation }: Props) {
   const [canResend, setCanResend] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
 
-  // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
   const buttonScale = useState(new Animated.Value(1))[0];
   const pulseAnim = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
-    // Run entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -58,7 +56,6 @@ function RequestPasswordResetContent({ navigation }: Props) {
     ]).start();
   }, []);
 
-  // Timer for 60 seconds countdown
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (loading && counter > 0) {
@@ -101,7 +98,7 @@ function RequestPasswordResetContent({ navigation }: Props) {
       useNativeDriver: true
     }).start();
   };
-  
+
   const handlePressOut = () => {
     Animated.timing(buttonScale, {
       toValue: 1,
@@ -115,27 +112,21 @@ function RequestPasswordResetContent({ navigation }: Props) {
       showAlert("Por favor, insira um e-mail válido.", { title: "Campo obrigatório" });
       return;
     }
-
     if (!validateEmail(email)) {
       showAlert("Por favor, insira um e-mail válido.", { title: "E-mail inválido" });
       return;
     }
-
     setLoading(true);
-    setCounter(60); // Reset counter when sending
+    setCounter(60);
     setCanResend(false);
-    
+
     try {
-      // 1. Send email to backend
       const response = await api.post("auth/password/forget", { email });
       if (response.status !== 200) {
         throw new Error(response.data?.message || "Erro ao enviar solicitação.");
       }
-      
       showAlert("Verifique sua caixa de entrada e confirme o e-mail.", { title: "E-mail enviado!" });
       await AsyncStorage.setItem("email", email);
-
-      // 2. Start polling to check if email was confirmed
       await waitForEmailConfirmation(email);
     } catch (error: any) {
       handleError(error);
@@ -144,27 +135,21 @@ function RequestPasswordResetContent({ navigation }: Props) {
     }
   };
 
-  // Polling: check if email was confirmed in backend
   const waitForEmailConfirmation = async (email: string) => {
     let attempts = 0;
     const maxAttempts = 25;
-    await delay(5000); // Wait 5 seconds before starting to check
-
+    await delay(5000);
     while (attempts < maxAttempts) {
       try {
         const response = await api.post("auth/email/confirmed", { email });
-        // Se status 200, está confirmado!
         if (response.status === 200) {
           navigation.navigate("PasswordResetEmailConfirmed");
           return;
         }
-      } catch (error: any) {
-        // Ignore and try again
-      }
+      } catch (error: any) {}
       await delay(5000);
       attempts++;
     }
-    
     showAlert(
       "Confirmação de e-mail não concluída a tempo. Tente novamente.",
       { title: "Tempo esgotado" }
@@ -175,29 +160,21 @@ function RequestPasswordResetContent({ navigation }: Props) {
 
   const handleError = (error: any) => {
     if (!error.response) {
-      showAlert(
-        error.message || "Erro desconhecido. Tente novamente.",
-        { title: "Erro" }
-      );
+      showAlert(error.message || "Erro desconhecido. Tente novamente.", { title: "Erro" });
       return;
     }
-    
     const { status, data } = error.response;
     const message = data?.message || "Tente novamente mais tarde.";
-    
     switch (status) {
       case 400:
         showAlert(message, { title: "Erro de Validação" });
         break;
       default:
-        showAlert(
-          `Status: ${status || "N/A"} - ${message}`,
-          { title: "Erro Desconhecido" }
-        );
+        showAlert(`Status: ${status || "N/A"} - ${message}`, { title: "Erro Desconhecido" });
         break;
     }
   };
-  
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -212,12 +189,22 @@ function RequestPasswordResetContent({ navigation }: Props) {
       >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
+          {/* 
+            ✅ ScrollView com bounces ativo:
+            - bounces / alwaysBounceVertical: dá sensação elástica no iOS mesmo sem scroll
+            - overScrollMode="always": efeito de overscroll no Android
+            - keyboardShouldPersistTaps: fecha teclado ao tocar fora do input
+          */}
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            bounces={true}
+            alwaysBounceVertical={true}
+            overScrollMode="always"
           >
             <View style={styles.logoContainer}>
               <Logo source={require("../assets/logo_white_label.png")} />
@@ -228,11 +215,11 @@ function RequestPasswordResetContent({ navigation }: Props) {
                 Seu universo esportivo
               </Text>
             </View>
-            
-            <Animated.View 
+
+            <Animated.View
               style={[
-                styles.formContainer, 
-                { 
+                styles.formContainer,
+                {
                   backgroundColor: colors.background,
                   opacity: fadeAnim,
                   transform: [{ translateY: slideAnim }]
@@ -242,20 +229,20 @@ function RequestPasswordResetContent({ navigation }: Props) {
               <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold }]}>
                 Recuperação de Senha
               </Text>
-              
+
               <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fonts.regular }]}>
                 Insira seu e-mail para receber um link de recuperação de senha.
               </Text>
-              
+
               <View style={[
                 styles.inputContainer,
                 isEmailFocused && styles.inputContainerFocused,
                 { borderColor: isEmailFocused ? colors.secondary : colors.muted }
               ]}>
-                <MaterialCommunityIcons 
-                  name="email-outline" 
-                  size={20} 
-                  color={isEmailFocused ? colors.secondary : colors.muted} 
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={20}
+                  color={isEmailFocused ? colors.secondary : colors.muted}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -275,16 +262,18 @@ function RequestPasswordResetContent({ navigation }: Props) {
                   onBlur={() => setIsEmailFocused(false)}
                   editable={true}
                   selectTextOnFocus={true}
+                  returnKeyType="done"
+                  onSubmitEditing={handlePasswordRecovery}
                 />
               </View>
-              
-              <Animated.View 
+
+              <Animated.View
                 style={[
-                  { 
+                  {
                     width: '100%',
                     transform: [
                       { scale: canResend ? pulseAnim : buttonScale }
-                    ] 
+                    ]
                   }
                 ]}
               >
@@ -306,58 +295,58 @@ function RequestPasswordResetContent({ navigation }: Props) {
                       <Text style={[styles.buttonText, { color: '#FFF', fontFamily: fonts.bold }]}>
                         {canResend ? "REENVIAR E-MAIL" : "CONFIRMAR"}
                       </Text>
-                      <MaterialCommunityIcons 
-                        name={canResend ? "email-send" : "lock-reset"} 
-                        size={20} 
-                        color="#FFF" 
+                      <MaterialCommunityIcons
+                        name={canResend ? "email-send" : "lock-reset"}
+                        size={20}
+                        color="#FFF"
                       />
                     </>
                   )}
                 </TouchableOpacity>
               </Animated.View>
-              
+
               {loading && counter > 0 && (
                 <View style={styles.statusContainer}>
-                  <MaterialCommunityIcons 
-                    name="timer-sand" 
-                    size={20} 
-                    color={colors.muted} 
+                  <MaterialCommunityIcons
+                    name="timer-sand"
+                    size={20}
+                    color={colors.muted}
                   />
                   <Text style={[styles.statusText, { color: colors.muted, fontFamily: fonts.regular }]}>
                     Aguardando confirmação... ({counter}s)
                   </Text>
                 </View>
               )}
-              
+
               {canResend && (
                 <View style={styles.statusContainer}>
-                  <MaterialCommunityIcons 
-                    name="email-alert" 
-                    size={20} 
-                    color={colors.secondary} 
+                  <MaterialCommunityIcons
+                    name="email-alert"
+                    size={20}
+                    color={colors.secondary}
                   />
                   <Text style={[styles.statusText, { color: colors.secondary, fontFamily: fonts.regular }]}>
                     Não recebeu o e-mail? Você pode reenviar agora.
                   </Text>
                 </View>
               )}
-              
+
               <TouchableOpacity
                 style={styles.backToLoginButton}
                 onPress={() => navigation.navigate("Login")}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons 
-                  name="keyboard-backspace" 
-                  size={20} 
-                  color={colors.accent} 
+                <MaterialCommunityIcons
+                  name="keyboard-backspace"
+                  size={20}
+                  color={colors.accent}
                 />
                 <Text style={[styles.backToLoginText, { color: colors.accent, fontFamily: fonts.medium }]}>
                   Voltar para o login
                 </Text>
               </TouchableOpacity>
             </Animated.View>
-            
+
             <Footer />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -375,6 +364,7 @@ export default function RequestPasswordReset(props: Props) {
 }
 
 const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
@@ -384,6 +374,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
+    paddingBottom: 32,
   },
   logoContainer: {
     alignItems: "center",
