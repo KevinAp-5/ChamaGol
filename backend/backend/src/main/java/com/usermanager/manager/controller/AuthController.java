@@ -16,15 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.usermanager.manager.dto.authentication.ActivateUserDTO;
-import com.usermanager.manager.dto.authentication.AuthenticationDTO;
-import com.usermanager.manager.dto.authentication.CreateUserDTO;
-import com.usermanager.manager.dto.authentication.LoginResponseDTO;
-import com.usermanager.manager.dto.authentication.PasswordResetWithEmailDTO;
-import com.usermanager.manager.dto.authentication.RefreshTokenRequest;
-import com.usermanager.manager.dto.authentication.TokensDTO;
-import com.usermanager.manager.dto.authentication.UserCreatedDTO;
-import com.usermanager.manager.dto.authentication.UserEmailDTO;
+import com.usermanager.manager.dto.authentication.*;
 import com.usermanager.manager.dto.common.ResponseMessage;
 import com.usermanager.manager.dto.user.ProfileDTO;
 import com.usermanager.manager.dto.user.UserLoginInfo;
@@ -44,13 +36,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthController {
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
-
     private final AuthService authService;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
+    // --- Testes/Admin ---
     @GetMapping("teste/updateAllAlerts")
     public ResponseEntity<ResponseMessage> testeUpdateAllAlerts() {
         authService.updateAllAlerts();
@@ -69,15 +61,17 @@ public class AuthController {
         return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
     }
 
+    // --- Cadastro e confirmação ---
     @PostMapping("register")
     @ResponseBody
     public ResponseEntity<UserCreatedDTO> createUser(
             @org.springframework.web.bind.annotation.RequestBody @Valid CreateUserDTO dto) {
         UserCreatedDTO response = authService.register(dto);
-        return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/users")
-                .path("/{id}")
-                .buildAndExpand(response.id())
-                .toUri())
+        return ResponseEntity.created(
+                UriComponentsBuilder.fromPath("/api/users")
+                        .path("/{id}")
+                        .buildAndExpand(response.id())
+                        .toUri())
                 .body(response);
     }
 
@@ -91,6 +85,7 @@ public class AuthController {
         return "account_confirmed";
     }
 
+    // --- Recuperação de senha ---
     @PostMapping("password/forget")
     @ResponseBody
     public ResponseEntity<ResponseMessage> sendPasswordResetCode(
@@ -100,7 +95,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ResponseMessage(
                             "Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
-
         return ResponseEntity.ok(new ResponseMessage("Link para redefinição de senha enviado para seu e-mail."));
     }
 
@@ -116,11 +110,13 @@ public class AuthController {
     public String confirmEmailreset(
             @RequestParam("token") String uuid,
             Model model) {
+        log.info("UUID RECEBIDO {}", uuid);
         boolean confirmed = authService.confirmEmail(convertStringToUUID(uuid));
         model.addAttribute("confirmed", confirmed);
         return "index";
     }
 
+    // --- Login e refresh ---
     @PostMapping("login")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> login(
@@ -128,9 +124,11 @@ public class AuthController {
             HttpServletResponse response,
             @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
         TokensDTO tokens = authService.login(data);
+
         if (clientType == ClientType.WEB) {
             response.addCookie(createCookie("refreshToken", tokens.refreshToken()));
         }
+
         LoginResponseDTO responseDTO = new LoginResponseDTO(tokens.accessToken());
         if (clientType == ClientType.MOBILE) {
             responseDTO.setRefreshToken(tokens.refreshToken());
@@ -147,11 +145,9 @@ public class AuthController {
             @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
 
         String refreshToken = cookieToken;
-
         if ((refreshToken == null || refreshToken.isBlank()) && refreshTokenRequest != null) {
             refreshToken = refreshTokenRequest.token();
         }
-
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponseDTO("Refresh token is missing."));
@@ -164,14 +160,13 @@ public class AuthController {
         }
 
         LoginResponseDTO responseDTO = new LoginResponseDTO(newTokens.accessToken());
-
         if (clientType == ClientType.MOBILE) {
             responseDTO.setRefreshToken(newTokens.refreshToken());
         }
-
         return ResponseEntity.ok(responseDTO);
     }
 
+    // --- Ativação e confirmação de e-mail ---
     @PostMapping("activate")
     @ResponseBody
     public ResponseEntity<ResponseMessage> activateUser(
@@ -180,7 +175,6 @@ public class AuthController {
         if (!activationSent)
             return ResponseEntity.status(409)
                     .body(new ResponseMessage("Usuário já está ativo com o e-mail: " + data.email()));
-
         return ResponseEntity
                 .ok(new ResponseMessage("Link de ativação enviado para " + data.email() + " com sucesso."));
     }
@@ -195,35 +189,37 @@ public class AuthController {
         if (validated) {
             return ResponseEntity.ok(new ResponseMessage("E-mail ativado."));
         }
-
         return ResponseEntity.badRequest().body(new ResponseMessage("E-mail não ativado."));
     }
 
+    // --- Info e validação de token ---
     @GetMapping("token/validate")
-    public ResponseEntity<String> validateToken(
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<String> validateToken(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok("válido");
     }
 
     @GetMapping("me")
     @ResponseBody
-    public ResponseEntity<ProfileDTO> getUserInfo(
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<ProfileDTO> getUserInfo(@AuthenticationPrincipal User user) {
         log.info("User: {}", user);
         ZonedDateTime expirationDate = authService.getExpirationDate(user);
-        return ResponseEntity.ok(new ProfileDTO(user.getName(), user.getLogin(), user.getCreatedAt(),
-                user.getSubscription().getValue(), expirationDate));
+        return ResponseEntity.ok(new ProfileDTO(
+                user.getName(),
+                user.getLogin(),
+                user.getCreatedAt(),
+                user.getSubscription().getValue(),
+                expirationDate
+        ));
     }
 
     @GetMapping("user/info")
     @ResponseBody
-    public ResponseEntity<UserLoginInfo> getUserLoginInfo(
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<UserLoginInfo> getUserLoginInfo(@AuthenticationPrincipal User user) {
         String username = capitalize(user.getName().split(" ")[0]);
-        return ResponseEntity.ok(
-                new UserLoginInfo(username, user.getLastLogin()));
+        return ResponseEntity.ok(new UserLoginInfo(username, user.getLastLogin()));
     }
 
+    // --- Health check/cron ---
     @GetMapping("cron")
     @ResponseBody
     public ResponseEntity<String> cronJob() {
@@ -231,6 +227,7 @@ public class AuthController {
         return ResponseEntity.ok("Aplicação está funcionando.");
     }
 
+    // --- Utilitários privados ---
     private Cookie createCookie(String name, String value) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
@@ -241,9 +238,7 @@ public class AuthController {
     }
 
     private static String capitalize(String str) {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
+        if (str == null || str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
