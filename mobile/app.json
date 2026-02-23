@@ -83,7 +83,9 @@
             "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "owner": "kevenap-5"
   }
