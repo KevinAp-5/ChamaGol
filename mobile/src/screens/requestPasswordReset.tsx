@@ -211,9 +211,16 @@ function RequestPasswordResetContent({ navigation }: Props) {
               <Text style={[styles.appTitle, { color: colors.secondary, fontFamily: fonts.bold }]}>
                 CHAMAGOL
               </Text>
-              <Text style={[styles.tagline, { color: '#FFFFFF' }]}>
-                Seu universo esportivo
-              </Text>
+              <View style={styles.taglineWrapper}>
+                <Text
+                  style={[styles.tagline, { color: '#FFFFFF' }]}
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  Seu universo esportivo
+                </Text>
+              </View>
             </View>
 
             <Animated.View
@@ -387,9 +394,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     letterSpacing: 1,
   },
+  taglineWrapper: {
+    maxWidth: width * 0.7, // 70% da largura da tela
+    alignSelf: "center",
+  },
   tagline: {
     fontSize: 16,
     marginTop: 4,
+    marginBottom: 4,
     opacity: 0.8,
   },
   formContainer: {
