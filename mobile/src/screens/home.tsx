@@ -686,7 +686,7 @@ function HomeContent({ navigation }: Props) {
             { color: colors.muted, fontFamily: fonts.regular },
           ]}
         >
-          © 2025 CHAMAGOL • Todos os direitos reservados
+          © 2026 CHAMAGOL • Todos os direitos reservados
         </Text>
       </View>
 
