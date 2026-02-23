@@ -29,6 +29,40 @@ import { useFocusEffect } from "@react-navigation/native";
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 type SubscriptionType = "FREE" | "PRO" | "VIP" | null;
 
+const { width } = Dimensions.get("window");
+
+// ─── Dados dos cards ────────────────────────────────────────────────────────
+const MENU_CARDS = [
+  {
+    id: "timeline",
+    nav: "Timeline" as keyof RootStackParamList,
+    icon: "fire" as const,
+    label: "Sinais",
+    description: "Dicas e análises esportivas em tempo real",
+    // Cor dentro do design system: vermelho/destaque
+    gradientColors: ["#E53935", "#B71C1C"] as [string, string],
+    accentColor: "#E53935",
+  },
+  {
+    id: "profile",
+    nav: "Profile" as keyof RootStackParamList,
+    icon: "account-circle" as const,
+    label: "Meu Perfil",
+    description: "Gerencie suas informações pessoais",
+    gradientColors: ["#333333", "#111111"] as [string, string],
+    accentColor: "#555555",
+  },
+  {
+    id: "about",
+    nav: "About" as keyof RootStackParamList,
+    icon: "information-outline" as const,
+    label: "Sobre Nós",
+    description: "Nossa história e missão",
+    gradientColors: ["#333333", "#111111"] as [string, string],
+    accentColor: "#555555",
+  },
+];
+
 function HomeContent({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
   const { showAlert } = useCustomAlert();
@@ -37,98 +71,107 @@ function HomeContent({ navigation }: Props) {
   const [username, setUsername] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastLogin, setLastLogin] = useState<string | null>(null);
-  const [subscriptionAlert, setSubscriptionAlert] = useState(false);
-  const [subscriptionAlertLoaded, setSubscriptionAlertLoaded] = useState(false);
   const [termLoaded, setTermLoaded] = useState(false);
 
-  // Recupera subscription do AsyncStorage assim que entra na tela
+  // ─── Animations ─────────────────────────────────────────────────────────────
+  const headerFade = useRef(new Animated.Value(0)).current;
+  const headerSlide = useRef(new Animated.Value(-20)).current;
+  const cardAnims = MENU_CARDS.map(() => ({
+    scale: useRef(new Animated.Value(1)).current,
+    opacity: useRef(new Animated.Value(0)).current,
+    translateY: useRef(new Animated.Value(24)).current,
+  }));
+  const vipAnim = {
+    opacity: useRef(new Animated.Value(0)).current,
+    translateY: useRef(new Animated.Value(24)).current,
+    scale: useRef(new Animated.Value(1)).current,
+    shimmer: useRef(new Animated.Value(0)).current,
+  };
+
+  // ─── Entrance animations ─────────────────────────────────────────────────
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(headerSlide, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+
+    cardAnims.forEach((anim, i) => {
+      Animated.sequence([
+        Animated.delay(200 + i * 90),
+        Animated.parallel([
+          Animated.timing(anim.opacity, { toValue: 1, duration: 380, useNativeDriver: true }),
+          Animated.timing(anim.translateY, { toValue: 0, duration: 380, useNativeDriver: true }),
+        ]),
+      ]).start();
+    });
+
+    // VIP card shimmer loop
+    Animated.sequence([
+      Animated.delay(600),
+      Animated.parallel([
+        Animated.timing(vipAnim.opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(vipAnim.translateY, { toValue: 0, duration: 400, useNativeDriver: true }),
+      ]),
+    ]).start(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(vipAnim.shimmer, { toValue: 1, duration: 1600, useNativeDriver: true }),
+          Animated.timing(vipAnim.shimmer, { toValue: 0, duration: 1600, useNativeDriver: true }),
+        ])
+      ).start();
+    });
+  }, []);
+
+  // ─── Data fetching ────────────────────────────────────────────────────────
   useEffect(() => {
     const loadInitialSubscription = async () => {
       try {
         const storedSubscription = await AsyncStorage.getItem("subscription");
-        if (storedSubscription) {
-          setSubscription(storedSubscription as SubscriptionType);
-        }
-      } catch (error) {
-        console.log("Erro ao recuperar subscription do AsyncStorage", error);
-      }
+        if (storedSubscription) setSubscription(storedSubscription as SubscriptionType);
+      } catch {}
     };
     loadInitialSubscription();
   }, []);
 
-  // Atualize o fetchSubscriptionAlert para depender do fetchSubscription
   const fetchSubscriptionAlert = async (currentSubscription: SubscriptionType) => {
-    // Só mostra alerta se o usuário tiver PRO ou VIP
-    if (!currentSubscription || currentSubscription === "FREE") {
-      setSubscriptionAlert(false);
-      return;
-    }
-
+    if (!currentSubscription || currentSubscription === "FREE") return;
     try {
       const alertFlag = await AsyncStorage.getItem("subscriptionAlertFlag");
-      // se já mostramos o alerta, garante estado e não chama a API novamente
-      if (alertFlag === "1") {
-        setSubscriptionAlert(false);
-        return;
-      }
-
+      if (alertFlag === "1") return;
       const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) {
-        setSubscriptionAlert(false);
-        return;
-      }
-
+      if (!token) return;
       const response = await api.get("users/subscription/alert", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // garante que subscriptionAlert seja booleano
       const serverAlert = !!(response.status === 200 && response.data === true);
-      setSubscriptionAlert(serverAlert);
-
-      // apenas mostra o alerta e grava o flag se a API indicar true e não tivermos mostrado antes
-      if (serverAlert && alertFlag !== "1") {
-        showAlert(
-          "Lembre-se de renovar para continuar aproveitando os benefícios VIP.",
-          { title: "Sua assinatura vai expirar em breve" }
-        );
+      if (serverAlert) {
+        showAlert("Lembre-se de renovar para continuar aproveitando os benefícios VIP.", {
+          title: "Sua assinatura vai expirar em breve",
+        });
         await AsyncStorage.setItem("subscriptionAlertFlag", "1");
       }
-    } catch (error) {
-      console.log("Erro ao recuperar alerta de assinatura do usuário", error);
-      setSubscriptionAlert(false);
-    }
+    } catch {}
   };
 
-  // Sempre busque a assinatura antes de buscar o alerta
   const fetchSubscription = async () => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-      if (!token) {
-        setSubscription(null);
-        return;
-      }
-
+      if (!token) { setSubscription(null); return; }
       const response = await api.get("users/subscription", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       let userSubscription: SubscriptionType = null;
       if (response.status === 200 && response.data?.userSubscription) {
         userSubscription = String(response.data.userSubscription) as SubscriptionType;
-        // armazena string segura
         await AsyncStorage.setItem("subscription", userSubscription);
         setSubscription(userSubscription);
       } else {
         setSubscription(null);
         await AsyncStorage.removeItem("subscription");
       }
-
-      // Só chama o alerta depois de saber a assinatura
       await fetchSubscriptionAlert(userSubscription);
-    } catch (error) {
+    } catch {
       setSubscription(null);
-      console.log("Erro ao recuperar assinatura do usuário", error);
     }
   };
 
@@ -136,100 +179,31 @@ function HomeContent({ navigation }: Props) {
     const setFlagsAndFetch = async () => {
       try {
         const termFlag = await AsyncStorage.getItem("termFlag");
-        const termLoaded = termFlag === "1";
-        setTermLoaded(termLoaded);
-
-        // Sempre atualiza subscription e alerta juntos
+        const loaded = termFlag === "1";
+        setTermLoaded(loaded);
         await fetchSubscription();
-
-        if (!termLoaded) {
-          await checkTermAcceptance();
-        }
-      } catch (error) {
-        setTermLoaded(false);
-      }
+        if (!loaded) await checkTermAcceptance();
+      } catch { setTermLoaded(false); }
     };
     setFlagsAndFetch();
   }, []);
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-
-  // Animation for cards
-  const cardAnimations = Array(4)
-    .fill(0)
-    .map(() => ({
-      scale: useRef(new Animated.Value(1)).current,
-      opacity: useRef(new Animated.Value(0)).current,
-      translateY: useRef(new Animated.Value(20)).current,
-    }));
 
   useEffect(() => {
     const validateToken = async () => {
       try {
         const tokenResponse = await api.get("/auth/token/validate");
         if (!tokenResponse) {
-          showAlert(
-            "Acesso atualizado, faça login novamente para continuar!",
-            { title: "Alerta" }
-          );
+          showAlert("Acesso atualizado, faça login novamente para continuar!", { title: "Alerta" });
           navigation.navigate("Login");
         }
-      } catch (error) {
-        console.log("Erro ao validar token", error);
-      }
+      } catch {}
     };
     validateToken();
-  }, []);
 
-  useEffect(() => {
-    // Run entrance animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Animate cards sequentially
-    cardAnimations.forEach((anim, index) => {
-      Animated.sequence([
-        Animated.delay(300 + index * 100),
-        Animated.parallel([
-          Animated.timing(anim.opacity, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.translateY, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start();
-    });
-
-    // Get username from storage
     const getUserInfo = async () => {
       try {
         const storedUsername = await AsyncStorage.getItem("username");
-        if (storedUsername) {
-          setUsername(storedUsername);
-        }
+        if (storedUsername) setUsername(storedUsername);
         const lastLoginDate = await AsyncStorage.getItem("lastLogin");
         if (lastLoginDate) {
           setLastLogin(lastLoginDate);
@@ -238,49 +212,24 @@ function HomeContent({ navigation }: Props) {
           await AsyncStorage.setItem("lastLogin", now);
           setLastLogin(now);
         }
-      } catch (error) {
-        console.log("Erro ao recuperar informações do usuário", error);
-      }
+      } catch {}
     };
-
     getUserInfo();
   }, []);
 
-
   const checkTermAcceptance = async () => {
-    console.log("checkTermAcceptance chamado, termLoaded:", termLoaded);
-
-    if (termLoaded) {
-      console.log("Terms já carregados, pulando requisição");
-      return;
-    }
-
+    if (termLoaded) return;
     try {
       const token = await SecureStore.getItemAsync("accessToken");
       if (!token) return;
-
-      console.log("Fazendo requisição de terms...");
       const response = await api.get("acceptance/has-accepted-latest", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (response.status === 200 && response.data === false) {
-        setShowTermModal(true);
-      }
-
-      // Definir flag como carregado independente do resultado
+      if (response.status === 200 && response.data === false) setShowTermModal(true);
       await AsyncStorage.setItem("termFlag", "1");
       setTermLoaded(true);
-
-      console.log("Terms verificados e flag definida");
-
-      if (response.status === 404) {
-        showAlert(
-          "Erro ao validar usuário, faça login novamente",
-          { title: "Erro" }
-        );
-      }
-    } catch (error) {
+      if (response.status === 404) showAlert("Erro ao validar usuário, faça login novamente", { title: "Erro" });
+    } catch {
       showAlert("Erro ao verificar aceite dos termos.", { title: "Erro" });
     }
   };
@@ -288,412 +237,307 @@ function HomeContent({ navigation }: Props) {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchSubscription();
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula a espera da atualização
+    await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "";
-
     const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return "hoje";
-    } else if (diffDays === 1) {
-      return "ontem";
-    } else {
-      return `há ${diffDays} dias`;
-    }
+    const diffDays = Math.floor(Math.abs(new Date().getTime() - date.getTime()) / 86400000);
+    if (diffDays === 0) return "hoje";
+    if (diffDays === 1) return "ontem";
+    return `há ${diffDays} dias`;
   };
 
-  const handleCardPress = (
-    cardAnimation: any,
-    navigationTarget: keyof RootStackParamList
-  ) => {
+  const handleCardPress = (anim: typeof cardAnims[0], nav: keyof RootStackParamList) => {
     Animated.sequence([
-      Animated.timing(cardAnimation.scale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(cardAnimation.scale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      navigation.navigate(navigationTarget);
-    });
+      Animated.timing(anim.scale, { toValue: 0.96, duration: 90, useNativeDriver: true }),
+      Animated.timing(anim.scale, { toValue: 1, duration: 90, useNativeDriver: true }),
+    ]).start(() => navigation.navigate(nav));
   };
 
-  const getSubscriptionBadge = () => {
-    if (!subscription || subscription === "FREE") {
-      return { text: "GRATUITO", color: colors.muted, icon: "account-outline" };
-    } else if (subscription === "PRO") {
-      return { text: "PRO", color: "#FFC107", icon: "crown" };
-    } else if (subscription === "VIP") {
-      return { text: "VIP", color: "#8E24AA", icon: "diamond-stone" };
-    }
-    return { text: "GRATUITO", color: colors.muted, icon: "account-outline" };
+  const handleVIPPress = () => {
+    Animated.sequence([
+      Animated.timing(vipAnim.scale, { toValue: 0.97, duration: 90, useNativeDriver: true }),
+      Animated.timing(vipAnim.scale, { toValue: 1, duration: 90, useNativeDriver: true }),
+    ]).start(() => navigation.navigate("ProSubscription"));
   };
 
-  const badge = getSubscriptionBadge();
+  // ─── Subscription badge ───────────────────────────────────────────────────
+  const getSubscriptionConfig = () => {
+    if (subscription === "PRO") return { text: "PRO", bgColors: ["#FFC107", "#FF8F00"] as [string, string], icon: "crown" as const };
+    if (subscription === "VIP") return { text: "VIP", bgColors: ["#8E24AA", "#6A1B9A"] as [string, string], icon: "diamond-stone" as const };
+    return { text: "GRATUITO", bgColors: ["#444444", "#333333"] as [string, string], icon: "account-outline" as const };
+  };
+  const subConfig = getSubscriptionConfig();
+
+  const isFree = !subscription || subscription === "FREE";
+
+  // Shimmer interpolation for VIP card highlight
+  const shimmerOpacity = vipAnim.shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.32] });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <LinearGradient
-        colors={[colors.primary, "#222222"]}
-        style={styles.gradientBackground}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#E53935"]}
+            tintColor="#FFFFFF"
+          />
+        }
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colors.secondary]}
-              tintColor="#FFFFFF"
-            />
-          }
+        {/* ── HEADER ─────────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={["#000000", "#1a0000", "#000000"]}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
         >
           <Animated.View
             style={[
-              styles.headerSection,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY }, { scale: scaleAnim }],
-              },
+              styles.headerInner,
+              { opacity: headerFade, transform: [{ translateY: headerSlide }] },
             ]}
           >
-            <Image
-              source={require("../assets/logo_white_label.png")}
-              style={styles.logo}
-            />
-
-            <View style={styles.userInfoContainer}>
-              <View style={styles.greetingContainer}>
-                <Text
-                  style={[
-                    styles.welcomeText,
-                    { color: "#FFFFFF", fontFamily: fonts.regular },
-                  ]}
-                >
-                  Bem-vindo{username ? ", " : ""}
-                </Text>
-                {username && (
-                  <Text
-                    style={[
-                      styles.usernameText,
-                      { color: "#FFFFFF", fontFamily: fonts.bold },
-                    ]}
-                  >
-                    {username}
-                  </Text>
-                )}
-              </View>
-
-              <View
-                style={[
-                  styles.subscriptionBadge,
-                  { backgroundColor: badge.color },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={badge.icon}
-                  size={14}
-                  color="#FFF"
-                />
-                <Text style={styles.subscriptionText}>{badge.text}</Text>
-              </View>
+            {/* Logo compacto + Badge ao lado */}
+            <View style={styles.headerTop}>
+              <Image
+                source={require("../assets/logo_white_label.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <LinearGradient colors={subConfig.bgColors} style={styles.subscriptionBadge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <MaterialCommunityIcons name={subConfig.icon} size={13} color="#FFF" />
+                <Text style={[styles.subscriptionText, { fontFamily: fonts.bold }]}>{subConfig.text}</Text>
+              </LinearGradient>
             </View>
 
-            <Text
-              style={[
-                styles.title,
-                { color: "#FFFFFF", fontFamily: fonts.extraBold },
-              ]}
-            >
-              UNIVERSO CHAMAGOL
+            {/* Saudação */}
+            <View style={styles.greetingBlock}>
+              <Text style={[styles.greetingSmall, { fontFamily: fonts.regular }]}>
+                Bem-vindo de volta{username ? "," : ""}
+              </Text>
+              {username ? (
+                <Text style={[styles.greetingName, { fontFamily: fonts.bold }]}>
+                  {username} 👋
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Título principal */}
+            <Text style={[styles.heroTitle, { fontFamily: fonts.extraBold }]}>
+              UNIVERSO{"\n"}
+              <Text style={[styles.heroTitleAccent, { fontFamily: fonts.extraBold }]}>CHAMAGOL</Text>
             </Text>
 
-            {lastLogin && (
-              <Text
-                style={[
-                  styles.lastLoginText,
-                  { color: "#FFFFFF88", fontFamily: fonts.regular },
-                ]}
-              >
-                Último acesso: {formatDate(lastLogin)}
-              </Text>
-            )}
+            {/* Divider decorativo */}
+            <View style={styles.heroDivider}>
+              <View style={styles.heroDividerLine} />
+              <MaterialCommunityIcons name="soccer" size={14} color="#E53935" />
+              <View style={styles.heroDividerLine} />
+            </View>
+
+            {/* Meta info row */}
+            <View style={styles.metaRow}>
+              {lastLogin && (
+                <View style={styles.metaChip}>
+                  <MaterialCommunityIcons name="clock-outline" size={12} color="#FFFFFF88" />
+                  <Text style={[styles.metaChipText, { fontFamily: fonts.regular }]}>
+                    Acesso {formatDate(lastLogin)}
+                  </Text>
+                </View>
+              )}
+              {isFree && (
+                <TouchableOpacity
+                  style={styles.upgradeChip}
+                  onPress={() => navigation.navigate("ProSubscription")}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="arrow-up-circle" size={12} color="#F2994A" />
+                  <Text style={[styles.upgradeChipText, { fontFamily: fonts.semibold }]}>Fazer upgrade</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </Animated.View>
+        </LinearGradient>
 
-          <View style={styles.cardsContainer}>
-            <Animated.View
-              style={[
-                styles.cardWrapper,
-                {
-                  opacity: cardAnimations[0].opacity,
-                  transform: [
-                    { translateY: cardAnimations[0].translateY },
-                    { scale: cardAnimations[0].scale },
-                  ],
-                },
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  shadows.medium,
-                  { backgroundColor: colors.background },
-                ]}
-                activeOpacity={0.8}
-                onPress={() => handleCardPress(cardAnimations[0], "Timeline")}
-              >
-                <LinearGradient
-                  colors={[colors.secondary, colors.highlight]}
-                  style={styles.cardIconContainer}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <MaterialCommunityIcons name="fire" size={30} color="#FFF" />
-                </LinearGradient>
-                <View style={styles.cardContent}>
-                  <Text
-                    style={[
-                      styles.cardTitle,
-                      { color: colors.primary, fontFamily: fonts.bold },
-                    ]}
-                  >
-                    Sinais
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cardDescription,
-                      { color: colors.muted, fontFamily: fonts.regular },
-                    ]}
-                  >
-                    Acesse as dicas e análises esportivas
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={colors.muted}
-                />
-              </TouchableOpacity>
-            </Animated.View>
+        {/* ── CARDS CONTAINER ───────────────────────────────────────────── */}
+        <View style={styles.cardsContainer}>
 
-            <Animated.View
-              style={[
-                styles.cardWrapper,
-                {
-                  opacity: cardAnimations[1].opacity,
-                  transform: [
-                    { translateY: cardAnimations[1].translateY },
-                    { scale: cardAnimations[1].scale },
-                  ],
-                },
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  shadows.medium,
-                  { backgroundColor: colors.background },
-                ]}
-                activeOpacity={0.8}
-                onPress={() => handleCardPress(cardAnimations[1], "Profile")}
-              >
-                <LinearGradient
-                  colors={["#3498db", "#2980b9"]}
-                  style={styles.cardIconContainer}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={30}
-                    color="#FFF"
-                  />
-                </LinearGradient>
-                <View style={styles.cardContent}>
-                  <Text
-                    style={[
-                      styles.cardTitle,
-                      { color: colors.primary, fontFamily: fonts.bold },
-                    ]}
-                  >
-                    Perfil
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cardDescription,
-                      { color: colors.muted, fontFamily: fonts.regular },
-                    ]}
-                  >
-                    Gerencie suas informações pessoais
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={colors.muted}
-                />
-              </TouchableOpacity>
-            </Animated.View>
-
-            <Animated.View
-              style={[
-                styles.cardWrapper,
-                {
-                  opacity: cardAnimations[2].opacity,
-                  transform: [
-                    { translateY: cardAnimations[2].translateY },
-                    { scale: cardAnimations[2].scale },
-                  ],
-                },
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  shadows.medium,
-                  { backgroundColor: colors.background },
-                ]}
-                activeOpacity={0.8}
-                onPress={() => handleCardPress(cardAnimations[2], "About")}
-              >
-                <LinearGradient
-                  colors={["#27ae60", "#2ecc71"]}
-                  style={styles.cardIconContainer}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <MaterialCommunityIcons
-                    name="information"
-                    size={30}
-                    color="#FFF"
-                  />
-                </LinearGradient>
-                <View style={styles.cardContent}>
-                  <Text
-                    style={[
-                      styles.cardTitle,
-                      { color: colors.primary, fontFamily: fonts.bold },
-                    ]}
-                  >
-                    Sobre Nós
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cardDescription,
-                      { color: colors.muted, fontFamily: fonts.regular },
-                    ]}
-                  >
-                    Conheça nossa história e missão
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={colors.muted}
-                />
-              </TouchableOpacity>
-            </Animated.View>
-
-            {(!subscription || subscription === "FREE") && (
+          {/* Cards de navegação */}
+          {MENU_CARDS.map((card, index) => {
+            const anim = cardAnims[index];
+            const isPrimary = index === 0; // Sinais é o destaque
+            return (
               <Animated.View
+                key={card.id}
                 style={[
                   styles.cardWrapper,
                   {
-                    opacity: cardAnimations[3].opacity,
-                    transform: [
-                      { translateY: cardAnimations[3].translateY },
-                      { scale: cardAnimations[3].scale },
-                    ],
+                    opacity: anim.opacity,
+                    transform: [{ translateY: anim.translateY }, { scale: anim.scale }],
                   },
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.VIPCard, shadows.medium]}
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    handleCardPress(cardAnimations[3], "ProSubscription")
-                  }
+                  style={[
+                    styles.card,
+                    isPrimary && styles.cardPrimary,
+                    { shadowColor: isPrimary ? "#E53935" : "#000" },
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => handleCardPress(anim, card.nav)}
                 >
-                  <LinearGradient
-                    colors={["#F2994A", "#F2C94C"]}
-                    style={styles.VIPCardGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    <View style={styles.VIPContent}>
-                      <MaterialCommunityIcons
-                        name="crown"
-                        size={40}
-                        color="#FFF"
-                      />
-                      <Text
-                        style={[
-                          styles.VIPTitle,
-                          { fontFamily: fonts.bold },
-                        ]}
-                      >
-                        ATUALIZE PARA VIP
-                      </Text>
-                      <Text
-                        style={[
-                          styles.VIPDescription,
-                          { fontFamily: fonts.regular },
-                        ]}
-                      >
-                        Desbloqueie recursos exclusivos e aumente suas chances
-                        de sucesso!
-                      </Text>
-                      <View style={styles.VIPButton}>
-                        <Text
-                          style={[
-                            styles.VIPButtonText,
-                            { fontFamily: fonts.semibold },
-                          ]}
-                        >
-                          VER PLANOS
-                        </Text>
-                        <MaterialCommunityIcons
-                          name="chevron-right"
-                          size={20}
-                          color="#FFF"
-                        />
+                  {isPrimary ? (
+                    // Card primário — layout diferenciado com gradiente completo
+                    <LinearGradient
+                      colors={["#E53935", "#B71C1C"]}
+                      style={styles.cardPrimaryGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <View style={styles.cardPrimaryContent}>
+                        <View style={styles.cardPrimaryLeft}>
+                          <View style={styles.cardPrimaryIconWrap}>
+                            <MaterialCommunityIcons name={card.icon} size={26} color="#FFF" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.cardPrimaryLabel, { fontFamily: fonts.bold }]}>
+                              {card.label}
+                            </Text>
+                            <Text style={[styles.cardPrimaryDesc, { fontFamily: fonts.regular }]}>
+                              {card.description}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.cardPrimaryChevron}>
+                          <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.7)" />
+                        </View>
                       </View>
-                    </View>
-                  </LinearGradient>
+                    </LinearGradient>
+                  ) : (
+                    // Cards secundários — clean com accent bar
+                    <>
+                      {/* Barra lateral de acento */}
+                      <View style={styles.cardAccentBar} />
+                      <View style={styles.cardInner}>
+                        <View style={[styles.cardIconWrap, { backgroundColor: "#F5F5F5" }]}>
+                          <MaterialCommunityIcons name={card.icon} size={22} color="#222" />
+                        </View>
+                        <View style={styles.cardTextBlock}>
+                          <Text style={[styles.cardLabel, { fontFamily: fonts.bold }]}>{card.label}</Text>
+                          <Text style={[styles.cardDesc, { fontFamily: fonts.regular }]}>{card.description}</Text>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color="#BDBDBD" />
+                      </View>
+                    </>
+                  )}
                 </TouchableOpacity>
               </Animated.View>
-            )}
-          </View>
-        </ScrollView>
-      </LinearGradient>
-      <View style={styles.footer}>
-        <Text
-          style={[
-            styles.footerText,
-            { color: colors.muted, fontFamily: fonts.regular },
-          ]}
-        >
+            );
+          })}
+
+          {/* ── VIP UPGRADE CARD (só FREE) ────────────────────────────── */}
+          {isFree && (
+            <Animated.View
+              style={[
+                styles.cardWrapper,
+                {
+                  opacity: vipAnim.opacity,
+                  transform: [{ translateY: vipAnim.translateY }, { scale: vipAnim.scale }],
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={styles.vipCardOuter}
+                activeOpacity={0.88}
+                onPress={handleVIPPress}
+              >
+                <LinearGradient
+                  colors={["#1a0a00", "#2d1200", "#1a0a00"]}
+                  style={styles.vipGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  {/* Shimmer overlay */}
+                  <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: shimmerOpacity }]}>
+                    <LinearGradient
+                      colors={["transparent", "#F2994A44", "transparent"]}
+                      style={StyleSheet.absoluteFillObject}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    />
+                  </Animated.View>
+
+                  {/* Borda dourada sutil */}
+                  <View style={styles.vipBorderOverlay} />
+
+                  <View style={styles.vipContent}>
+                    {/* Ícone + Título */}
+                    <View style={styles.vipTitleRow}>
+                      <View style={styles.vipCrownWrap}>
+                        <MaterialCommunityIcons name="crown" size={20} color="#F2994A" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.vipEyebrow, { fontFamily: fonts.semibold }]}>
+                          PLANO VIP
+                        </Text>
+                        <Text style={[styles.vipTitle, { fontFamily: fonts.extraBold }]}>
+                          Aumente seus resultados
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Benefícios — lista compacta */}
+                    <View style={styles.vipBenefits}>
+                      {[
+                        { icon: "check-circle", text: "Sinais exclusivos em tempo real" },
+                        { icon: "check-circle", text: "Análises avançadas dos jogos" },
+                        { icon: "check-circle", text: "Suporte prioritário" },
+                      ].map((b, i) => (
+                        <View key={i} style={styles.vipBenefitRow}>
+                          <MaterialCommunityIcons name={b.icon as any} size={14} color="#F2994A" />
+                          <Text style={[styles.vipBenefitText, { fontFamily: fonts.regular }]}>{b.text}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* CTA */}
+                    <View style={styles.vipCTA}>
+                      <LinearGradient
+                        colors={["#F2994A", "#E53935"]}
+                        style={styles.vipButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                      >
+                        <Text style={[styles.vipButtonText, { fontFamily: fonts.bold }]}>
+                          VER PLANOS
+                        </Text>
+                        <MaterialCommunityIcons name="arrow-right" size={16} color="#FFF" />
+                      </LinearGradient>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
+        {/* ── FOOTER ───────────────────────────────────────────────────── */}
+        <Text style={[styles.footer, { fontFamily: fonts.regular }]}>
           © 2026 CHAMAGOL • Todos os direitos reservados
         </Text>
-      </View>
+      </ScrollView>
 
-      <TermModal
-        visible={showTermModal}
-        onAccepted={() => setShowTermModal(false)}
-      />
+      <TermModal visible={showTermModal} onAccepted={() => setShowTermModal(false)} />
     </SafeAreaView>
   );
 }
@@ -706,148 +550,307 @@ export default function HomeScreen(props: Props) {
   );
 }
 
-const { width } = Dimensions.get("window");
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-  },
-  scrollViewContent: {
+  scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 80,
+    backgroundColor: "#F4F4F4",
+    paddingBottom: 32,
   },
-  headerSection: {
-    alignItems: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
+
+  // ── Header
+  headerGradient: {
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  logo: {
-    width: width * 0.58,
-    height: width * 0.58,
-    resizeMode: "contain",
-    marginBottom: 1,
+  headerInner: {
+    gap: 14,
   },
-  userInfoContainer: {
+  headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 8,
   },
-  greetingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  welcomeText: {
-    fontSize: 16,
-  },
-  usernameText: {
-    fontSize: 16,
+  logo: {
+    width: width * 0.36,
+    height: width * 0.13,
   },
   subscriptionBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   subscriptionText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "bold",
-    marginLeft: 4,
+    color: "#FFF",
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "900",
-    letterSpacing: 1,
-    marginBottom: 8,
+
+  greetingBlock: {
+    gap: 2,
+    marginTop: 4,
   },
-  lastLoginText: {
-    fontSize: 12,
-    marginBottom: 16,
-  },
-  cardsContainer: {
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  cardWrapper: {
-    marginBottom: 16,
-    width: "100%",
-  },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
-  },
-  cardIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  cardDescription: {
+  greetingSmall: {
+    color: "rgba(255,255,255,0.55)",
     fontSize: 13,
   },
-  VIPCard: {
-    borderRadius: 16,
-    overflow: "hidden",
-    marginVertical: 10,
+  greetingName: {
+    color: "#FFF",
+    fontSize: 19,
   },
-  VIPCardGradient: {
-    width: "100%",
-    padding: 20,
+
+  heroTitle: {
+    color: "#FFF",
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: 1.5,
+    marginTop: 4,
   },
-  VIPContent: {
-    alignItems: "center",
+  heroTitleAccent: {
+    color: "#E53935",
   },
-  VIPTitle: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 16,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  VIPDescription: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 20,
-    opacity: 0.9,
-  },
-  VIPButton: {
+
+  heroDivider: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
+    gap: 8,
+    marginVertical: 2,
   },
-  VIPButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    marginRight: 5,
+  heroDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
-  footer: {
+
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  metaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  metaChipText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+  },
+  upgradeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(242,153,74,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(242,153,74,0.35)",
+  },
+  upgradeChipText: {
+    color: "#F2994A",
+    fontSize: 11,
+  },
+
+  // ── Cards container
+  cardsContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    gap: 12,
+  },
+  cardWrapper: {
+    width: "100%",
+  },
+
+  // Card primário (Sinais)
+  cardPrimary: {
+    borderRadius: 16,
+    overflow: "hidden",
+    // Sombra vermelha suave
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  cardPrimaryGradient: {
+    borderRadius: 16,
+  },
+  cardPrimaryContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 18,
+  },
+  cardPrimaryLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  cardPrimaryIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardPrimaryLabel: {
+    color: "#FFF",
+    fontSize: 17,
+    marginBottom: 3,
+  },
+  cardPrimaryDesc: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  cardPrimaryChevron: {
+    marginLeft: 8,
+  },
+
+  // Cards secundários
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  cardAccentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: "#E0E0E0",
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+  cardInner: {
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderTopWidth: 1,
+    paddingLeft: 20,
+    paddingRight: 16,
+    gap: 14,
   },
-  footerText: {
+  cardIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardTextBlock: {
+    flex: 1,
+    gap: 2,
+  },
+  cardLabel: {
+    color: "#111",
+    fontSize: 15,
+  },
+  cardDesc: {
+    color: "#888",
     fontSize: 12,
+    lineHeight: 16,
+  },
+
+  // ── VIP Card
+  vipCardOuter: {
+    borderRadius: 18,
+    overflow: "hidden",
+    shadowColor: "#F2994A",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    marginTop: 4,
+  },
+  vipGradient: {
+    borderRadius: 18,
+    padding: 20,
+  },
+  vipBorderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(242,153,74,0.3)",
+  },
+  vipContent: {
+    gap: 16,
+  },
+  vipTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  vipCrownWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(242,153,74,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(242,153,74,0.25)",
+  },
+  vipEyebrow: {
+    color: "#F2994A",
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginBottom: 3,
+  },
+  vipTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  vipBenefits: {
+    gap: 8,
+  },
+  vipBenefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  vipBenefitText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 13,
+  },
+  vipCTA: {
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  vipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  vipButtonText: {
+    color: "#FFF",
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
+
+  // ── Footer
+  footer: {
+    color: "#AAAAAA",
+    fontSize: 11,
     textAlign: "center",
+    marginTop: 28,
+    marginBottom: 8,
   },
 });
