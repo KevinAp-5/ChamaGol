@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -64,8 +65,7 @@ public class AuthController {
     // --- Cadastro e confirmação ---
     @PostMapping("register")
     @ResponseBody
-    public ResponseEntity<UserCreatedDTO> createUser(
-            @org.springframework.web.bind.annotation.RequestBody @Valid CreateUserDTO dto) {
+    public ResponseEntity<UserCreatedDTO> createUser(@RequestBody @Valid CreateUserDTO dto) {
         UserCreatedDTO response = authService.register(dto);
         return ResponseEntity.created(
                 UriComponentsBuilder.fromPath("/api/users")
@@ -76,9 +76,7 @@ public class AuthController {
     }
 
     @GetMapping("register/confirm")
-    public String confirmUser(
-            @RequestParam("uuid") @NotBlank String uuid,
-            Model model) {
+    public String confirmUser(@RequestParam("uuid") @NotBlank String uuid, Model model) {
         log.info("token: {}", uuid);
         boolean validated = authService.confirmVerificationToken(convertStringToUUID(uuid));
         model.addAttribute("confirmed", validated);
@@ -88,28 +86,24 @@ public class AuthController {
     // --- Recuperação de senha ---
     @PostMapping("password/forget")
     @ResponseBody
-    public ResponseEntity<ResponseMessage> sendPasswordResetCode(
-            @org.springframework.web.bind.annotation.RequestBody @Valid UserEmailDTO data) {
+    public ResponseEntity<ResponseMessage> sendPasswordResetCode(@RequestBody @Valid UserEmailDTO data) {
         boolean response = authService.sendPasswordResetCode(data);
         if (!response)
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ResponseMessage(
-                            "Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
+                    .body(new ResponseMessage
+                        ("Usuário não está habilitado. Por favor, confirme o e-mail após o cadastro."));
         return ResponseEntity.ok(new ResponseMessage("Link para redefinição de senha enviado para seu e-mail."));
     }
 
     @PostMapping("password/reset")
     @ResponseBody
-    public ResponseEntity<ResponseMessage> confirmPasswordReset(
-            @org.springframework.web.bind.annotation.RequestBody @Valid PasswordResetWithEmailDTO data) {
+    public ResponseEntity<ResponseMessage> confirmPasswordReset(@RequestBody @Valid PasswordResetWithEmailDTO data) {
         authService.passwordReset(data);
         return ResponseEntity.ok().body(new ResponseMessage("Senha alterada com sucesso."));
     }
 
     @GetMapping("/password/reset/confirmEmail")
-    public String confirmEmailreset(
-            @RequestParam("token") String uuid,
-            Model model) {
+    public String confirmEmailreset(@RequestParam("token") String uuid, Model model) {
         log.info("UUID RECEBIDO {}", uuid);
         boolean confirmed = authService.confirmEmail(convertStringToUUID(uuid));
         model.addAttribute("confirmed", confirmed);
@@ -120,7 +114,7 @@ public class AuthController {
     @PostMapping("login")
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> login(
-            @org.springframework.web.bind.annotation.RequestBody @Valid AuthenticationDTO data,
+            @RequestBody @Valid AuthenticationDTO data,
             HttpServletResponse response,
             @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
         TokensDTO tokens = authService.login(data);
@@ -140,8 +134,7 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<LoginResponseDTO> refreshToken(
             @CookieValue(name = "refreshToken", defaultValue = "") String cookieToken,
-            HttpServletResponse response,
-            @org.springframework.web.bind.annotation.RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
+            HttpServletResponse response, @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest,
             @RequestParam(defaultValue = "MOBILE") ClientType clientType) {
 
         String refreshToken = cookieToken;
@@ -169,8 +162,7 @@ public class AuthController {
     // --- Ativação e confirmação de e-mail ---
     @PostMapping("activate")
     @ResponseBody
-    public ResponseEntity<ResponseMessage> activateUser(
-            @org.springframework.web.bind.annotation.RequestBody @Valid ActivateUserDTO data) {
+    public ResponseEntity<ResponseMessage> activateUser(@RequestBody @Valid ActivateUserDTO data) {
         boolean activationSent = authService.sendActivationCode(data.email());
         if (!activationSent)
             return ResponseEntity.status(409)
@@ -208,8 +200,7 @@ public class AuthController {
                 user.getLogin(),
                 user.getCreatedAt(),
                 user.getSubscription().getValue(),
-                expirationDate
-        ));
+                expirationDate));
     }
 
     @GetMapping("user/info")
@@ -238,7 +229,8 @@ public class AuthController {
     }
 
     private static String capitalize(String str) {
-        if (str == null || str.isEmpty()) return str;
+        if (str == null || str.isEmpty())
+            return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
