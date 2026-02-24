@@ -13,6 +13,9 @@ import com.usermanager.manager.dto.message.CreateMessage;
 import com.usermanager.manager.dto.message.MessageDTO;
 import com.usermanager.manager.service.message.MessageService;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/message")
 public class MessageController {
@@ -28,6 +31,8 @@ public class MessageController {
     @PostMapping
     public ResponseEntity<MessageDTO> createMessage(@RequestBody CreateMessage request) {
         MessageDTO message = messageService.createMessage(request);
+
+        log.info("Enviando para websocket: {}", request);
         messagingTemplate.convertAndSend("/topic/messages", message);
         return ResponseEntity.created(URI.create("/api/message/" + message.id().toString()))
             .body(message);
