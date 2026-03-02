@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClient;
 
 import com.usermanager.manager.model.device.Device;
 import com.usermanager.manager.service.device.DeviceService;
@@ -18,7 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 public class PushNotificationService {
     private final DeviceService deviceService;
 
-    private final WebClient webClient = WebClient.create("https://exp.host");
+    private final RestClient restClient =
+        RestClient.builder()
+            .baseUrl("https://exp.host")
+            .build();
 
     public void sentToAll(String title, String body) {
         List<Device> devices = deviceService.findAllByActiveTrue();
@@ -28,17 +31,15 @@ public class PushNotificationService {
 
     private void send(String token, String title, String body) {
         Map<String, Object> payload = Map.of(
-            "to", token,
-            "title", title,
-            "body", body,
-            "sound", "default"
-        );
+                "to", token,
+                "title", title,
+                "body", body,
+                "sound", "default");
 
-        webClient.post()
-            .uri("/--/api/v2/push/send")
-            .bodyValue(payload)
-            .retrieve()
-            .bodyToMono(String.class)
-            .subscribe();
+        restClient.post()
+                .uri("/--/api/v2/push/send")
+                .body(payload)
+                .retrieve()
+                .toBodilessEntity();
     }
 }
