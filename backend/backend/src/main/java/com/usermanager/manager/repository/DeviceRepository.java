@@ -17,4 +17,6 @@ public interface DeviceRepository extends JpaRepository<Device, UUID>{
     List<Device> findAllByUserIdAndActiveTrue(Long userId);
 
     List<Device> findAllByActiveTrue();
+
+    List<Device> findAllByUserIdIn(List<Long> user);
 }
