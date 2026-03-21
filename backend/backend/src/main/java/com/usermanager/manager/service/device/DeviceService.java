@@ -54,4 +54,8 @@ public class DeviceService {
     public List<Device> findAllByActiveTrue() {
         return deviceRepository.findAllByActiveTrue();
     }
+
+    public List<Device> findAllByUserIdIn(List<Long> usersIds) {
+        return deviceRepository.findAllByUserIdIn(usersIds);
+    }
 }
