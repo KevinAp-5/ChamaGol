@@ -3,22 +3,24 @@ package com.usermanager.manager.service.message.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.message.CreateMessage;
 import com.usermanager.manager.dto.message.MessageDTO;
+import com.usermanager.manager.infra.event.MessageCreatedEvent;
 import com.usermanager.manager.model.message.Message;
 import com.usermanager.manager.repository.MessageRepository;
 import com.usermanager.manager.service.message.MessageService;
 
+import lombok.AllArgsConstructor;
+
 @Service
+@AllArgsConstructor
 public class MessageServiceImpl implements MessageService{
     private MessageRepository messageRepository;
-
-    public MessageServiceImpl(MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
-    }
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public MessageDTO createMessage(CreateMessage request) {
@@ -27,12 +29,23 @@ public class MessageServiceImpl implements MessageService{
             .people(request.people())
             .build();
 
-        return new MessageDTO(messageRepository.save(message));
+        Message savedMessage = messageRepository.save(message);
+
+        this.publishEvent(new MessageCreatedEvent(
+            savedMessage.getId(),
+            "new event",
+            savedMessage.getContent().substring(0, 20))
+        );
+        return new MessageDTO(savedMessage);
     }
     
     public List<MessageDTO> getAll() {
         return messageRepository.findAll().stream()
             .map(MessageDTO::new)
             .collect(Collectors.toList());
+    }
+
+    public void publishEvent(Object event) {
+        publisher.publishEvent(event);
     }
 }
