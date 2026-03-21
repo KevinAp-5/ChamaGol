@@ -1,4 +1,4 @@
-package com.usermanager.manager.infra.security.websocket;
+package com.usermanager.manager.websocket;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
@@ -23,6 +24,7 @@ import com.usermanager.manager.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component
 public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelInterceptor {
 
     private final TokenService tokenService;
