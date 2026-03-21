@@ -83,18 +83,16 @@ export default function App() {
   };
 
   return (
-    <NotificationProvider>
-      <CustomAlertProvider>
-        {/* Status bar escura */}
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-
-        <NavigationContainer linking={linking} theme={DarkTheme}>
+    <CustomAlertProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <NavigationContainer linking={linking} theme={DarkTheme}>
+        <NotificationProvider>
           <DeepLinkListener />
           <Stack.Navigator
             initialRouteName="Splash"
             screenOptions={{
               headerShown: false,
-              cardStyle: { backgroundColor: "#000000" }, // fundo preto nas telas
+              cardStyle: { backgroundColor: "#000000" },
             }}
           >
             <Stack.Screen name="Splash" component={SplashScreen} />
@@ -114,8 +112,8 @@ export default function App() {
             <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
             <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
           </Stack.Navigator>
-        </NavigationContainer>
-      </CustomAlertProvider>
-    </NotificationProvider>
+        </NotificationProvider>
+      </NavigationContainer>
+    </CustomAlertProvider>
   );
 }
