@@ -23,6 +23,30 @@ public class PushNotificationService {
             .baseUrl("https://exp.host")
             .build();
 
+
+    public void sendToUsers(List<Long> usersIds, String title, String body) {
+        List<Device> devices = deviceService.findAllByUserIdIn(usersIds);
+
+        for (Device device: devices) {
+            Map<String, Object> payload = Map.of(
+                "to", device.getPushToken(),
+                "title", title,
+                "body", body,
+                "sound", "default"
+            );
+
+            try {
+                restClient.post()
+                    .uri("/--/api/v2/push/send")
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity();
+            } catch (Exception e) {
+                log.info("Erro ao enviar push: {}", e.getMessage());
+            }
+        }
+    }
+
     public void sentToAll(String title, String body) {
         List<Device> devices = deviceService.findAllByActiveTrue();
 
