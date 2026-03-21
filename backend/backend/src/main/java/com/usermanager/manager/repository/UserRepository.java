@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;
 
+import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.model.user.User;
 
@@ -20,4 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long>{
     Optional<User> findUserByLogin(String login);
 
     List<User> findAllBySubscription(Subscription subscription);
+
+    List<User> findAllByStatus(Status status);
 }
