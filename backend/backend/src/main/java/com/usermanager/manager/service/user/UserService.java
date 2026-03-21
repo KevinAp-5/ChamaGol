@@ -11,9 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
-import com.usermanager.manager.dto.user.VipUserDTO;
 import com.usermanager.manager.dto.user.UserDTO;
 import com.usermanager.manager.dto.user.UserResponseDTO;
+import com.usermanager.manager.dto.user.VipUserDTO;
+import com.usermanager.manager.enums.Status;
 import com.usermanager.manager.exception.user.UserNotFoundException;
 import com.usermanager.manager.mappers.UserMapper;
 import com.usermanager.manager.model.user.User;
@@ -24,25 +25,19 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 // TODO: migrar para interface para diminuir acoplamento
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final SubscriptionRepository subscriptionRepository;
-
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
-            SubscriptionRepository subscriptionControlRepository) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-        this.subscriptionRepository = subscriptionControlRepository;
-    }
 
     @Transactional
     public UserResponseDTO updateUser(@NotNull @Valid UserResponseDTO dto) {
@@ -63,6 +58,9 @@ public class UserService {
                 .toList();
     }
 
+    public List<User> getAllActiveUsers() {
+        return userRepository.findAllByStatus(Status.ACTIVE);
+    }
     public UserDTO findUserById(@Positive @NotNull Long id) {
         User response = userRepository.findById(id).orElseThrow(
                 () -> new UserNotFoundException("with ID: " + id));
