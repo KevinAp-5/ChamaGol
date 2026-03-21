@@ -37,7 +37,6 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelIn
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
           @NonNull Map<String, Object> attributes) throws Exception {
         log.info("Handshake URI: {}", request.getURI());
-        log.info("Headers: {}", request.getHeaders());
 
         String token = extractToken(request);
         if (token == null) {
@@ -61,7 +60,6 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelIn
         List<String> authHeaders = request.getHeaders().get("Authorization");
         if (authHeaders != null && !authHeaders.isEmpty()) {
             String token = authHeaders.get(0).replace("Bearer ", "");
-            log.info("Token recebido via header: {}", token);
             return token;
         }
 
