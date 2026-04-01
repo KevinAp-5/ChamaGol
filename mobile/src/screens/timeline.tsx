@@ -442,11 +442,25 @@ export default function TimelineScreen({ navigation }: Props) {
         setStompClient(client);
         setIsConnecting(false);
         setIsConnected(true);
+
+        // --- HEARTBEAT ---
+        client.heartbeatIntervalId = setInterval(() => {
+          client.publish({
+            destination: "/app/heartbeat",
+            body: "{}",
+          });
+        }, 20000); // 20s
       },
       onDisconnect: () => {
         console.log("[STOMP] onDisconnect");
         setStompClient(null);
         setIsConnected(false);
+
+        // Limpa o heartbeat
+        if (client.heartbeatIntervalId) {
+          clearInterval(client.heartbeatIntervalId);
+          client.heartbeatIntervalId = null;
+        }
       },
       onStompError: (frame) => {
         console.error("[STOMP] broker error:", frame?.headers?.message, frame?.body);
@@ -455,26 +469,39 @@ export default function TimelineScreen({ navigation }: Props) {
       },
     });
 
-    try {
-      (client as any).debug = (msg: string) => console.log("[STOMP DEBUG]", msg);
-    } catch (e) {}
-
+    // Limpa o heartbeat ao fechar/desmontar
     client.onWebSocketClose = (evt: any) => {
       console.warn("[STOMP] websocket closed", evt);
       setIsConnected(false);
+      if (client.heartbeatIntervalId) {
+        clearInterval(client.heartbeatIntervalId);
+        client.heartbeatIntervalId = null;
+      }
     };
 
     client.onWebSocketError = (evt: any) => {
       console.error("[STOMP] websocket error", evt);
       setIsConnecting(false);
       setIsConnected(false);
+      if (client.heartbeatIntervalId) {
+        clearInterval(client.heartbeatIntervalId);
+        client.heartbeatIntervalId = null;
+      }
     };
+
+    try {
+      (client as any).debug = (msg: string) => console.log("[STOMP DEBUG]", msg);
+    } catch (e) {}
 
     console.log("[STOMP] activating client ->", wsUrl);
     client.activate();
 
     return () => {
       client.deactivate();
+      if (client.heartbeatIntervalId) {
+        clearInterval(client.heartbeatIntervalId);
+        client.heartbeatIntervalId = null;
+      }
     };
   }, [isTokenLoaded, token]);
 
