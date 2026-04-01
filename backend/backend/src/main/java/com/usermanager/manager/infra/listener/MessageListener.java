@@ -11,6 +11,7 @@ import com.usermanager.manager.infra.event.MessageCreatedEvent;
 import com.usermanager.manager.infra.service.PushNotificationService;
 import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.user.UserService;
+import com.usermanager.manager.websocket.presence.PresenceService;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class MessageListener {
 
     private final UserService userService;
     private final PushNotificationService pushNotificationService;
+    private final PresenceService presenceService;
 
     @EventListener
     @Async
@@ -33,6 +35,7 @@ public class MessageListener {
 
          List<Long> usersIds = usersToSendNotification.stream()
             .map(User::getId)
+            .filter(userId -> !presenceService.isOnline(userId))
             .toList();
 
         pushNotificationService.sendToUsers(usersIds, "Nova mensagem", event.message().substring(0, 20));
