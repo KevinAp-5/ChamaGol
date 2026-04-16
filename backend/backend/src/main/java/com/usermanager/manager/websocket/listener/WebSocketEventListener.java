@@ -22,19 +22,21 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectEvent event) {
-
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
 
         Authentication auth = (Authentication) accessor.getUser();
 
+        if (auth == null && accessor.getSessionAttributes() != null) {
+            auth = (Authentication) accessor.getSessionAttributes().get("user");
+        }
+
         if (auth != null) {
             var user = (User) auth.getPrincipal();
-
             Long userId = user.getId();
-
             presenceService.markOnline(userId);
-
             log.info("Usuário ONLINE: {}", userId);
+        } else {
+            log.warn("Usuário não autenticado no evento de conexão WebSocket.");
         }
     }
 
@@ -44,6 +46,10 @@ public class WebSocketEventListener {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
 
         Authentication auth = (Authentication) accessor.getUser();
+
+        if (auth == null && accessor.getSessionAttributes() != null) {
+            auth = (Authentication) accessor.getSessionAttributes().get("user");
+        }
 
         if (auth != null) {
             var user = (User) auth.getPrincipal();
