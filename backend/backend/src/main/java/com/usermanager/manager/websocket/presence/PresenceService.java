@@ -6,7 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class PresenceService {
 
     private final Map<Long, Instant> lastSeenMap = new ConcurrentHashMap<>();
@@ -23,6 +26,7 @@ public class PresenceService {
 
     public void heartbeat(Long userId) {
         this.lastSeenMap.put(userId, Instant.now());
+        log.info("heartbeat userId: {}", userId);
     }
 
     public boolean isOnline(Long userId) {
