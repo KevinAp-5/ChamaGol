@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,34 +20,44 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class MessageServiceImpl implements MessageService{
+public class MessageServiceImpl implements MessageService {
     private MessageRepository messageRepository;
     private final ApplicationEventPublisher publisher;
 
     @Transactional
     public MessageDTO createMessage(CreateMessage request) {
         Message message = Message.builder()
-            .content(request.content())
-            .people(request.people())
-            .build();
+                .content(request.content())
+                .people(request.people())
+                .build();
 
         Message savedMessage = messageRepository.save(message);
 
         this.publishEvent(new MessageCreatedEvent(
-            savedMessage.getId(),
-            "Nova mensagem",
-            message.getContent())
-        );
+                savedMessage.getId(),
+                "Nova mensagem",
+                message.getContent()));
         return new MessageDTO(savedMessage);
     }
-    
+
     public List<MessageDTO> getAll() {
         return messageRepository.findAll().stream()
-            .map(MessageDTO::new)
-            .collect(Collectors.toList());
+                .map(MessageDTO::new)
+                .collect(Collectors.toList());
     }
 
     public void publishEvent(Object event) {
         publisher.publishEvent(event);
+    }
+
+    public List<MessageDTO> findAfterIdOrdered(Long afterId) {
+        return messageRepository.findByIdGreaterThanOrderByCreatedAtAsc(afterId)
+        .stream()
+        .map(MessageDTO::new)
+        .toList();
+    }
+
+    public Page<MessageDTO> findAllPaged(Pageable pageable) {
+        return messageRepository.findAll(pageable).map(MessageDTO::new);
     }
 }
