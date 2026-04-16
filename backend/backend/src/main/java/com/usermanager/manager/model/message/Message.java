@@ -35,7 +35,7 @@ public class Message {
     
     @Builder.Default()
     @Column(nullable = false)
-    private ZonedDateTime created_at = ZonedDateTime.now();
+    private ZonedDateTime createdAt = ZonedDateTime.now();
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
