@@ -33,8 +33,8 @@ public class MessageServiceImpl implements MessageService{
 
         this.publishEvent(new MessageCreatedEvent(
             savedMessage.getId(),
-            "new event",
-            savedMessage.getContent().substring(0, 20))
+            "Nova mensagem",
+            message.getContent())
         );
         return new MessageDTO(savedMessage);
     }
