@@ -33,13 +33,11 @@ public class MessageListener {
 
         List<User> usersToSendNotification = userService.getAllActiveUsers();
 
-         List<Long> usersIds = usersToSendNotification.stream()
-            .map(User::getId)
-            .filter(userId -> !presenceService.isOnline(userId))
-            .toList();
+        List<Long> usersIds = usersToSendNotification.stream()
+                .map(User::getId)
+                .filter(userId -> !presenceService.isOnline(userId))
+                .toList();
 
-        pushNotificationService.sendToUsers(usersIds, "Nova mensagem", event.message().substring(0, 20));
-
-        log.info("MessageListener: {}", event);
+        pushNotificationService.sendToUsers(usersIds, "Novo sinal", "clique para abrir o novo sinal");
     }
 }
