@@ -62,7 +62,7 @@ function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
 // ─── Formatted text ─────────────────────────────────────────────────────────
 
 const renderFormattedText = (text: string, colors: any, fonts: any) => {
-  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  const parts = text.split(/(\\*\\*.*?\\*\\*|\\*.*?\\*)/g);
   return (
     <Text style={[styles.messageText, { color: colors.primary, fontFamily: fonts.regular }]}>
       {parts.map((part, index) => {
@@ -219,37 +219,91 @@ const MessageCard = React.memo(function MessageCard({
   );
 });
 
-// ─── ConnectionIndicator ─────────────────────────────────────────────────────
+// ─── Enhanced Connection Toggle Button ──────────────────────────────────────
 
-const ConnectionIndicator = ({ isConnected, fonts }: any) => {
+const ConnectionToggle = ({
+  isConnected,
+  isConnecting,
+  onToggle,
+  fonts,
+  colors,
+}: {
+  isConnected: boolean;
+  isConnecting: boolean;
+  onToggle: () => void;
+  fonts: any;
+  colors: any;
+}) => {
+  const buttonScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    let loop: Animated.CompositeAnimation | undefined;
     if (isConnected) {
-      Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.2, duration: 1000, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 900,
+            useNativeDriver: true,
+          }),
         ])
-      ).start();
+      );
+      loop.start();
+    } else {
+      pulseAnim.setValue(1);
     }
-  }, [isConnected]);
+    return () => {
+      if (loop) loop.stop();
+    };
+  }, [isConnected, pulseAnim]);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.spring(buttonScale, {
+        toValue: 0.96,
+        friction: 5,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => onToggle());
+  };
+
+  const iconName = isConnecting
+    ? "wifi-arrow-up-down"
+    : isConnected
+    ? "wifi"
+    : "wifi-off";
+  const gradientColors = isConnecting
+    ? ["#FFA726", "#FB8C00"]
+    : isConnected
+    ? ["#43A047", "#2E7D32"]
+    : ["#616161", "#424242"];
 
   return (
-    <View style={styles.connectionIndicator}>
-      <Animated.View
-        style={[
-          styles.connectionDot,
-          {
-            backgroundColor: isConnected ? "#34C759" : "#FF3B30",
-            transform: [{ scale: isConnected ? pulseAnim : 1 }],
-          },
-        ]}
-      />
-      <Text style={[styles.connectionText, { color: "rgba(255,255,255,0.9)", fontFamily: fonts.medium }]}>
-        {isConnected ? "Conectado" : "Desconectado"}
-      </Text>
-    </View>
+    <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.9} disabled={isConnecting}>
+        <LinearGradient colors={gradientColors} style={styles.toggleGradient}>
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <MaterialCommunityIcons name={iconName} size={22} color="#fff" />
+          </Animated.View>
+          <Text style={[styles.toggleText, { fontFamily: fonts.semibold }]}>
+            {isConnecting ? "Conectando..." : isConnected ? "LIVE" : "ATIVAR LIVE"}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -265,20 +319,24 @@ export default function TimelineScreen({ navigation }: Props) {
   const [token, setToken] = useState<string | null>(null);
   const [isTokenLoaded, setIsTokenLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
+  
+  // ── NEW: Manual WebSocket control ──
   const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showConnectionHint, setShowConnectionHint] = useState(true);
 
   // ── ETAPA 4: controle de paginação e sync ──
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMorePages, setHasMorePages] = useState(true);
-  const lastMessageIdRef = useRef<number | null>(null); // useRef evita stale closure no AppState
+  const lastMessageIdRef = useRef<number | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const newMessageAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const hintAnim = useRef(new Animated.Value(1)).current;
 
   // ── Fade in ──
   useEffect(() => {
@@ -317,8 +375,8 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [isTokenLoaded, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — Carregamento HTTP inicial
-  // Carrega mensagens ANTES de conectar o WebSocket.
+  // ETAPA 4 — Carregamento HTTP inicial (PRIMEIRO)
+  // Carrega mensagens ANTES de qualquer WebSocket.
   // ─────────────────────────────────────────────────────────────────────────
   const fetchInitialMessages = useCallback(async () => {
     if (!token) return;
@@ -359,7 +417,6 @@ export default function TimelineScreen({ navigation }: Props) {
 
       setMessages((prev) => {
         const merged = mergeMessages(prev, incoming);
-        // Atualiza lastMessageId com o maior ID da lista mesclada
         const maxId = Math.max(...merged.map((m) => Number(m.id)));
         lastMessageIdRef.current = maxId;
         return merged;
@@ -413,7 +470,7 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [fetchAfterLastId]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — Fluxo correto: HTTP primeiro, WebSocket depois
+  // NOVO FLUXO: HTTP primeiro, WebSocket manual depois
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isTokenLoaded && token) {
@@ -421,57 +478,71 @@ export default function TimelineScreen({ navigation }: Props) {
     }
   }, [isTokenLoaded, token]);
 
-  // WebSocket só conecta após token carregado
-  useEffect(() => {
-    if (!isTokenLoaded || !token) return;
-
-    setIsConnecting(true);
-    const wsUrl = `${BASE_URL}/ws/chat?token=${token}`;
-    const client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl),
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      onConnect: () => {
-        setStompClient(client);
-        setIsConnecting(false);
-        setIsConnected(true);
-        (client as any).heartbeatIntervalId = setInterval(() => {
-          client.publish({ destination: "/app/heartbeat", body: "{}" });
-        }, 20000);
-      },
-      onDisconnect: () => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // NOVO: Toggle WebSocket Connection (controlado pelo usuário)
+  // ─────────────────────────────────────────────────────────────────────────
+  const toggleWebSocket = useCallback(async () => {
+    if (isConnected) {
+      // Disconnect
+      if (stompClient) {
+        stompClient.deactivate();
         setStompClient(null);
         setIsConnected(false);
+        setShowConnectionHint(false);
+      }
+    } else {
+      // Connect
+      if (!token) return;
+      
+      setIsConnecting(true);
+      const wsUrl = `${BASE_URL}/ws/chat?token=${token}`;
+      const client = new Client({
+        webSocketFactory: () => new SockJS(wsUrl),
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+        onConnect: () => {
+          setStompClient(client);
+          setIsConnecting(false);
+          setIsConnected(true);
+          setShowConnectionHint(false);
+          
+          // Heartbeat
+          (client as any).heartbeatIntervalId = setInterval(() => {
+            client.publish({ destination: "/app/heartbeat", body: "{}" });
+          }, 20000);
+        },
+        onDisconnect: () => {
+          setStompClient(null);
+          setIsConnected(false);
+          setIsConnecting(false);
+          clearInterval((client as any).heartbeatIntervalId);
+        },
+        onStompError: (frame) => {
+          console.error("[STOMP] broker error:", frame?.headers?.message);
+          setIsConnecting(false);
+          setIsConnected(false);
+        },
+      });
+
+      client.onWebSocketClose = () => {
+        setIsConnected(false);
+        setIsConnecting(false);
         clearInterval((client as any).heartbeatIntervalId);
-      },
-      onStompError: (frame) => {
-        console.error("[STOMP] broker error:", frame?.headers?.message);
+      };
+
+      client.onWebSocketError = () => {
         setIsConnecting(false);
         setIsConnected(false);
-      },
-    });
+        clearInterval((client as any).heartbeatIntervalId);
+      };
 
-    client.onWebSocketClose = () => {
-      setIsConnected(false);
-      clearInterval((client as any).heartbeatIntervalId);
-    };
-
-    client.onWebSocketError = () => {
-      setIsConnecting(false);
-      setIsConnected(false);
-      clearInterval((client as any).heartbeatIntervalId);
-    };
-
-    client.activate();
-    return () => {
-      client.deactivate();
-      clearInterval((client as any).heartbeatIntervalId);
-    };
-  }, [isTokenLoaded, token]);
+      client.activate();
+    }
+  }, [isConnected, isConnecting, stompClient, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — WebSocket: apenas atualização incremental + deduplicação
+  // WebSocket Subscription (só quando conectado)
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!stompClient) return;
@@ -482,7 +553,7 @@ export default function TimelineScreen({ navigation }: Props) {
 
       const shouldAdd =
         messageDTO.people === "ALL" ||
-        messageDTO.people === "VIP"; // card bloqueado para FREE
+        messageDTO.people === "VIP";
 
       if (!shouldAdd) return;
 
@@ -493,10 +564,8 @@ export default function TimelineScreen({ navigation }: Props) {
       };
 
       setMessages((prev) => {
-        // ── DEDUPLICAÇÃO por ID (regra de ouro) ──
         if (prev.some((m) => m.id === newMessage.id)) return prev;
 
-        // Atualiza lastMessageId
         const incomingId = Number(newMessage.id);
         if (lastMessageIdRef.current === null || incomingId > lastMessageIdRef.current) {
           lastMessageIdRef.current = incomingId;
@@ -512,7 +581,6 @@ export default function TimelineScreen({ navigation }: Props) {
         Animated.timing(newMessageAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
       ]).start();
 
-      // Remove flag isNew depois de 3s
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((m) => (m.id === newMessage.id ? { ...m, isNew: false } : m))
@@ -526,7 +594,18 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [stompClient, userSubscription]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Pull-to-refresh: reseta e recarrega do zero
+  // Cleanup on unmount
+  // ─────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (stompClient) {
+        stompClient.deactivate();
+      }
+    };
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Pull-to-refresh
   // ─────────────────────────────────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -623,16 +702,6 @@ export default function TimelineScreen({ navigation }: Props) {
         </View>
       );
     }
-    if (isConnecting) {
-      return (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.semibold }]}>
-            Conectando ao serviço...
-          </Text>
-        </View>
-      );
-    }
     return (
       <View style={styles.emptyState}>
         <View style={[styles.emptyIcon, { backgroundColor: "rgba(229,57,53,0.1)" }]}>
@@ -642,11 +711,39 @@ export default function TimelineScreen({ navigation }: Props) {
           Nenhuma mensagem ainda
         </Text>
         <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
-          Novas mensagens aparecerão aqui em tempo real
+          Novas mensagens aparecerão aqui em tempo real quando você ativar o LIVE
         </Text>
       </View>
     );
   };
+
+  const connectionHint = (
+    <Animated.View
+      style={[
+        styles.connectionHint,
+        {
+          opacity: showConnectionHint ? hintAnim : 0,
+          transform: [
+            {
+              scale: showConnectionHint 
+                ? hintAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] })
+                : 1
+            }
+          ]
+        }
+      ]}
+    >
+      <LinearGradient
+        colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
+        style={styles.hintGradient}
+      >
+        <MaterialCommunityIcons name="lightning-bolt" size={20} color={colors.secondary} />
+        <Text style={[styles.hintText, { color: colors.primary, fontFamily: fonts.medium }]}>
+          Toque para ativar mensagens em tempo real
+        </Text>
+      </LinearGradient>
+    </Animated.View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000000" }}>
@@ -664,11 +761,18 @@ export default function TimelineScreen({ navigation }: Props) {
               <View>
                 <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>Timeline</Text>
                 <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-                  Acompanhe em tempo real
+                  Mensagens sincronizadas
                 </Text>
               </View>
-              <ConnectionIndicator isConnected={isConnected} fonts={fonts} />
+              <ConnectionToggle
+                isConnected={isConnected}
+                isConnecting={isConnecting}
+                onToggle={toggleWebSocket}
+                fonts={fonts}
+                colors={colors}
+              />
             </View>
+            {connectionHint}
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -693,7 +797,6 @@ export default function TimelineScreen({ navigation }: Props) {
                 data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
-                // ── ETAPA 4: header com spinner de "carregando mais" ──
                 ListHeaderComponent={renderHeader}
                 contentContainerStyle={{
                   flexGrow: 1,
@@ -701,7 +804,6 @@ export default function TimelineScreen({ navigation }: Props) {
                   paddingBottom: spacing.xl + 60,
                   paddingHorizontal: spacing.md,
                 }}
-                // ── ETAPA 4: paginação ao rolar para cima ──
                 onEndReachedThreshold={0.3}
                 onEndReached={fetchOlderMessages}
                 onContentSizeChange={() =>
@@ -730,10 +832,11 @@ export default function TimelineScreen({ navigation }: Props) {
   );
 }
 
-// ─── Styles (sem alterações em relação ao original) ───────────────────────────
+// ─── Updated Styles ─────────────────────────────────────────────────────────
 
 const { width } = Dimensions.get("window");
 const styles = StyleSheet.create({
+  // ... todos os styles originais permanecem iguais ...
   header: { paddingBottom: 40, zIndex: 1 },
   headerContent: {
     paddingTop: Platform.OS === "ios" ? 10 : 20,
@@ -742,6 +845,58 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   headerTitle: { fontSize: 28, color: "#FFFFFF", marginBottom: 4 },
   headerSubtitle: { fontSize: 14, color: "rgba(255,255,255,0.7)" },
+  
+  // ── NEW Toggle Button Styles ──
+  toggleButton: {
+    borderRadius: 25,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toggleButtonInner: {
+    borderRadius: 25,
+    padding: 2,
+  },
+  toggleGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    gap: 8,
+    minWidth: 140,
+    borderRadius: 23,
+  },
+  toggleText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+
+  // ── NEW Connection Hint ──
+  connectionHint: {
+    marginTop: 16,
+    alignSelf: "center",
+  },
+  hintGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    gap: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  hintText: {
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
+
   connectionIndicator: {
     flexDirection: "row",
     alignItems: "center",
@@ -760,6 +915,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     zIndex: 2,
   },
+  // ... resto dos styles originais permanecem exatamente iguais ...
   messageCard: {
     width: width - 32,
     alignSelf: "center",
