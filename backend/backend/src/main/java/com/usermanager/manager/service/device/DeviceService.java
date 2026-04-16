@@ -19,9 +19,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 
 @Service
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 public class DeviceService {
     private final DeviceRepository deviceRepository;
