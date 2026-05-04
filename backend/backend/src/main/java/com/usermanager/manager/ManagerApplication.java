@@ -3,12 +3,14 @@ package com.usermanager.manager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import lombok.extern.slf4j.Slf4j;
+
 @SpringBootApplication
+@Slf4j
 public class ManagerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ManagerApplication.class, args);
-		// TODO: adicionar envio de notificações mesmo com app fechado
 
 		// TODO: inserir um default term of uso assim que a aplicação rodar, caso
 		// estiver ausente no banco de dados

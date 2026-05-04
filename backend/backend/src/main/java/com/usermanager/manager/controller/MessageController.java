@@ -41,6 +41,7 @@ public class MessageController {
         MessageDTO message = messageService.createMessage(request);
 
         log.info("Enviando para websocket: {}", request);
+        log.info("message: {}", message.content());
         messagingTemplate.convertAndSend("/topic/messages", message);
         return ResponseEntity.created(URI.create("/api/message/" + message.id().toString()))
                 .body(message);
