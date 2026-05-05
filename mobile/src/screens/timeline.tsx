@@ -29,13 +29,11 @@ import { api, BASE_URL } from "../config/Api";
 import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert";
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SockJS from "sockjs-client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
 type People = "ALL" | "VIP" | "FREE";
-
 type MessageType = "NORMAL" | "ALERT" | "GOAL" | "TIP" | "WARNING" | "INFO";
-
 type Message = {
   id: string;
   content: string;
@@ -44,14 +42,10 @@ type Message = {
   isNew?: boolean;
   messageType?: MessageType;
 };
-
 type Props = NativeStackScreenProps<RootStackParamList, "Timeline">;
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
 const { width } = Dimensions.get("window");
-
-// Telegram-like dark background
 const CHAT_BG = "#0E1621";
 const BUBBLE_NORMAL = "#1E2C3D";
 const BUBBLE_VIP = "#2A1F3D";
@@ -61,7 +55,6 @@ const BUBBLE_TIP = "#1F2E3D";
 const BUBBLE_WARNING = "#3D2E1F";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
   const ids = new Set(existing.map((m) => m.id));
   const merged = [...existing, ...incoming.filter((m) => !ids.has(m.id))];
@@ -72,9 +65,6 @@ function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
   return merged;
 }
 
-/**
- * Detecta o tipo semântico de uma mensagem pelo conteúdo.
- */
 function detectMessageType(content: string): MessageType {
   const upper = content.toUpperCase();
   if (
@@ -95,16 +85,11 @@ function detectMessageType(content: string): MessageType {
     upper.includes("TIP:")
   )
     return "TIP";
-  if (content.includes("⚠️") || upper.includes("ATENÇÃO"))
-    return "WARNING";
-  if (content.includes("ℹ️") || upper.includes("INFO:"))
-    return "INFO";
+  if (content.includes("⚠️") || upper.includes("ATENÇÃO")) return "WARNING";
+  if (content.includes("ℹ️") || upper.includes("INFO:")) return "INFO";
   return "NORMAL";
 }
 
-/**
- * Config visual por tipo de mensagem.
- */
 function getMessageStyle(type: MessageType, isVip: boolean) {
   if (isVip)
     return {
@@ -173,26 +158,9 @@ function getMessageStyle(type: MessageType, isVip: boolean) {
   }
 }
 
-// ─── Formatted Text (Telegram-style) ─────────────────────────────────────────
-
-/**
- * Renderiza markdown simples: **negrito**, *itálico*, `código`.
- * Garante UTF-8 correto (fix dos emojis).
- */
+// ─── Formatted Text ───────────────────────────────────────────────────────────
 const renderFormattedText = (text: string, accentColor: string) => {
-  // Garante que a string é UTF-8 correta
-  const safeText = text
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      // Preserva todos os caracteres incluindo emojis (surrogates)
-      return char;
-    })
-    .join("");
-
-  // Split por padrões de formatação: **bold**, *italic*, `code`
-  const parts = safeText.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/gs);
-
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/gs);
   return (
     <Text style={telegramStyles.messageText}>
       {parts.map((part, index) => {
@@ -230,8 +198,7 @@ const renderFormattedText = (text: string, accentColor: string) => {
   );
 };
 
-// ─── MessageBubble (Telegram-like) ───────────────────────────────────────────
-
+// ─── MessageBubble ────────────────────────────────────────────────────────────
 const MessageBubble = React.memo(function MessageBubble({
   item,
   index,
@@ -266,7 +233,6 @@ const MessageBubble = React.memo(function MessageBubble({
     }
   }, [item.isNew]);
 
-  // ── Locked VIP card ──
   if (isVipMessage && userSubscription !== "VIP") {
     return (
       <Animated.View
@@ -283,15 +249,12 @@ const MessageBubble = React.memo(function MessageBubble({
           colors={["#1A1228", "#0F0D1A"]}
           style={telegramStyles.lockedGradient}
         >
-          {/* Shine bar */}
           <LinearGradient
             colors={["transparent", "rgba(255,215,0,0.15)", "transparent"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={telegramStyles.lockedShine}
           />
-
-          {/* VIP Crown Badge */}
           <View style={telegramStyles.lockedBadge}>
             <LinearGradient
               colors={["#FFD700", "#FFA000"]}
@@ -305,22 +268,17 @@ const MessageBubble = React.memo(function MessageBubble({
               </Text>
             </LinearGradient>
           </View>
-
-          {/* Lock icon */}
           <View style={telegramStyles.lockedIconWrap}>
             <View style={telegramStyles.lockedIconRing}>
               <MaterialCommunityIcons name="lock" size={36} color="#FFD700" />
             </View>
           </View>
-
           <Text style={[telegramStyles.lockedTitle, { fontFamily: fonts.bold }]}>
             Conteúdo exclusivo VIP
           </Text>
           <Text style={[telegramStyles.lockedDesc, { fontFamily: fonts.regular }]}>
             Assine o plano VIP para desbloquear análises, tips exclusivos e muito mais
           </Text>
-
-          {/* Features */}
           {["Todas as mensagens VIP", "Análises e tips exclusivos", "Suporte prioritário"].map(
             (feat) => (
               <View key={feat} style={telegramStyles.lockedFeature}>
@@ -331,8 +289,6 @@ const MessageBubble = React.memo(function MessageBubble({
               </View>
             )
           )}
-
-          {/* CTA */}
           <TouchableOpacity
             onPress={() => navigation.navigate("ProSubscription")}
             activeOpacity={0.85}
@@ -356,9 +312,7 @@ const MessageBubble = React.memo(function MessageBubble({
     );
   }
 
-  // ── Normal bubble ──
   const hasLabel = msgStyle.label !== null;
-
   return (
     <Animated.View
       style={[
@@ -370,15 +324,12 @@ const MessageBubble = React.memo(function MessageBubble({
         },
       ]}
     >
-      {/* Left accent line */}
       <View
         style={[
           telegramStyles.bubbleAccentLine,
           { backgroundColor: msgStyle.accentColor },
         ]}
       />
-
-      {/* Bubble body */}
       <View
         style={[
           telegramStyles.bubble,
@@ -388,7 +339,6 @@ const MessageBubble = React.memo(function MessageBubble({
           },
         ]}
       >
-        {/* Type badge row */}
         {hasLabel && (
           <View style={telegramStyles.bubbleTypeRow}>
             {msgStyle.icon && (
@@ -416,13 +366,9 @@ const MessageBubble = React.memo(function MessageBubble({
             )}
           </View>
         )}
-
-        {/* Message text */}
         <View style={[telegramStyles.bubbleTextWrap, hasLabel && { marginTop: 6 }]}>
           {renderFormattedText(item.content, msgStyle.accentColor)}
         </View>
-
-        {/* Footer: timestamp */}
         <View style={telegramStyles.bubbleFooter}>
           {!hasLabel && item.isNew && (
             <View style={telegramStyles.newBadgeInline}>
@@ -442,17 +388,18 @@ const MessageBubble = React.memo(function MessageBubble({
 });
 
 // ─── ConnectionToggle ─────────────────────────────────────────────────────────
-
 const ConnectionToggle = ({
   isConnected,
   isConnecting,
   onToggle,
   fonts,
+  disabled = false,
 }: {
   isConnected: boolean;
   isConnecting: boolean;
   onToggle: () => void;
   fonts: any;
+  disabled?: boolean;
 }) => {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -491,7 +438,11 @@ const ConnectionToggle = ({
 
   return (
     <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-      <TouchableOpacity onPress={handlePress} activeOpacity={0.9} disabled={isConnecting}>
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.9}
+        disabled={isConnecting || disabled}
+      >
         <LinearGradient colors={gradientColors} style={telegramStyles.toggleGradient}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <MaterialCommunityIcons name={iconName} size={18} color="#FFF" />
@@ -504,7 +455,6 @@ const ConnectionToggle = ({
 };
 
 // ─── DateSeparator ────────────────────────────────────────────────────────────
-
 const DateSeparator = ({ date, fonts }: { date: string; fonts: any }) => (
   <View style={telegramStyles.dateSeparator}>
     <View style={telegramStyles.dateLine} />
@@ -523,11 +473,9 @@ const DateSeparator = ({ date, fonts }: { date: string; fonts: any }) => (
 );
 
 // ─── TimelineScreen ───────────────────────────────────────────────────────────
-
 export default function TimelineScreen({ navigation }: Props) {
   const { colors, fonts, shadows, spacing, borderRadius } = useTheme();
 
-  // ── State ──
   const [userSubscription, setUserSubscription] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [stompClient, setStompClient] = useState<Client | null>(null);
@@ -535,35 +483,29 @@ export default function TimelineScreen({ navigation }: Props) {
   const [isTokenLoaded, setIsTokenLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ── Connection ──
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showLiveHint, setShowLiveHint] = useState(true);
 
-  // ── Pagination ──
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMorePages, setHasMorePages] = useState(true);
 
-  // ── Scroll behavior ──
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const isNearBottomRef = useRef(true);
   const scrollOffsetRef = useRef(0);
   const contentHeightRef = useRef(0);
   const listHeightRef = useRef(0);
-
   const lastMessageIdRef = useRef<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  // ── Animations ──
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const newMsgNotifAnim = useRef(new Animated.Value(0)).current;
   const hintOpacity = useRef(new Animated.Value(1)).current;
 
-  // ── Fade in on mount ──
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -571,14 +513,12 @@ export default function TimelineScreen({ navigation }: Props) {
     ]).start();
   }, []);
 
-  // ── Load subscription ──
   useEffect(() => {
     AsyncStorage.getItem("subscription").then((v) => {
       if (v) setUserSubscription(v);
     });
   }, []);
 
-  // ── Load token ──
   useEffect(() => {
     SecureStore.getItemAsync("accessToken").then((storedToken) => {
       if (storedToken) {
@@ -591,7 +531,6 @@ export default function TimelineScreen({ navigation }: Props) {
     });
   }, []);
 
-  // ── Validate token ──
   useEffect(() => {
     if (!isTokenLoaded || !token) return;
     api.get("/auth/token/validate").catch(() => {
@@ -635,18 +574,15 @@ export default function TimelineScreen({ navigation }: Props) {
       });
       const incoming: Message[] = response.data.content ?? response.data;
       if (incoming.length === 0) return;
-
       const withTypes = incoming.map((m) => ({
         ...m,
         messageType: detectMessageType(m.content),
       }));
-
       setMessages((prev) => {
         const merged = mergeMessages(prev, withTypes);
         lastMessageIdRef.current = Math.max(...merged.map((m) => Number(m.id)));
         return merged;
       });
-
       if (isNearBottomRef.current) {
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
       }
@@ -657,7 +593,6 @@ export default function TimelineScreen({ navigation }: Props) {
 
   // ─────────────────────────────────────────────────────────────────────────
   // HTTP: Load older messages (paginação)
-  // FIX: Mantém a posição de scroll ao prepender mensagens antigas
   // ─────────────────────────────────────────────────────────────────────────
   const fetchOlderMessages = useCallback(async () => {
     if (!token || isLoadingMore || !hasMorePages) return;
@@ -676,12 +611,9 @@ export default function TimelineScreen({ navigation }: Props) {
         ...m,
         messageType: detectMessageType(m.content),
       }));
-
       setMessages((prev) => mergeMessages(prev, withTypes));
       setCurrentPage(nextPage);
       setHasMorePages(nextPage + 1 < (response.data.totalPages ?? 1));
-
-      // Não faz scroll automático ao carregar mensagens antigas
     } catch (err) {
       console.error("[Timeline] Erro ao carregar mensagens antigas:", err);
     } finally {
@@ -699,60 +631,77 @@ export default function TimelineScreen({ navigation }: Props) {
     return () => sub.remove();
   }, [fetchAfterLastId]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Load initial on token ready
-  // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isTokenLoaded && token) fetchInitialMessages();
   }, [isTokenLoaded, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // WebSocket Toggle
-  // Volta para SockJS com brokerURL para melhor compatibilidade
+  //
+  // CORREÇÕES:
+  //  1. SockJS usa URL HTTP/HTTPS — não converte para ws:// (SockJS faz isso internamente)
+  //  2. Token enviado via connectHeaders (STOMP) E query param (HandshakeInterceptor HTTP)
+  //  3. Endpoint alinhado com registerStompEndpoints: /ws/chat
   // ─────────────────────────────────────────────────────────────────────────
-  const toggleWebSocket = useCallback(async () => {
+  const toggleWebSocket = useCallback(() => {
+    if (!isTokenLoaded || !token) return;
+
     if (isConnected) {
       stompClient?.deactivate();
       setStompClient(null);
       setIsConnected(false);
       return;
     }
-    if (!token) return;
+
     setIsConnecting(true);
     setShowLiveHint(false);
 
-    // Converte http → ws, https → wss
-    const wsBase = BASE_URL.replace(/^http/, "ws");
-    // SockJS com brokerURL — gerencia handshake HTTP → WS automaticamente
-    const wsUrl = `${wsBase}/ws/chat`;
-    console.log(wsUrl);
+    // ✅ FIX 1: SockJS precisa de URL HTTP/HTTPS — não converte para ws://
+    // O BASE_URL já deve ser http:// ou https://
+    // O token vai como query param para o HandshakeInterceptor Java ler no HTTP handshake
+    const sockJsUrl = `${BASE_URL}/ws/chat?token=${encodeURIComponent(token)}`;
 
     const client = new Client({
-      brokerURL: wsUrl,  // ✅ SockJS detecta upgrade automaticamente
+      // ✅ FIX 2: webSocketFactory com URL HTTP correta para SockJS
+      webSocketFactory: () => new SockJS(sockJsUrl),
+
+      // ✅ FIX 3: Token também nos connectHeaders STOMP
+      // O WebSocketAuthInterceptor pode ler daqui se implementar ChannelInterceptor
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+
       onConnect: () => {
         setStompClient(client);
         setIsConnecting(false);
         setIsConnected(true);
+
+        // Heartbeat manual a cada 20s para manter a sessão ativa
         (client as any)._heartbeatTimer = setInterval(() => {
           client.publish({ destination: "/app/heartbeat", body: "{}" });
         }, 20000);
       },
+
       onDisconnect: () => {
         setStompClient(null);
         setIsConnected(false);
         setIsConnecting(false);
         clearInterval((client as any)._heartbeatTimer);
       },
+
       onStompError: (frame) => {
         console.error("[STOMP] error:", frame?.headers?.message);
         setIsConnecting(false);
         setIsConnected(false);
+        clearInterval((client as any)._heartbeatTimer);
       },
     });
 
+    // ✅ FIX 4: Handlers de erro/close no nível WebSocket
     client.onWebSocketClose = () => {
       setIsConnected(false);
       setIsConnecting(false);
@@ -766,24 +715,21 @@ export default function TimelineScreen({ navigation }: Props) {
     };
 
     client.activate();
-  }, [isConnected, isConnecting, stompClient, token]);
+  }, [isConnected, stompClient, token, isTokenLoaded]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // WebSocket subscription
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!stompClient) return;
-
     const sub = stompClient.subscribe("/topic/messages", (msg) => {
       if (!msg.body) return;
-
       let messageDTO: Message;
       try {
         messageDTO = JSON.parse(msg.body);
       } catch {
         return;
       }
-
       const shouldAdd = messageDTO.people === "ALL" || messageDTO.people === "VIP";
       if (!shouldAdd) return;
 
@@ -803,7 +749,6 @@ export default function TimelineScreen({ navigation }: Props) {
         return [...prev, newMessage];
       });
 
-      // Notificação de nova mensagem animada
       Animated.sequence([
         Animated.spring(newMsgNotifAnim, {
           toValue: 1,
@@ -823,14 +768,12 @@ export default function TimelineScreen({ navigation }: Props) {
         setShowScrollToBottom(true);
       }
 
-      // Remove flag isNew após 3s
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((m) => (m.id === newMessage.id ? { ...m, isNew: false } : m))
         );
       }, 3000);
     });
-
     return () => sub.unsubscribe();
   }, [stompClient]);
 
@@ -855,8 +798,7 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [fetchInitialMessages]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Scroll handlers — FIX do bug de scroll (volta ao topo)
-  // Rastreia se o usuário está perto do fim para controlar auto-scroll.
+  // Scroll handlers
   // ─────────────────────────────────────────────────────────────────────────
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -864,13 +806,10 @@ export default function TimelineScreen({ navigation }: Props) {
       scrollOffsetRef.current = contentOffset.y;
       contentHeightRef.current = contentSize.height;
       listHeightRef.current = layoutMeasurement.height;
-
       const distanceFromBottom =
         contentSize.height - contentOffset.y - layoutMeasurement.height;
-
       const nearBottom = distanceFromBottom < 120;
       isNearBottomRef.current = nearBottom;
-
       if (nearBottom) {
         setShowScrollToBottom(false);
         setNewMessagesCount(0);
@@ -892,7 +831,6 @@ export default function TimelineScreen({ navigation }: Props) {
   // Agrupa mensagens por data para os separadores
   // ─────────────────────────────────────────────────────────────────────────
   type ListItem = Message | { type: "date_separator"; date: string; id: string };
-
   const listData: ListItem[] = React.useMemo(() => {
     const result: ListItem[] = [];
     let lastDate = "";
@@ -910,14 +848,12 @@ export default function TimelineScreen({ navigation }: Props) {
   // ─────────────────────────────────────────────────────────────────────────
   // Render helpers
   // ─────────────────────────────────────────────────────────────────────────
-
   const renderItem = useCallback(
     ({ item, index }: { item: ListItem; index: number }) => {
       if ("type" in item && item.type === "date_separator") {
         return <DateSeparator date={item.date} fonts={fonts} />;
       }
       const msg = item as Message;
-      // Find index in messages array for isLast check
       const msgIndex = messages.findIndex((m) => m.id === msg.id);
       return (
         <MessageBubble
@@ -1023,9 +959,7 @@ export default function TimelineScreen({ navigation }: Props) {
       >
         <SafeAreaView edges={["top"]} style={{ backgroundColor: "transparent" }}>
           <View style={telegramStyles.headerInner}>
-            {/* Left: title */}
             <View style={telegramStyles.headerLeft}>
-              {/* Avatar / logo */}
               <LinearGradient
                 colors={["#E53935", "#B71C1C"]}
                 style={telegramStyles.headerAvatar}
@@ -1045,17 +979,14 @@ export default function TimelineScreen({ navigation }: Props) {
                 </Text>
               </View>
             </View>
-
-            {/* Right: toggle */}
             <ConnectionToggle
               isConnected={isConnected}
               isConnecting={isConnecting}
               onToggle={toggleWebSocket}
               fonts={fonts}
+              disabled={!isTokenLoaded || !token}
             />
           </View>
-
-          {/* Hint */}
           {showLiveHint && !isConnected && (
             <Animated.View style={[telegramStyles.hint, { opacity: hintOpacity }]}>
               <MaterialCommunityIcons name="lightning-bolt" size={14} color="#FF9F0A" />
@@ -1089,10 +1020,7 @@ export default function TimelineScreen({ navigation }: Props) {
                 renderItem={renderItem}
                 ListHeaderComponent={renderListHeader}
                 contentContainerStyle={telegramStyles.listContent}
-                // ★ FIX scroll: não usa onContentSizeChange para auto-scroll
-                // Apenas faz scroll ao fim no carregamento inicial
                 onLayout={() => {
-                  // Scroll para o fim somente no primeiro render
                   setTimeout(() => {
                     flatListRef.current?.scrollToEnd({ animated: false });
                     isNearBottomRef.current = true;
@@ -1115,7 +1043,6 @@ export default function TimelineScreen({ navigation }: Props) {
                 maxToRenderPerBatch={12}
                 windowSize={7}
                 removeClippedSubviews={Platform.OS === "android"}
-                // ★ FIX scroll: mantém posição ao prepender mensagens antigas
                 maintainVisibleContentPosition={{
                   minIndexForVisible: 1,
                   autoscrollToTopThreshold: 10,
@@ -1185,14 +1112,11 @@ export default function TimelineScreen({ navigation }: Props) {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
 const telegramStyles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#000",
   },
-
-  // ── Header ──
   header: {
     paddingBottom: 16,
     zIndex: 10,
@@ -1258,8 +1182,6 @@ const telegramStyles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     flex: 1,
   },
-
-  // ── Chat body ──
   chatBody: {
     flex: 1,
     backgroundColor: CHAT_BG,
@@ -1279,8 +1201,6 @@ const telegramStyles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
   },
-
-  // ── Date separator ──
   dateSeparator: {
     flexDirection: "row",
     alignItems: "center",
@@ -1304,8 +1224,6 @@ const telegramStyles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     letterSpacing: 0.3,
   },
-
-  // ── Bubble ──
   bubbleRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -1389,8 +1307,6 @@ const telegramStyles = StyleSheet.create({
     color: "#FF5722",
     letterSpacing: 0.8,
   },
-
-  // ── Locked VIP bubble ──
   lockedBubble: {
     width: width - 32,
     alignSelf: "center",
@@ -1491,8 +1407,6 @@ const telegramStyles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.8,
   },
-
-  // ── Notifications ──
   newMsgNotif: {
     position: "absolute",
     bottom: 72,
@@ -1552,8 +1466,6 @@ const telegramStyles = StyleSheet.create({
     color: "#FFF",
     fontSize: 11,
   },
-
-  // ── Empty state ──
   emptyState: {
     flex: 1,
     justifyContent: "center",
