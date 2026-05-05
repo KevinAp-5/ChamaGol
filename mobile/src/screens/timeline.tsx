@@ -15,10 +15,11 @@ import {
   Platform,
   AppState,
   AppStateStatus,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import SockJS from "sockjs-client";
 import FireGif from "../components/fire";
 import * as SecureStore from "expo-secure-store";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -29,7 +30,11 @@ import { CustomAlertProvider, showCustomAlert } from "../components/CustomAlert"
 import { useTheme } from "../theme/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type People = "ALL" | "VIP" | "FREE";
+
+type MessageType = "NORMAL" | "ALERT" | "GOAL" | "TIP" | "WARNING" | "INFO";
 
 type Message = {
   id: string;
@@ -37,21 +42,29 @@ type Message = {
   created_at: string;
   people: People;
   isNew?: boolean;
+  messageType?: MessageType;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, "Timeline">;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
-/**
- * Merge duas listas sem duplicatas, mantendo ordem por created_at.
- */
+const { width } = Dimensions.get("window");
+
+// Telegram-like dark background
+const CHAT_BG = "#0E1621";
+const BUBBLE_NORMAL = "#1E2C3D";
+const BUBBLE_VIP = "#2A1F3D";
+const BUBBLE_ALERT = "#3D1F1F";
+const BUBBLE_GOAL = "#1F3D2A";
+const BUBBLE_TIP = "#1F2E3D";
+const BUBBLE_WARNING = "#3D2E1F";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
   const ids = new Set(existing.map((m) => m.id));
-  const merged = [
-    ...existing,
-    ...incoming.filter((m) => !ids.has(m.id)),
-  ];
+  const merged = [...existing, ...incoming.filter((m) => !ids.has(m.id))];
   merged.sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -59,180 +72,387 @@ function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
   return merged;
 }
 
-// ─── Formatted text ─────────────────────────────────────────────────────────
+/**
+ * Detecta o tipo semântico de uma mensagem pelo conteúdo.
+ */
+function detectMessageType(content: string): MessageType {
+  const upper = content.toUpperCase();
+  if (
+    content.includes("🚨") ||
+    upper.includes("ALERTA") ||
+    upper.includes("URGENTE")
+  )
+    return "ALERT";
+  if (
+    content.includes("⚽") ||
+    upper.includes("GOL") ||
+    upper.includes("GOOOOL")
+  )
+    return "GOAL";
+  if (
+    content.includes("💡") ||
+    upper.includes("DICA:") ||
+    upper.includes("TIP:")
+  )
+    return "TIP";
+  if (content.includes("⚠️") || upper.includes("ATENÇÃO"))
+    return "WARNING";
+  if (content.includes("ℹ️") || upper.includes("INFO:"))
+    return "INFO";
+  return "NORMAL";
+}
 
-const renderFormattedText = (text: string, colors: any, fonts: any) => {
-  const parts = text.split(/(\\*\\*.*?\\*\\*|\\*.*?\\*)/g);
+/**
+ * Config visual por tipo de mensagem.
+ */
+function getMessageStyle(type: MessageType, isVip: boolean) {
+  if (isVip)
+    return {
+      bubbleColor: BUBBLE_VIP,
+      accentColor: "#FFD700",
+      borderColor: "rgba(255, 215, 0, 0.4)",
+      icon: "crown" as const,
+      iconColor: "#FFD700",
+      label: "VIP",
+    };
+  switch (type) {
+    case "ALERT":
+      return {
+        bubbleColor: BUBBLE_ALERT,
+        accentColor: "#FF3B30",
+        borderColor: "rgba(255,59,48,0.4)",
+        icon: "alert-circle" as const,
+        iconColor: "#FF3B30",
+        label: "ALERTA",
+      };
+    case "GOAL":
+      return {
+        bubbleColor: BUBBLE_GOAL,
+        accentColor: "#34C759",
+        borderColor: "rgba(52,199,89,0.4)",
+        icon: "soccer" as const,
+        iconColor: "#34C759",
+        label: "GOL!",
+      };
+    case "TIP":
+      return {
+        bubbleColor: BUBBLE_TIP,
+        accentColor: "#5AC8FA",
+        borderColor: "rgba(90,200,250,0.4)",
+        icon: "lightbulb-on" as const,
+        iconColor: "#5AC8FA",
+        label: "DICA",
+      };
+    case "WARNING":
+      return {
+        bubbleColor: BUBBLE_WARNING,
+        accentColor: "#FF9F0A",
+        borderColor: "rgba(255,159,10,0.4)",
+        icon: "alert" as const,
+        iconColor: "#FF9F0A",
+        label: "ATENÇÃO",
+      };
+    case "INFO":
+      return {
+        bubbleColor: BUBBLE_NORMAL,
+        accentColor: "#64D2FF",
+        borderColor: "rgba(100,210,255,0.3)",
+        icon: "information" as const,
+        iconColor: "#64D2FF",
+        label: "INFO",
+      };
+    default:
+      return {
+        bubbleColor: BUBBLE_NORMAL,
+        accentColor: "#E53935",
+        borderColor: "rgba(229,57,53,0.3)",
+        icon: null,
+        iconColor: "transparent",
+        label: null,
+      };
+  }
+}
+
+// ─── Formatted Text (Telegram-style) ─────────────────────────────────────────
+
+/**
+ * Renderiza markdown simples: **negrito**, *itálico*, `código`.
+ * Garante UTF-8 correto (fix dos emojis).
+ */
+const renderFormattedText = (text: string, accentColor: string) => {
+  // Garante que a string é UTF-8 correta
+  const safeText = text
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      // Preserva todos os caracteres incluindo emojis (surrogates)
+      return char;
+    })
+    .join("");
+
+  // Split por padrões de formatação: **bold**, *italic*, `code`
+  const parts = safeText.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/gs);
+
   return (
-    <Text style={[styles.messageText, { color: colors.primary, fontFamily: fonts.regular }]}>
+    <Text style={telegramStyles.messageText}>
       {parts.map((part, index) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <Text key={index} style={{ fontFamily: fonts.bold }}>
+            <Text key={index} style={telegramStyles.boldText}>
               {part.slice(2, -2)}
             </Text>
           );
-        } else if (part.startsWith("*") && part.endsWith("*")) {
+        }
+        if (part.startsWith("*") && part.endsWith("*")) {
           return (
-            <Text key={index} style={{ fontFamily: fonts.medium, opacity: 0.9 }}>
+            <Text
+              key={index}
+              style={[telegramStyles.italicText, { color: accentColor }]}
+            >
               {part.slice(1, -1)}
             </Text>
           );
         }
-        return part;
+        if (part.startsWith("`") && part.endsWith("`")) {
+          return (
+            <Text key={index} style={telegramStyles.codeText}>
+              {part.slice(1, -1)}
+            </Text>
+          );
+        }
+        return (
+          <Text key={index} style={telegramStyles.normalText}>
+            {part}
+          </Text>
+        );
       })}
     </Text>
   );
 };
 
-// ─── MessageCard ─────────────────────────────────────────────────────────────
+// ─── MessageBubble (Telegram-like) ───────────────────────────────────────────
 
-const MessageCard = React.memo(function MessageCard({
+const MessageBubble = React.memo(function MessageBubble({
   item,
   index,
   userSubscription,
   navigation,
-  colors,
   fonts,
-  spacing,
-  borderRadius,
-  shadows,
   messagesLength,
+  scrollToEnd,
 }: any) {
-  const isVIPMessage = item.people === "VIP";
+  const isVipMessage = item.people === "VIP";
   const isLast = index === messagesLength - 1;
+  const type = item.messageType ?? detectMessageType(item.content);
+  const msgStyle = getMessageStyle(type, isVipMessage);
+  const scaleAnim = useRef(new Animated.Value(item.isNew ? 0.92 : 1)).current;
+  const opacityAnim = useRef(new Animated.Value(item.isNew ? 0 : 1)).current;
 
-  if (isVIPMessage && userSubscription !== "VIP") {
+  useEffect(() => {
+    if (item.isNew) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 7,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [item.isNew]);
+
+  // ── Locked VIP card ──
+  if (isVipMessage && userSubscription !== "VIP") {
     return (
-      <View style={[styles.lockedCard, { marginBottom: isLast ? spacing.xl : spacing.md }]}>
-        <LinearGradient colors={["#1a1a1a", "#0a0a0a"]} style={styles.lockedCardGradient}>
-          <View style={styles.vipShineEffect}>
+      <Animated.View
+        style={[
+          telegramStyles.lockedBubble,
+          {
+            marginBottom: isLast ? 24 : 12,
+            opacity: opacityAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={["#1A1228", "#0F0D1A"]}
+          style={telegramStyles.lockedGradient}
+        >
+          {/* Shine bar */}
+          <LinearGradient
+            colors={["transparent", "rgba(255,215,0,0.15)", "transparent"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={telegramStyles.lockedShine}
+          />
+
+          {/* VIP Crown Badge */}
+          <View style={telegramStyles.lockedBadge}>
             <LinearGradient
-              colors={["transparent", "rgba(255, 215, 0, 0.1)", "transparent"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.shineGradient}
-            />
-          </View>
-          <View style={styles.vipPremiumBadge}>
-            <LinearGradient
-              colors={["#FFD700", "#FFA500", "#FF8C00"]}
+              colors={["#FFD700", "#FFA000"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.vipPremiumGradient}
+              style={telegramStyles.lockedBadgeGradient}
             >
-              <MaterialCommunityIcons name="crown" size={16} color="#000" />
-              <Text style={[styles.vipPremiumText, { fontFamily: fonts.extrabold }]}>
-                CONTEÚDO VIP
+              <MaterialCommunityIcons name="crown" size={14} color="#000" />
+              <Text style={[telegramStyles.lockedBadgeText, { fontFamily: fonts.extrabold }]}>
+                MENSAGEM VIP
               </Text>
             </LinearGradient>
           </View>
-          <View style={styles.lockedContent}>
-            <View style={styles.lockIconContainer}>
-              <View style={styles.lockIconGlow}>
-                <LinearGradient
-                  colors={["rgba(229, 57, 53, 0.3)", "rgba(229, 57, 53, 0)"]}
-                  style={styles.glowCircle}
-                />
-              </View>
-              <View style={styles.lockIconWrapper}>
-                <MaterialCommunityIcons name="lock" size={48} color="#FFD700" />
-              </View>
+
+          {/* Lock icon */}
+          <View style={telegramStyles.lockedIconWrap}>
+            <View style={telegramStyles.lockedIconRing}>
+              <MaterialCommunityIcons name="lock" size={36} color="#FFD700" />
             </View>
-            <Text style={[styles.lockedTitle, { color: "#FFFFFF", fontFamily: fonts.bold }]}>
-              Mensagem Exclusiva VIP
-            </Text>
-            <Text style={[styles.lockedDescription, { color: "rgba(255, 255, 255, 0.7)", fontFamily: fonts.regular }]}>
-              Desbloqueie conteúdo premium, análises exclusivas e muito mais
-            </Text>
-            <View style={styles.vipFeatures}>
-              {["Acesso a todas as mensagens", "Conteúdo exclusivo e análises", "Suporte prioritário"].map((f) => (
-                <View key={f} style={styles.vipFeatureItem}>
-                  <MaterialCommunityIcons name="check-circle" size={18} color="#34C759" />
-                  <Text style={[styles.vipFeatureText, { fontFamily: fonts.medium }]}>{f}</Text>
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity
-              style={styles.unlockButton}
-              onPress={() => navigation.navigate("ProSubscription")}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={["#E53935", "#B71C1C"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.unlockButtonGradient}
-              >
-                <MaterialCommunityIcons name="crown" size={22} color="#FFD700" />
-                <Text style={[styles.unlockButtonText, { fontFamily: fonts.bold }]}>ASSINAR AGORA</Text>
-                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
           </View>
+
+          <Text style={[telegramStyles.lockedTitle, { fontFamily: fonts.bold }]}>
+            Conteúdo exclusivo VIP
+          </Text>
+          <Text style={[telegramStyles.lockedDesc, { fontFamily: fonts.regular }]}>
+            Assine o plano VIP para desbloquear análises, tips exclusivos e muito mais
+          </Text>
+
+          {/* Features */}
+          {["Todas as mensagens VIP", "Análises e tips exclusivos", "Suporte prioritário"].map(
+            (feat) => (
+              <View key={feat} style={telegramStyles.lockedFeature}>
+                <MaterialCommunityIcons name="check-circle" size={16} color="#34C759" />
+                <Text style={[telegramStyles.lockedFeatureText, { fontFamily: fonts.medium }]}>
+                  {feat}
+                </Text>
+              </View>
+            )
+          )}
+
+          {/* CTA */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ProSubscription")}
+            activeOpacity={0.85}
+            style={telegramStyles.lockedCTA}
+          >
+            <LinearGradient
+              colors={["#E53935", "#B71C1C"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={telegramStyles.lockedCTAGradient}
+            >
+              <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
+              <Text style={[telegramStyles.lockedCTAText, { fontFamily: fonts.bold }]}>
+                ASSINAR AGORA
+              </Text>
+              <MaterialCommunityIcons name="arrow-right" size={18} color="#FFF" />
+            </LinearGradient>
+          </TouchableOpacity>
         </LinearGradient>
-      </View>
+      </Animated.View>
     );
   }
 
+  // ── Normal bubble ──
+  const hasLabel = msgStyle.label !== null;
+
   return (
-    <View
+    <Animated.View
       style={[
-        styles.messageCard,
+        telegramStyles.bubbleRow,
         {
-          backgroundColor: colors.card,
-          marginBottom: isLast ? spacing.xl : spacing.md,
-          ...shadows.medium,
+          marginBottom: isLast ? 24 : 8,
+          opacity: opacityAnim,
+          transform: [{ scale: scaleAnim }],
         },
       ]}
     >
-      <View style={[styles.colorBorder, { backgroundColor: isVIPMessage ? "#FFD700" : colors.secondary }]} />
-      {isVIPMessage && (
-        <View style={styles.vipBadgeCard}>
-          <LinearGradient
-            colors={["#8E24AA", "#7B1FA2", "#6A1B9A"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.vipBadgeCardGradient}
-          >
-            <MaterialCommunityIcons name="crown" size={14} color="#FFF" />
-            <Text style={[styles.vipBadgeCardText, { fontFamily: fonts.extrabold }]}>VIP</Text>
-          </LinearGradient>
+      {/* Left accent line */}
+      <View
+        style={[
+          telegramStyles.bubbleAccentLine,
+          { backgroundColor: msgStyle.accentColor },
+        ]}
+      />
+
+      {/* Bubble body */}
+      <View
+        style={[
+          telegramStyles.bubble,
+          {
+            backgroundColor: msgStyle.bubbleColor,
+            borderColor: msgStyle.borderColor,
+          },
+        ]}
+      >
+        {/* Type badge row */}
+        {hasLabel && (
+          <View style={telegramStyles.bubbleTypeRow}>
+            {msgStyle.icon && (
+              <MaterialCommunityIcons
+                name={msgStyle.icon}
+                size={14}
+                color={msgStyle.accentColor}
+              />
+            )}
+            <Text
+              style={[
+                telegramStyles.bubbleTypeLabel,
+                { color: msgStyle.accentColor, fontFamily: fonts.extrabold },
+              ]}
+            >
+              {msgStyle.label}
+            </Text>
+            {item.isNew && (
+              <View style={telegramStyles.newBadge}>
+                <FireGif />
+                <Text style={[telegramStyles.newBadgeText, { fontFamily: fonts.bold }]}>
+                  NOVO
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Message text */}
+        <View style={[telegramStyles.bubbleTextWrap, hasLabel && { marginTop: 6 }]}>
+          {renderFormattedText(item.content, msgStyle.accentColor)}
         </View>
-      )}
-      {item.isNew && (
-        <View style={styles.newIndicatorTop}>
-          <FireGif />
-          <Text style={[styles.newText, { fontFamily: fonts.bold }]}>NOVO</Text>
+
+        {/* Footer: timestamp */}
+        <View style={telegramStyles.bubbleFooter}>
+          {!hasLabel && item.isNew && (
+            <View style={telegramStyles.newBadgeInline}>
+              <FireGif />
+              <Text style={[telegramStyles.newBadgeText, { fontFamily: fonts.bold }]}>
+                NOVO
+              </Text>
+            </View>
+          )}
+          <Text style={[telegramStyles.bubbleTime, { fontFamily: fonts.regular }]}>
+            {moment(item.created_at).format("HH:mm")}
+          </Text>
         </View>
-      )}
-      <View style={styles.messageContent}>
-        {renderFormattedText(item.content, colors, fonts)}
       </View>
-      <View style={styles.timestamp}>
-        <MaterialCommunityIcons name="clock-time-four-outline" size={12} color={colors.muted} />
-        <Text style={[styles.timestampText, { color: colors.muted, fontFamily: fonts.regular }]}>
-          {moment(item.created_at).format("DD/MM/YYYY • HH:mm")}
-        </Text>
-      </View>
-    </View>
+    </Animated.View>
   );
 });
 
-// ─── Enhanced Connection Toggle Button ──────────────────────────────────────
+// ─── ConnectionToggle ─────────────────────────────────────────────────────────
 
 const ConnectionToggle = ({
   isConnected,
   isConnecting,
   onToggle,
   fonts,
-  colors,
 }: {
   isConnected: boolean;
   isConnecting: boolean;
   onToggle: () => void;
   fonts: any;
-  colors: any;
 }) => {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -242,70 +462,65 @@ const ConnectionToggle = ({
     if (isConnected) {
       loop = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.08,
-            duration: 900,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 900,
-            useNativeDriver: true,
-          }),
+          Animated.timing(pulseAnim, { toValue: 1.06, duration: 900, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
         ])
       );
       loop.start();
     } else {
       pulseAnim.setValue(1);
     }
-    return () => {
-      if (loop) loop.stop();
-    };
-  }, [isConnected, pulseAnim]);
+    return () => loop?.stop();
+  }, [isConnected]);
 
   const handlePress = () => {
     Animated.sequence([
-      Animated.spring(buttonScale, {
-        toValue: 0.96,
-        friction: 5,
-        tension: 200,
-        useNativeDriver: true,
-      }),
-      Animated.spring(buttonScale, {
-        toValue: 1,
-        friction: 5,
-        tension: 200,
-        useNativeDriver: true,
-      }),
+      Animated.spring(buttonScale, { toValue: 0.94, friction: 5, tension: 200, useNativeDriver: true }),
+      Animated.spring(buttonScale, { toValue: 1, friction: 5, tension: 200, useNativeDriver: true }),
     ]).start(() => onToggle());
   };
 
-  const iconName = isConnecting
-    ? "wifi-arrow-up-down"
+  const gradientColors: [string, string] = isConnecting
+    ? ["#FB8C00", "#F57C00"]
     : isConnected
-    ? "wifi"
-    : "wifi-off";
-  const gradientColors = isConnecting
-    ? ["#FFA726", "#FB8C00"]
-    : isConnected
-    ? ["#43A047", "#2E7D32"]
-    : ["#616161", "#424242"];
+    ? ["#2E7D32", "#1B5E20"]
+    : ["#C62828", "#B71C1C"];
+
+  const iconName = isConnecting ? "wifi-arrow-up-down" : isConnected ? "wifi" : "wifi-off";
+  const label = isConnecting ? "Conectando..." : isConnected ? "🔴 LIVE" : "ATIVAR LIVE";
 
   return (
     <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
       <TouchableOpacity onPress={handlePress} activeOpacity={0.9} disabled={isConnecting}>
-        <LinearGradient colors={gradientColors} style={styles.toggleGradient}>
+        <LinearGradient colors={gradientColors} style={telegramStyles.toggleGradient}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <MaterialCommunityIcons name={iconName} size={22} color="#fff" />
+            <MaterialCommunityIcons name={iconName} size={18} color="#FFF" />
           </Animated.View>
-          <Text style={[styles.toggleText, { fontFamily: fonts.semibold }]}>
-            {isConnecting ? "Conectando..." : isConnected ? "LIVE" : "ATIVAR LIVE"}
-          </Text>
+          <Text style={[telegramStyles.toggleText, { fontFamily: fonts.bold }]}>{label}</Text>
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
   );
 };
+
+// ─── DateSeparator ────────────────────────────────────────────────────────────
+
+const DateSeparator = ({ date, fonts }: { date: string; fonts: any }) => (
+  <View style={telegramStyles.dateSeparator}>
+    <View style={telegramStyles.dateLine} />
+    <View style={telegramStyles.datePill}>
+      <Text style={[telegramStyles.datePillText, { fontFamily: fonts.semibold }]}>
+        {moment(date).calendar(null, {
+          sameDay: "[Hoje]",
+          lastDay: "[Ontem]",
+          lastWeek: "DD [de] MMMM",
+          sameElse: "DD [de] MMMM [de] YYYY",
+        })}
+      </Text>
+    </View>
+    <View style={telegramStyles.dateLine} />
+  </View>
+);
 
 // ─── TimelineScreen ───────────────────────────────────────────────────────────
 
@@ -319,41 +534,51 @@ export default function TimelineScreen({ navigation }: Props) {
   const [token, setToken] = useState<string | null>(null);
   const [isTokenLoaded, setIsTokenLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
-  // ── NEW: Manual WebSocket control ──
+
+  // ── Connection ──
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [showConnectionHint, setShowConnectionHint] = useState(true);
+  const [showLiveHint, setShowLiveHint] = useState(true);
 
-  // ── ETAPA 4: controle de paginação e sync ──
+  // ── Pagination ──
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMorePages, setHasMorePages] = useState(true);
+
+  // ── Scroll behavior ──
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const isNearBottomRef = useRef(true);
+  const scrollOffsetRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const listHeightRef = useRef(0);
+
   const lastMessageIdRef = useRef<number | null>(null);
-
   const flatListRef = useRef<FlatList>(null);
-  const newMessageAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const hintAnim = useRef(new Animated.Value(1)).current;
 
-  // ── Fade in ──
+  // ── Animations ──
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const newMsgNotifAnim = useRef(new Animated.Value(0)).current;
+  const hintOpacity = useRef(new Animated.Value(1)).current;
+
+  // ── Fade in on mount ──
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  // ── Subscription ──
+  // ── Load subscription ──
   useEffect(() => {
     AsyncStorage.getItem("subscription").then((v) => {
       if (v) setUserSubscription(v);
     });
   }, []);
 
-  // ── Token ──
+  // ── Load token ──
   useEffect(() => {
     SecureStore.getItemAsync("accessToken").then((storedToken) => {
       if (storedToken) {
@@ -375,21 +600,18 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [isTokenLoaded, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — Carregamento HTTP inicial (PRIMEIRO)
-  // Carrega mensagens ANTES de qualquer WebSocket.
+  // HTTP: Initial fetch
   // ─────────────────────────────────────────────────────────────────────────
   const fetchInitialMessages = useCallback(async () => {
     if (!token) return;
     setIsLoadingInitial(true);
     try {
-      const response = await api.get("/message", {
-        params: { page: 0, size: 20 },
-      });
+      const response = await api.get("/message", { params: { page: 0, size: 20 } });
       const data: Message[] = response.data.content ?? response.data;
       if (data.length > 0) {
-        const sorted = [...data].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
+        const sorted = [...data]
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map((m) => ({ ...m, messageType: detectMessageType(m.content) }));
         setMessages(sorted);
         lastMessageIdRef.current = Number(sorted[sorted.length - 1].id);
       }
@@ -403,8 +625,7 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — Sync ao voltar ao foreground (AppState)
-  // Busca apenas mensagens novas usando ?afterId=lastMessageId
+  // HTTP: Sync novas mensagens (foreground)
   // ─────────────────────────────────────────────────────────────────────────
   const fetchAfterLastId = useCallback(async () => {
     if (!token || lastMessageIdRef.current === null) return;
@@ -415,21 +636,28 @@ export default function TimelineScreen({ navigation }: Props) {
       const incoming: Message[] = response.data.content ?? response.data;
       if (incoming.length === 0) return;
 
+      const withTypes = incoming.map((m) => ({
+        ...m,
+        messageType: detectMessageType(m.content),
+      }));
+
       setMessages((prev) => {
-        const merged = mergeMessages(prev, incoming);
-        const maxId = Math.max(...merged.map((m) => Number(m.id)));
-        lastMessageIdRef.current = maxId;
+        const merged = mergeMessages(prev, withTypes);
+        lastMessageIdRef.current = Math.max(...merged.map((m) => Number(m.id)));
         return merged;
       });
 
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      if (isNearBottomRef.current) {
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      }
     } catch (err) {
       console.error("[Timeline] Erro ao sincronizar mensagens:", err);
     }
   }, [token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — Paginação: carregar mensagens antigas ao rolar para cima
+  // HTTP: Load older messages (paginação)
+  // FIX: Mantém a posição de scroll ao prepender mensagens antigas
   // ─────────────────────────────────────────────────────────────────────────
   const fetchOlderMessages = useCallback(async () => {
     if (!token || isLoadingMore || !hasMorePages) return;
@@ -444,9 +672,16 @@ export default function TimelineScreen({ navigation }: Props) {
         setHasMorePages(false);
         return;
       }
-      setMessages((prev) => mergeMessages(prev, older));
+      const withTypes = older.map((m) => ({
+        ...m,
+        messageType: detectMessageType(m.content),
+      }));
+
+      setMessages((prev) => mergeMessages(prev, withTypes));
       setCurrentPage(nextPage);
       setHasMorePages(nextPage + 1 < (response.data.totalPages ?? 1));
+
+      // Não faz scroll automático ao carregar mensagens antigas
     } catch (err) {
       console.error("[Timeline] Erro ao carregar mensagens antigas:", err);
     } finally {
@@ -455,152 +690,156 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [token, isLoadingMore, hasMorePages, currentPage]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ETAPA 4 — AppState: dispara sync quando app volta ao foreground
+  // AppState: sync ao voltar ao foreground
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const subscription = AppState.addEventListener(
-      "change",
-      (nextState: AppStateStatus) => {
-        if (nextState === "active") {
-          fetchAfterLastId();
-        }
-      }
-    );
-    return () => subscription.remove();
+    const sub = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+      if (nextState === "active") fetchAfterLastId();
+    });
+    return () => sub.remove();
   }, [fetchAfterLastId]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // NOVO FLUXO: HTTP primeiro, WebSocket manual depois
+  // Load initial on token ready
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (isTokenLoaded && token) {
-      fetchInitialMessages();
-    }
+    if (isTokenLoaded && token) fetchInitialMessages();
   }, [isTokenLoaded, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // NOVO: Toggle WebSocket Connection (controlado pelo usuário)
+  // WebSocket Toggle
+  // Volta para SockJS com brokerURL para melhor compatibilidade
   // ─────────────────────────────────────────────────────────────────────────
   const toggleWebSocket = useCallback(async () => {
     if (isConnected) {
-      // Disconnect
-      if (stompClient) {
-        stompClient.deactivate();
+      stompClient?.deactivate();
+      setStompClient(null);
+      setIsConnected(false);
+      return;
+    }
+    if (!token) return;
+    setIsConnecting(true);
+    setShowLiveHint(false);
+
+    // Converte http → ws, https → wss
+    const wsBase = BASE_URL.replace(/^http/, "ws");
+    // SockJS com brokerURL — gerencia handshake HTTP → WS automaticamente
+    const wsUrl = `${wsBase}/ws/chat`;
+    console.log(wsUrl);
+
+    const client = new Client({
+      brokerURL: wsUrl,  // ✅ SockJS detecta upgrade automaticamente
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      onConnect: () => {
+        setStompClient(client);
+        setIsConnecting(false);
+        setIsConnected(true);
+        (client as any)._heartbeatTimer = setInterval(() => {
+          client.publish({ destination: "/app/heartbeat", body: "{}" });
+        }, 20000);
+      },
+      onDisconnect: () => {
         setStompClient(null);
         setIsConnected(false);
-        setShowConnectionHint(false);
-      }
-    } else {
-      // Connect
-      if (!token) return;
-      
-      setIsConnecting(true);
-      const wsUrl = `${BASE_URL}/ws/chat?token=${token}`;
-      const client = new Client({
-        webSocketFactory: () => new SockJS(wsUrl),
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        onConnect: () => {
-          setStompClient(client);
-          setIsConnecting(false);
-          setIsConnected(true);
-          setShowConnectionHint(false);
-          
-          // Heartbeat
-          (client as any).heartbeatIntervalId = setInterval(() => {
-            client.publish({ destination: "/app/heartbeat", body: "{}" });
-          }, 20000);
-        },
-        onDisconnect: () => {
-          setStompClient(null);
-          setIsConnected(false);
-          setIsConnecting(false);
-          clearInterval((client as any).heartbeatIntervalId);
-        },
-        onStompError: (frame) => {
-          console.error("[STOMP] broker error:", frame?.headers?.message);
-          setIsConnecting(false);
-          setIsConnected(false);
-        },
-      });
-
-      client.onWebSocketClose = () => {
-        setIsConnected(false);
         setIsConnecting(false);
-        clearInterval((client as any).heartbeatIntervalId);
-      };
-
-      client.onWebSocketError = () => {
+        clearInterval((client as any)._heartbeatTimer);
+      },
+      onStompError: (frame) => {
+        console.error("[STOMP] error:", frame?.headers?.message);
         setIsConnecting(false);
         setIsConnected(false);
-        clearInterval((client as any).heartbeatIntervalId);
-      };
+      },
+    });
 
-      client.activate();
-    }
+    client.onWebSocketClose = () => {
+      setIsConnected(false);
+      setIsConnecting(false);
+      clearInterval((client as any)._heartbeatTimer);
+    };
+
+    client.onWebSocketError = () => {
+      setIsConnecting(false);
+      setIsConnected(false);
+      clearInterval((client as any)._heartbeatTimer);
+    };
+
+    client.activate();
   }, [isConnected, isConnecting, stompClient, token]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // WebSocket Subscription (só quando conectado)
+  // WebSocket subscription
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!stompClient) return;
 
     const sub = stompClient.subscribe("/topic/messages", (msg) => {
       if (!msg.body) return;
-      const messageDTO: Message = JSON.parse(msg.body);
 
-      const shouldAdd =
-        messageDTO.people === "ALL" ||
-        messageDTO.people === "VIP";
+      let messageDTO: Message;
+      try {
+        messageDTO = JSON.parse(msg.body);
+      } catch {
+        return;
+      }
 
+      const shouldAdd = messageDTO.people === "ALL" || messageDTO.people === "VIP";
       if (!shouldAdd) return;
 
       const newMessage: Message = {
         ...messageDTO,
         id: messageDTO.id.toString(),
         isNew: true,
+        messageType: detectMessageType(messageDTO.content),
       };
 
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMessage.id)) return prev;
-
         const incomingId = Number(newMessage.id);
         if (lastMessageIdRef.current === null || incomingId > lastMessageIdRef.current) {
           lastMessageIdRef.current = incomingId;
         }
-
         return [...prev, newMessage];
       });
 
-      // Animação de nova mensagem
+      // Notificação de nova mensagem animada
       Animated.sequence([
-        Animated.spring(newMessageAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+        Animated.spring(newMsgNotifAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 50,
+          useNativeDriver: true,
+        }),
         Animated.delay(2500),
-        Animated.timing(newMessageAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+        Animated.timing(newMsgNotifAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start();
 
+      if (isNearBottomRef.current) {
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 120);
+        setNewMessagesCount(0);
+      } else {
+        setNewMessagesCount((c) => c + 1);
+        setShowScrollToBottom(true);
+      }
+
+      // Remove flag isNew após 3s
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((m) => (m.id === newMessage.id ? { ...m, isNew: false } : m))
         );
       }, 3000);
-
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     });
 
     return () => sub.unsubscribe();
-  }, [stompClient, userSubscription]);
+  }, [stompClient]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Cleanup on unmount
+  // Cleanup
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
-      if (stompClient) {
-        stompClient.deactivate();
-      }
+      stompClient?.deactivate();
     };
   }, []);
 
@@ -616,69 +855,103 @@ export default function TimelineScreen({ navigation }: Props) {
   }, [fetchInitialMessages]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Renderização
+  // Scroll handlers — FIX do bug de scroll (volta ao topo)
+  // Rastreia se o usuário está perto do fim para controlar auto-scroll.
+  // ─────────────────────────────────────────────────────────────────────────
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      scrollOffsetRef.current = contentOffset.y;
+      contentHeightRef.current = contentSize.height;
+      listHeightRef.current = layoutMeasurement.height;
+
+      const distanceFromBottom =
+        contentSize.height - contentOffset.y - layoutMeasurement.height;
+
+      const nearBottom = distanceFromBottom < 120;
+      isNearBottomRef.current = nearBottom;
+
+      if (nearBottom) {
+        setShowScrollToBottom(false);
+        setNewMessagesCount(0);
+      } else {
+        setShowScrollToBottom(true);
+      }
+    },
+    []
+  );
+
+  const scrollToBottom = useCallback(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+    setShowScrollToBottom(false);
+    setNewMessagesCount(0);
+    isNearBottomRef.current = true;
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Agrupa mensagens por data para os separadores
+  // ─────────────────────────────────────────────────────────────────────────
+  type ListItem = Message | { type: "date_separator"; date: string; id: string };
+
+  const listData: ListItem[] = React.useMemo(() => {
+    const result: ListItem[] = [];
+    let lastDate = "";
+    for (const msg of messages) {
+      const msgDate = moment(msg.created_at).format("YYYY-MM-DD");
+      if (msgDate !== lastDate) {
+        result.push({ type: "date_separator", date: msg.created_at, id: `sep_${msgDate}` });
+        lastDate = msgDate;
+      }
+      result.push(msg);
+    }
+    return result;
+  }, [messages]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render helpers
   // ─────────────────────────────────────────────────────────────────────────
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Message; index: number }) => (
-      <MessageCard
-        item={item}
-        index={index}
-        userSubscription={userSubscription}
-        navigation={navigation}
-        colors={colors}
-        fonts={fonts}
-        spacing={spacing}
-        borderRadius={borderRadius}
-        shadows={shadows}
-        messagesLength={messages.length}
-      />
-    ),
-    [userSubscription, navigation, colors, fonts, spacing, borderRadius, shadows, messages.length]
+    ({ item, index }: { item: ListItem; index: number }) => {
+      if ("type" in item && item.type === "date_separator") {
+        return <DateSeparator date={item.date} fonts={fonts} />;
+      }
+      const msg = item as Message;
+      // Find index in messages array for isLast check
+      const msgIndex = messages.findIndex((m) => m.id === msg.id);
+      return (
+        <MessageBubble
+          item={msg}
+          index={msgIndex}
+          userSubscription={userSubscription}
+          navigation={navigation}
+          fonts={fonts}
+          messagesLength={messages.length}
+          scrollToEnd={scrollToBottom}
+        />
+      );
+    },
+    [userSubscription, navigation, fonts, messages, scrollToBottom]
   );
 
-  const renderHeader = useCallback(() => {
+  const renderListHeader = useCallback(() => {
     if (!isLoadingMore) return null;
     return (
       <View style={{ paddingVertical: 16, alignItems: "center" }}>
-        <ActivityIndicator size="small" color={colors.secondary} />
+        <ActivityIndicator size="small" color="#E53935" />
+        <Text style={[telegramStyles.loadingText, { fontFamily: fonts.regular }]}>
+          Carregando mensagens antigas...
+        </Text>
       </View>
     );
-  }, [isLoadingMore, colors.secondary]);
-
-  const newMessageNotification = (
-    <Animated.View
-      style={[
-        styles.floatingNotification,
-        {
-          opacity: newMessageAnim,
-          transform: [
-            { translateY: newMessageAnim.interpolate({ inputRange: [0, 1], outputRange: [100, 0] }) },
-            { scale: newMessageAnim },
-          ],
-        },
-      ]}
-    >
-      <LinearGradient
-        colors={[colors.secondary, colors.highlight]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.notificationGradient}
-      >
-        <MaterialCommunityIcons name="bell-ring" size={20} color="#FFFFFF" />
-        <Text style={[styles.notificationText, { fontFamily: fonts.bold }]}>
-          Nova mensagem disponível!
-        </Text>
-      </LinearGradient>
-    </Animated.View>
-  );
+  }, [isLoadingMore, fonts]);
 
   const renderEmptyState = () => {
     if (isLoadingInitial) {
       return (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.semibold }]}>
+        <View style={telegramStyles.emptyState}>
+          <ActivityIndicator size="large" color="#E53935" />
+          <Text style={[telegramStyles.emptyTitle, { fontFamily: fonts.semibold }]}>
             Carregando mensagens...
           </Text>
         </View>
@@ -686,102 +959,119 @@ export default function TimelineScreen({ navigation }: Props) {
     }
     if (!token) {
       return (
-        <View style={styles.emptyState}>
-          <View style={[styles.emptyIcon, { backgroundColor: "rgba(255,59,48,0.1)" }]}>
+        <View style={telegramStyles.emptyState}>
+          <View style={[telegramStyles.emptyIconWrap, { backgroundColor: "rgba(255,59,48,0.1)" }]}>
             <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#FF3B30" />
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.bold }]}>
-            Erro ao recuperar sessão
+          <Text style={[telegramStyles.emptyTitle, { fontFamily: fonts.bold }]}>
+            Sessão expirada
           </Text>
           <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: colors.secondary }]}
+            style={telegramStyles.emptyBtn}
             onPress={() => navigation.navigate("Login")}
           >
-            <Text style={[styles.emptyButtonText, { fontFamily: fonts.bold }]}>IR PARA LOGIN</Text>
+            <Text style={[telegramStyles.emptyBtnText, { fontFamily: fonts.bold }]}>IR PARA LOGIN</Text>
           </TouchableOpacity>
         </View>
       );
     }
     return (
-      <View style={styles.emptyState}>
-        <View style={[styles.emptyIcon, { backgroundColor: "rgba(229,57,53,0.1)" }]}>
-          <MaterialCommunityIcons name="message-text-outline" size={48} color={colors.secondary} />
+      <View style={telegramStyles.emptyState}>
+        <View style={[telegramStyles.emptyIconWrap, { backgroundColor: "rgba(229,57,53,0.08)" }]}>
+          <MaterialCommunityIcons name="message-text-outline" size={52} color="#E53935" />
         </View>
-        <Text style={[styles.emptyTitle, { color: colors.primary, fontFamily: fonts.bold }]}>
+        <Text style={[telegramStyles.emptyTitle, { fontFamily: fonts.bold }]}>
           Nenhuma mensagem ainda
         </Text>
-        <Text style={[styles.emptyDescription, { color: colors.muted, fontFamily: fonts.regular }]}>
-          Novas mensagens aparecerão aqui em tempo real quando você ativar o LIVE
+        <Text style={[telegramStyles.emptyDesc, { fontFamily: fonts.regular }]}>
+          Ative o LIVE para receber mensagens em tempo real
         </Text>
+        <TouchableOpacity
+          onPress={toggleWebSocket}
+          activeOpacity={0.85}
+          style={telegramStyles.emptyLiveBtn}
+        >
+          <LinearGradient
+            colors={["#E53935", "#B71C1C"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={telegramStyles.emptyLiveBtnGradient}
+          >
+            <MaterialCommunityIcons name="wifi" size={18} color="#FFF" />
+            <Text style={[telegramStyles.emptyLiveBtnText, { fontFamily: fonts.bold }]}>
+              ATIVAR LIVE
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     );
   };
 
-  const connectionHint = (
-    <Animated.View
-      style={[
-        styles.connectionHint,
-        {
-          opacity: showConnectionHint ? hintAnim : 0,
-          transform: [
-            {
-              scale: showConnectionHint 
-                ? hintAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] })
-                : 1
-            }
-          ]
-        }
-      ]}
-    >
-      <LinearGradient
-        colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
-        style={styles.hintGradient}
-      >
-        <MaterialCommunityIcons name="lightning-bolt" size={20} color={colors.secondary} />
-        <Text style={[styles.hintText, { color: colors.primary, fontFamily: fonts.medium }]}>
-          Toque para ativar mensagens em tempo real
-        </Text>
-      </LinearGradient>
-    </Animated.View>
-  );
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <View style={telegramStyles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
 
+      {/* ── Header ── */}
       <LinearGradient
-        colors={["#000000", "#1a1a1a", "#B71C1C"]}
+        colors={["#000000", "#1a0000", "#B71C1C"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={telegramStyles.header}
       >
         <SafeAreaView edges={["top"]} style={{ backgroundColor: "transparent" }}>
-          <View style={styles.headerContent}>
-            <View style={styles.headerTop}>
+          <View style={telegramStyles.headerInner}>
+            {/* Left: title */}
+            <View style={telegramStyles.headerLeft}>
+              {/* Avatar / logo */}
+              <LinearGradient
+                colors={["#E53935", "#B71C1C"]}
+                style={telegramStyles.headerAvatar}
+              >
+                <MaterialCommunityIcons name="soccer" size={20} color="#FFF" />
+              </LinearGradient>
               <View>
-                <Text style={[styles.headerTitle, { fontFamily: fonts.bold }]}>Timeline</Text>
-                <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>
-                  Mensagens sincronizadas
+                <Text style={[telegramStyles.headerTitle, { fontFamily: fonts.bold }]}>
+                  ChamaGol
+                </Text>
+                <Text style={[telegramStyles.headerSubtitle, { fontFamily: fonts.regular }]}>
+                  {isConnected
+                    ? "🟢 transmitindo ao vivo"
+                    : isConnecting
+                    ? "🟡 conectando..."
+                    : "⚪ mensagens sincronizadas"}
                 </Text>
               </View>
-              <ConnectionToggle
-                isConnected={isConnected}
-                isConnecting={isConnecting}
-                onToggle={toggleWebSocket}
-                fonts={fonts}
-                colors={colors}
-              />
             </View>
-            {connectionHint}
+
+            {/* Right: toggle */}
+            <ConnectionToggle
+              isConnected={isConnected}
+              isConnecting={isConnecting}
+              onToggle={toggleWebSocket}
+              fonts={fonts}
+            />
           </View>
+
+          {/* Hint */}
+          {showLiveHint && !isConnected && (
+            <Animated.View style={[telegramStyles.hint, { opacity: hintOpacity }]}>
+              <MaterialCommunityIcons name="lightning-bolt" size={14} color="#FF9F0A" />
+              <Text style={[telegramStyles.hintText, { fontFamily: fonts.medium }]}>
+                Toque em ATIVAR LIVE para mensagens em tempo real
+              </Text>
+            </Animated.View>
+          )}
         </SafeAreaView>
       </LinearGradient>
 
+      {/* ── Chat body ── */}
       <Animated.View
         style={[
-          styles.content,
+          telegramStyles.chatBody,
           {
-            backgroundColor: colors.background,
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
           },
@@ -794,36 +1084,98 @@ export default function TimelineScreen({ navigation }: Props) {
             <>
               <FlatList
                 ref={flatListRef}
-                data={messages}
-                keyExtractor={(item) => item.id}
+                data={listData}
+                keyExtractor={(item) => ("id" in item ? item.id : item.id)}
                 renderItem={renderItem}
-                ListHeaderComponent={renderHeader}
-                contentContainerStyle={{
-                  flexGrow: 1,
-                  paddingTop: spacing.lg,
-                  paddingBottom: spacing.xl + 60,
-                  paddingHorizontal: spacing.md,
+                ListHeaderComponent={renderListHeader}
+                contentContainerStyle={telegramStyles.listContent}
+                // ★ FIX scroll: não usa onContentSizeChange para auto-scroll
+                // Apenas faz scroll ao fim no carregamento inicial
+                onLayout={() => {
+                  // Scroll para o fim somente no primeiro render
+                  setTimeout(() => {
+                    flatListRef.current?.scrollToEnd({ animated: false });
+                    isNearBottomRef.current = true;
+                  }, 100);
                 }}
-                onEndReachedThreshold={0.3}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                onEndReachedThreshold={0.2}
                 onEndReached={fetchOlderMessages}
-                onContentSizeChange={() =>
-                  flatListRef.current?.scrollToEnd({ animated: true })
-                }
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                   <RefreshControl
                     refreshing={isRefreshing}
                     onRefresh={onRefresh}
-                    colors={[colors.secondary]}
-                    tintColor={colors.secondary}
+                    colors={["#E53935"]}
+                    tintColor={"#E53935"}
                   />
                 }
-                initialNumToRender={10}
-                maxToRenderPerBatch={10}
+                initialNumToRender={12}
+                maxToRenderPerBatch={12}
                 windowSize={7}
                 removeClippedSubviews={Platform.OS === "android"}
+                // ★ FIX scroll: mantém posição ao prepender mensagens antigas
+                maintainVisibleContentPosition={{
+                  minIndexForVisible: 1,
+                  autoscrollToTopThreshold: 10,
+                }}
               />
-              {newMessageNotification}
+
+              {/* ── Nova mensagem flutuante ── */}
+              <Animated.View
+                style={[
+                  telegramStyles.newMsgNotif,
+                  {
+                    opacity: newMsgNotifAnim,
+                    transform: [
+                      {
+                        translateY: newMsgNotifAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [80, 0],
+                        }),
+                      },
+                      { scale: newMsgNotifAnim },
+                    ],
+                  },
+                ]}
+                pointerEvents="none"
+              >
+                <LinearGradient
+                  colors={["#E53935", "#B71C1C"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={telegramStyles.newMsgNotifGradient}
+                >
+                  <MaterialCommunityIcons name="bell-ring" size={18} color="#FFF" />
+                  <Text style={[telegramStyles.newMsgNotifText, { fontFamily: fonts.bold }]}>
+                    Nova mensagem!
+                  </Text>
+                </LinearGradient>
+              </Animated.View>
+
+              {/* ── Botão "ir para o fim" ── */}
+              {showScrollToBottom && (
+                <TouchableOpacity
+                  style={telegramStyles.scrollToBottomBtn}
+                  onPress={scrollToBottom}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={["#1E2C3D", "#152030"]}
+                    style={telegramStyles.scrollToBottomGradient}
+                  >
+                    {newMessagesCount > 0 && (
+                      <View style={telegramStyles.newCountBadge}>
+                        <Text style={[telegramStyles.newCountText, { fontFamily: fonts.bold }]}>
+                          {newMessagesCount}
+                        </Text>
+                      </View>
+                    )}
+                    <MaterialCommunityIcons name="chevron-down" size={24} color="#E53935" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </CustomAlertProvider>
@@ -832,167 +1184,293 @@ export default function TimelineScreen({ navigation }: Props) {
   );
 }
 
-// ─── Updated Styles ─────────────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
-const { width } = Dimensions.get("window");
-const styles = StyleSheet.create({
-  // ... todos os styles originais permanecem iguais ...
-  header: { paddingBottom: 40, zIndex: 1 },
-  headerContent: {
-    paddingTop: Platform.OS === "ios" ? 10 : 20,
-    paddingHorizontal: 20,
+const telegramStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#000",
   },
-  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  headerTitle: { fontSize: 28, color: "#FFFFFF", marginBottom: 4 },
-  headerSubtitle: { fontSize: 14, color: "rgba(255,255,255,0.7)" },
-  
-  // ── NEW Toggle Button Styles ──
-  toggleButton: {
-    borderRadius: 25,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+
+  // ── Header ──
+  header: {
+    paddingBottom: 16,
+    zIndex: 10,
   },
-  toggleButtonInner: {
-    borderRadius: 25,
-    padding: 2,
+  headerInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "ios" ? 8 : 16,
+    paddingBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  headerAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    color: "#FFF",
+    letterSpacing: 0.3,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.65)",
+    marginTop: 1,
   },
   toggleGradient: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    gap: 8,
-    minWidth: 140,
-    borderRadius: 23,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
   toggleText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-
-  // ── NEW Connection Hint ──
-  connectionHint: {
-    marginTop: 16,
-    alignSelf: "center",
-  },
-  hintGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    gap: 10,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  hintText: {
+    color: "#FFF",
     fontSize: 13,
     letterSpacing: 0.3,
   },
-
-  connectionIndicator: {
+  hint: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: 6,
+    marginHorizontal: 16,
+    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(255,159,10,0.12)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,159,10,0.2)",
   },
-  connectionDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  connectionText: { fontSize: 12 },
-  content: {
+  hintText: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.8)",
     flex: 1,
-    marginTop: -20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: "hidden",
-    zIndex: 2,
   },
-  // ... resto dos styles originais permanecem exatamente iguais ...
-  messageCard: {
+
+  // ── Chat body ──
+  chatBody: {
+    flex: 1,
+    backgroundColor: CHAT_BG,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -12,
+    overflow: "hidden",
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingTop: 16,
+    paddingBottom: 24,
+    paddingHorizontal: 12,
+  },
+  loadingText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    marginTop: 6,
+  },
+
+  // ── Date separator ──
+  dateSeparator: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 16,
+    paddingHorizontal: 4,
+  },
+  dateLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  datePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 10,
+    marginHorizontal: 10,
+  },
+  datePillText: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.5)",
+    letterSpacing: 0.3,
+  },
+
+  // ── Bubble ──
+  bubbleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    maxWidth: width - 24,
+  },
+  bubbleAccentLine: {
+    width: 3,
+    borderRadius: 2,
+    alignSelf: "stretch",
+    marginRight: 8,
+    marginTop: 4,
+    marginBottom: 4,
+    opacity: 0.85,
+  },
+  bubble: {
+    flex: 1,
+    borderRadius: 12,
+    borderTopLeftRadius: 4,
+    padding: 12,
+    borderWidth: 1,
+  },
+  bubbleTypeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 4,
+  },
+  bubbleTypeLabel: {
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  bubbleTextWrap: {},
+  messageText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#EAEAEA",
+  },
+  normalText: {
+    color: "#EAEAEA",
+  },
+  boldText: {
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  italicText: {
+    fontStyle: "italic",
+    opacity: 0.95,
+  },
+  codeText: {
+    fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 4,
+    borderRadius: 3,
+    fontSize: 13,
+    color: "#A8DAFF",
+  },
+  bubbleFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 6,
+    gap: 6,
+  },
+  bubbleTime: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.35)",
+  },
+  newBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  newBadgeInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginRight: "auto" as any,
+  },
+  newBadgeText: {
+    fontSize: 10,
+    color: "#FF5722",
+    letterSpacing: 0.8,
+  },
+
+  // ── Locked VIP bubble ──
+  lockedBubble: {
     width: width - 32,
     alignSelf: "center",
     borderRadius: 16,
     overflow: "hidden",
-    position: "relative",
-    padding: 20,
   },
-  colorBorder: {
+  lockedGradient: {
+    padding: 24,
+    alignItems: "center",
+  },
+  lockedShine: {
     position: "absolute",
-    left: 0,
     top: 0,
-    bottom: 0,
-    width: 5,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    left: 0,
+    right: 0,
+    height: 3,
   },
-  vipBadgeCard: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    zIndex: 10,
+  lockedBadge: {
     borderRadius: 10,
     overflow: "hidden",
-    shadowColor: "#8E24AA",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 6,
+    marginBottom: 20,
   },
-  vipBadgeCardGradient: { flexDirection: "row", alignItems: "center", paddingVertical: 6, paddingHorizontal: 12, gap: 5 },
-  vipBadgeCardText: { color: "#FFF", fontSize: 13, letterSpacing: 0.8 },
-  newIndicatorTop: { position: "absolute", top: 16, left: 20, flexDirection: "row", alignItems: "center", gap: 4, zIndex: 5 },
-  newText: { fontSize: 10, color: "#FF5722", letterSpacing: 1 },
-  messageContent: { marginTop: 12, marginBottom: 16 },
-  messageText: { fontSize: 16, lineHeight: 24 },
-  timestamp: { flexDirection: "row", alignItems: "center", gap: 6 },
-  timestampText: { fontSize: 11 },
-  lockedCard: { width: width - 32, alignSelf: "center", minHeight: 420, borderRadius: 16, overflow: "hidden" },
-  lockedCardGradient: { flex: 1, minHeight: 420, position: "relative" },
-  vipShineEffect: { position: "absolute", top: 0, left: 0, right: 0, height: 4 },
-  shineGradient: { flex: 1 },
-  vipPremiumBadge: {
-    alignSelf: "center",
-    marginTop: 24,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#FFD700",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
+  lockedBadgeGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
   },
-  vipPremiumGradient: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 20, gap: 8 },
-  vipPremiumText: { color: "#000000", fontSize: 14, letterSpacing: 1.2 },
-  lockedContent: { flex: 1, justifyContent: "center", alignItems: "center", padding: 28 },
-  lockIconContainer: { position: "relative", marginBottom: 24 },
-  lockIconGlow: { position: "absolute", top: -20, left: -20, right: -20, bottom: -20, justifyContent: "center", alignItems: "center" },
-  glowCircle: { width: 120, height: 120, borderRadius: 60 },
-  lockIconWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,215,0,0.1)",
+  lockedBadgeText: {
+    fontSize: 13,
+    color: "#000",
+    letterSpacing: 1,
+  },
+  lockedIconWrap: {
+    marginBottom: 16,
+  },
+  lockedIconRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,215,0,0.08)",
+    borderWidth: 2,
+    borderColor: "rgba(255,215,0,0.25)",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "rgba(255,215,0,0.3)",
   },
-  lockedTitle: { fontSize: 22, marginBottom: 12, textAlign: "center", letterSpacing: 0.5 },
-  lockedDescription: { fontSize: 14, textAlign: "center", marginBottom: 28, lineHeight: 22, maxWidth: 280 },
-  vipFeatures: { width: "100%", marginBottom: 28, gap: 12 },
-  vipFeatureItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 8 },
-  vipFeatureText: { color: "rgba(255,255,255,0.9)", fontSize: 13 },
-  unlockButton: {
+  lockedTitle: {
+    fontSize: 18,
+    color: "#FFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  lockedDesc: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 20,
+    maxWidth: 280,
+  },
+  lockedFeature: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "stretch",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  lockedFeatureText: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+  },
+  lockedCTA: {
     width: "100%",
-    borderRadius: 14,
+    marginTop: 12,
+    borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#E53935",
     shadowOffset: { width: 0, height: 4 },
@@ -1000,19 +1478,26 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  unlockButtonGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 16, paddingHorizontal: 32, gap: 10 },
-  unlockButtonText: { color: "#FFFFFF", fontSize: 16, letterSpacing: 1 },
-  emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
-  emptyIcon: { width: 96, height: 96, borderRadius: 48, justifyContent: "center", alignItems: "center", marginBottom: 24 },
-  emptyTitle: { fontSize: 20, marginTop: 16, textAlign: "center", marginBottom: 8 },
-  emptyDescription: { fontSize: 14, textAlign: "center", lineHeight: 20, maxWidth: 280 },
-  emptyButton: { marginTop: 24, paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 },
-  emptyButtonText: { color: "#FFFFFF", fontSize: 14, letterSpacing: 0.5 },
-  floatingNotification: {
+  lockedCTAGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  lockedCTAText: {
+    color: "#FFF",
+    fontSize: 15,
+    letterSpacing: 0.8,
+  },
+
+  // ── Notifications ──
+  newMsgNotif: {
     position: "absolute",
-    bottom: 24,
+    bottom: 72,
     alignSelf: "center",
-    borderRadius: 28,
+    borderRadius: 24,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -1020,6 +1505,108 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  notificationGradient: { paddingVertical: 14, paddingHorizontal: 24, flexDirection: "row", alignItems: "center", gap: 10 },
-  notificationText: { color: "#FFFFFF", fontSize: 15 },
+  newMsgNotifGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  newMsgNotifText: {
+    color: "#FFF",
+    fontSize: 14,
+  },
+  scrollToBottomBtn: {
+    position: "absolute",
+    bottom: 24,
+    right: 16,
+    borderRadius: 24,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  scrollToBottomGradient: {
+    width: 48,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 24,
+  },
+  newCountBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#E53935",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    zIndex: 1,
+  },
+  newCountText: {
+    color: "#FFF",
+    fontSize: 11,
+  },
+
+  // ── Empty state ──
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  emptyIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    color: "#FFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.5)",
+    textAlign: "center",
+    lineHeight: 20,
+    maxWidth: 260,
+    marginBottom: 24,
+  },
+  emptyBtn: {
+    backgroundColor: "#E53935",
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+  },
+  emptyBtnText: {
+    color: "#FFF",
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
+  emptyLiveBtn: {
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  emptyLiveBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  emptyLiveBtnText: {
+    color: "#FFF",
+    fontSize: 15,
+    letterSpacing: 0.5,
+  },
 });
