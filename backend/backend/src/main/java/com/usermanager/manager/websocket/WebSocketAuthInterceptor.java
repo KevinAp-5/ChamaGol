@@ -1,4 +1,4 @@
-package com.usermanager.manager.infra.security.websocket;
+package com.usermanager.manager.websocket;
 
 import java.util.List;
 import java.util.Map;
@@ -11,8 +11,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
@@ -23,6 +25,7 @@ import com.usermanager.manager.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component
 public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelInterceptor {
 
     private final TokenService tokenService;
@@ -34,20 +37,20 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelIn
     }
 
     @Override
-    public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
-          @NonNull Map<String, Object> attributes) throws Exception {
+    public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
+            @NonNull Map<String, Object> attributes) throws Exception {
         log.info("Handshake URI: {}", request.getURI());
-        log.info("Headers: {}", request.getHeaders());
 
         String token = extractToken(request);
         if (token == null) {
-            log.warn("Token ausente no handshake WebSocket.");
+            log.warn("----Token ausente no handshake WebSocket.");
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
             return false; // BLOQUEIA handshake
         }
 
         if (!tokenService.isTokenValid(token)) {
-            log.warn("Token inválido no handshake WebSocket.");
+            log.warn("-----Token inválido no handshake WebSocket.");
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
             return false; // BLOQUEIA handshake
         }
@@ -61,7 +64,6 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelIn
         List<String> authHeaders = request.getHeaders().get("Authorization");
         if (authHeaders != null && !authHeaders.isEmpty()) {
             String token = authHeaders.get(0).replace("Bearer ", "");
-            log.info("Token recebido via header: {}", token);
             return token;
         }
 
@@ -89,26 +91,29 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor, ChannelIn
     }
 
     @Override
-    public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
+    public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
             @Nullable Exception exception) {
-        // Método implementado vazio conforme original
     }
 
     @Override
     public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
-        if (accessor.getUser() != null || accessor.getSessionAttributes() == null) {
-            return message;
-        }
+        if (accessor.getUser() == null) {
+            var session = accessor.getSessionAttributes();
+            if (session == null) {
+                log.warn("Sessão STOMP sem atributos!");
+                return message;
+            }
 
-        var session = accessor.getSessionAttributes();
-        if (session == null || session.isEmpty()) {
-            return message;
-        }
-        Authentication auth = (Authentication) session.get("user");
-        if (auth != null) {
-            accessor.setUser(auth);
+            Authentication auth = (Authentication) session.get("user");
+            if (auth != null) {
+                accessor.setUser(auth);
+                return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+            } else {
+                log.warn("Authentication não encontrado na sessão!");
+            }
         }
 
         return message;

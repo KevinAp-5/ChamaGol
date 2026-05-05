@@ -7,21 +7,17 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import com.usermanager.manager.infra.security.token.TokenService;
-import com.usermanager.manager.infra.security.websocket.WebSocketAuthInterceptor;
-import com.usermanager.manager.service.user.UserService;
+
+import com.usermanager.manager.websocket.WebSocketAuthInterceptor;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final TokenService tokenService;
-    private final UserService userService;
-
-    public WebSocketConfig(TokenService tokenService, UserService userService) {
-        this.tokenService = tokenService;
-        this.userService = userService;
-    }
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
@@ -31,16 +27,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        // registra ambos os caminhos para compatibilidade com cliente que usa /api prefix
         registry.addEndpoint("/ws/chat", "/api/ws/chat")
                 .setAllowedOriginPatterns("*")
+                .addInterceptors(webSocketAuthInterceptor)
                 .withSockJS();
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        // se já tiver interceptores, mantenha-os
-        registration.interceptors(new WebSocketAuthInterceptor(tokenService, userService));
-    }
+//     @Override
+//     public void configureClientInboundChannel(ChannelRegistration registration) {
+//         // se já tiver interceptores, mantenha-os
+//         registration.interceptors(webSocketAuthInterceptor);
+//     }
 
 }

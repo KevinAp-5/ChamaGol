@@ -8,6 +8,6 @@ import com.usermanager.manager.model.message.Message;
 public record MessageDTO(Long id, String content, ZonedDateTime created_at, People people) {
 
     public MessageDTO(Message message) {
-        this(message.getId(), message.getContent(), message.getCreated_at(), message.getPeople());
+        this(message.getId(), message.getContent(), message.getCreatedAt(), message.getPeople());
     }
 }

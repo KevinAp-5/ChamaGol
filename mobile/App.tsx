@@ -21,6 +21,7 @@ import PaymentSuccessScreen from "./src/screens/payment/success";
 import PaymentFailureScreen from "./src/screens/payment/failure";
 import PaymentPendingScreen from "./src/screens/payment/pending";
 import { CustomAlertProvider } from "./src/components/CustomAlert";
+import { NotificationProvider } from "./src/context/NotificationProvider";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -58,7 +59,7 @@ const DarkTheme: Theme = {
 
 export default function App() {
   const linking = {
-    prefixes: ["chamagol://", "https://chamagol-9gfb.onrender.com", "exp://"],
+    prefixes: ["chamagol://", "https://chamagol.com", "exp://"],
     config: {
       screens: {
         Home: "home",
@@ -83,35 +84,35 @@ export default function App() {
 
   return (
     <CustomAlertProvider>
-      {/* Status bar escura */}
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
-
       <NavigationContainer linking={linking} theme={DarkTheme}>
-        <DeepLinkListener />
-        <Stack.Navigator
-          initialRouteName="Splash"
-          screenOptions={{
-            headerShown: false,
-            cardStyle: { backgroundColor: "#000000" }, // fundo preto nas telas
-          }}
-        >
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} options={{ gestureEnabled: false }} />
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Timeline" component={TimelineScreen} />
-          <Stack.Screen name="About" component={AboutScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="PasswordResetEmailConfirmed" component={PasswordResetEmailConfirmed} />
-          <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
-          <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
-          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
-          <Stack.Screen name="EmailConfirmationSuccess" component={EmailConfirmationSuccessScreen} />
-          <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
-          <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
-          <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
-        </Stack.Navigator>
+        <NotificationProvider>
+          <DeepLinkListener />
+          <Stack.Navigator
+            initialRouteName="Splash"
+            screenOptions={{
+              headerShown: false,
+              cardStyle: { backgroundColor: "#000000" },
+            }}
+          >
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ gestureEnabled: false }} />
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Timeline" component={TimelineScreen} />
+            <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="PasswordResetEmailConfirmed" component={PasswordResetEmailConfirmed} />
+            <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
+            <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
+            <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
+            <Stack.Screen name="EmailConfirmationSuccess" component={EmailConfirmationSuccessScreen} />
+            <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
+            <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
+            <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
+          </Stack.Navigator>
+        </NotificationProvider>
       </NavigationContainer>
     </CustomAlertProvider>
   );

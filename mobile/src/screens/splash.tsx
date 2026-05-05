@@ -1,26 +1,32 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ThreeDots from '../components/loading';
 import Logo from '../components/logo';
+import { api } from '../config/Api';
 
 const SplashScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
 
   useEffect(() => {
-    // Simula um carregamento e redireciona para a tela inicial
-    const timer = setTimeout(() => {
-      navigation.replace('Login'); // Redireciona para a tela de login
-    }, 3000); // 3 segundos
-
-    return () => clearTimeout(timer); // Limpa o timer ao desmontar o componente
+    const checkAuth = async () => {
+      try {
+        // Tenta buscar info do usuário (usa accessToken salvo)
+        await api.get("/auth/user/info");
+        navigation.replace('Home');
+      } catch (err) {
+        // Se falhar (ex: token inválido/expirado), vai para Login
+        navigation.replace('Login');
+      }
+    };
+    checkAuth();
   }, [navigation]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Logo></Logo>
+        <Logo />
         <View style={styles.loadingContainer}>
           <ThreeDots />
         </View>
