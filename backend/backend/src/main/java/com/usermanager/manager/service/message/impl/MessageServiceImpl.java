@@ -1,11 +1,13 @@
 package com.usermanager.manager.service.message.impl;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +19,11 @@ import com.usermanager.manager.repository.MessageRepository;
 import com.usermanager.manager.service.message.MessageService;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class MessageServiceImpl implements MessageService {
     private MessageRepository messageRepository;
     private final ApplicationEventPublisher publisher;
@@ -52,12 +56,20 @@ public class MessageServiceImpl implements MessageService {
 
     public List<MessageDTO> findAfterIdOrdered(Long afterId) {
         return messageRepository.findByIdGreaterThanOrderByCreatedAtAsc(afterId)
-        .stream()
-        .map(MessageDTO::new)
-        .toList();
+                .stream()
+                .map(MessageDTO::new)
+                .toList();
     }
 
     public Page<MessageDTO> findAllPaged(Pageable pageable) {
         return messageRepository.findAll(pageable).map(MessageDTO::new);
+    }
+
+    @Transactional
+    // @Scheduled(cron = "@hourly")
+    @Scheduled(fixedDelay = 10000)
+    public void deleteExpiredMessages() {
+        int deletedCount = messageRepository.deleteByCreatedAtBefore(ZonedDateTime.now().minusHours(13));
+        log.info("messagesDeleted: {}", deletedCount);
     }
 }
