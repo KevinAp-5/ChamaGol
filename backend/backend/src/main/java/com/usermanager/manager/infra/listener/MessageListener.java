@@ -38,6 +38,7 @@ public class MessageListener {
                 .filter(userId -> !presenceService.isOnline(userId))
                 .toList();
 
+        log.info("users to send notification: {}", usersIds);
         pushNotificationService.sendToUsers(usersIds, "Novo sinal", "clique para abrir o novo sinal");
     }
 }
