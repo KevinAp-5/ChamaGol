@@ -27,17 +27,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        // registra ambos os caminhos para compatibilidade com cliente que usa /api prefix
         registry.addEndpoint("/ws/chat", "/api/ws/chat")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(webSocketAuthInterceptor)
                 .withSockJS();
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        // se já tiver interceptores, mantenha-os
-        registration.interceptors(webSocketAuthInterceptor);
-    }
+//     @Override
+//     public void configureClientInboundChannel(ChannelRegistration registration) {
+//         // se já tiver interceptores, mantenha-os
+//         registration.interceptors(webSocketAuthInterceptor);
+//     }
 
 }
