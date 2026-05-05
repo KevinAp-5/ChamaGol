@@ -66,8 +66,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Transactional
-    // @Scheduled(cron = "@hourly")
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(cron = "@hourly")
     public void deleteExpiredMessages() {
         int deletedCount = messageRepository.deleteByCreatedAtBefore(ZonedDateTime.now().minusHours(13));
         log.info("messagesDeleted: {}", deletedCount);
