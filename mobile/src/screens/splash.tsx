@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ThreeDots from '../components/loading';
 import Logo from '../components/logo';
 import { api } from '../config/Api';
+import { registerDevice } from '../utils/registerDevice';
 
 const SplashScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -14,6 +15,7 @@ const SplashScreen = ({ navigation }: any) => {
       try {
         // Tenta buscar info do usuário (usa accessToken salvo)
         await api.get("/auth/user/info");
+        await registerDevice(); // <-- registra o device aqui também!
         navigation.replace('Home');
       } catch (err) {
         // Se falhar (ex: token inválido/expirado), vai para Login
