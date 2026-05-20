@@ -20,7 +20,6 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import FireGif from "../components/fire";
 import * as SecureStore from "expo-secure-store";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -198,6 +197,83 @@ const renderFormattedText = (text: string, accentColor: string) => {
   );
 };
 
+// ─── NewBadge (absolute, non-layout-affecting) ───────────────────────────────
+/**
+ * Badge "NOVO" absolutamente posicionado no canto superior direito do bubble.
+ * Usa apenas Animated nativo — sem dependências externas.
+ * Não afeta o layout do bubble (position: absolute).
+ */
+const NewBadge = React.memo(function NewBadge({ fonts }: { fonts: any }) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeIn = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in na montagem
+    Animated.timing(fadeIn, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+
+    // Pulse contínuo
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.18, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        newBadgeStyles.wrap,
+        { opacity: fadeIn, transform: [{ scale: pulseAnim }] },
+      ]}
+    >
+      {/* Dot pulsante */}
+      <View style={newBadgeStyles.dot} />
+      <Text style={[newBadgeStyles.text, { fontFamily: fonts.bold }]}>NOVO</Text>
+    </Animated.View>
+  );
+});
+
+const newBadgeStyles = StyleSheet.create({
+  wrap: {
+    position: "absolute",
+    top: -8,
+    right: -6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#FF5722",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    // Sombra colorida para destacar sem poluir
+    shadowColor: "#FF5722",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.55,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 10,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#FFF",
+    opacity: 0.9,
+  },
+  text: {
+    fontSize: 9,
+    color: "#FFF",
+    letterSpacing: 0.8,
+  },
+});
+
 // ─── MessageBubble ────────────────────────────────────────────────────────────
 const MessageBubble = React.memo(function MessageBubble({
   item,
@@ -324,6 +400,8 @@ const MessageBubble = React.memo(function MessageBubble({
         },
       ]}
     >
+      {/* Badge absolutamente posicionado — não afeta o layout */}
+      {item.isNew && <NewBadge fonts={fonts} />}
       <View
         style={[
           telegramStyles.bubbleAccentLine,
@@ -356,28 +434,14 @@ const MessageBubble = React.memo(function MessageBubble({
             >
               {msgStyle.label}
             </Text>
-            {item.isNew && (
-              <View style={telegramStyles.newBadge}>
-                <FireGif />
-                <Text style={[telegramStyles.newBadgeText, { fontFamily: fonts.bold }]}>
-                  NOVO
-                </Text>
-              </View>
-            )}
+
           </View>
         )}
         <View style={[telegramStyles.bubbleTextWrap, hasLabel && { marginTop: 6 }]}>
           {renderFormattedText(item.content, msgStyle.accentColor)}
         </View>
         <View style={telegramStyles.bubbleFooter}>
-          {!hasLabel && item.isNew && (
-            <View style={telegramStyles.newBadgeInline}>
-              <FireGif />
-              <Text style={[telegramStyles.newBadgeText, { fontFamily: fonts.bold }]}>
-                NOVO
-              </Text>
-            </View>
-          )}
+
           <Text style={[telegramStyles.bubbleTime, { fontFamily: fonts.regular }]}>
             {moment(item.created_at).format("HH:mm")}
           </Text>
@@ -730,7 +794,11 @@ export default function TimelineScreen({ navigation }: Props) {
       } catch {
         return;
       }
-      const shouldAdd = messageDTO.people === "ALL" || messageDTO.people === "VIP";
+      // FIX: "FREE" estava ausente — mensagens para usuários gratuitos não apareciam no modo live
+      const shouldAdd =
+        messageDTO.people === "ALL" ||
+        messageDTO.people === "VIP" ||
+        messageDTO.people === "FREE";
       if (!shouldAdd) return;
 
       const newMessage: Message = {
@@ -920,25 +988,46 @@ export default function TimelineScreen({ navigation }: Props) {
           Nenhuma mensagem ainda
         </Text>
         <Text style={[telegramStyles.emptyDesc, { fontFamily: fonts.regular }]}>
-          Ative o LIVE para receber mensagens em tempo real
+          {isConnected
+            ? "Aguardando novas mensagens ao vivo..."
+            : isConnecting
+            ? "Conectando ao live..."
+            : "Ative o LIVE para receber mensagens em tempo real"}
         </Text>
-        <TouchableOpacity
-          onPress={toggleWebSocket}
-          activeOpacity={0.85}
-          style={telegramStyles.emptyLiveBtn}
-        >
-          <LinearGradient
-            colors={["#E53935", "#B71C1C"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={telegramStyles.emptyLiveBtnGradient}
+
+        {/* FIX: botao so aparece se o usuario ainda nao ativou o live */}
+        {!isConnected && !isConnecting && (
+          <TouchableOpacity
+            onPress={toggleWebSocket}
+            activeOpacity={0.85}
+            style={telegramStyles.emptyLiveBtn}
           >
-            <MaterialCommunityIcons name="wifi" size={18} color="#FFF" />
-            <Text style={[telegramStyles.emptyLiveBtnText, { fontFamily: fonts.bold }]}>
-              ATIVAR LIVE
+            <LinearGradient
+              colors={["#E53935", "#B71C1C"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={telegramStyles.emptyLiveBtnGradient}
+            >
+              <MaterialCommunityIcons name="wifi" size={18} color="#FFF" />
+              <Text style={[telegramStyles.emptyLiveBtnText, { fontFamily: fonts.bold }]}>
+                ATIVAR LIVE
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
+        {/* Indicador quando live ja esta ativo mas ainda sem mensagens */}
+        {(isConnected || isConnecting) && (
+          <View style={telegramStyles.emptyLiveActiveWrap}>
+            <ActivityIndicator
+              size="small"
+              color={isConnected ? "#34C759" : "#FB8C00"}
+            />
+            <Text style={[telegramStyles.emptyLiveActiveText, { fontFamily: fonts.medium }]}>
+              {isConnected ? "Live ativo - aguardando mensagens" : "Conectando..."}
             </Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -1228,6 +1317,7 @@ const telegramStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     maxWidth: width - 24,
+    position: "relative",  // necessário para o NewBadge absolute funcionar
   },
   bubbleAccentLine: {
     width: 3,
@@ -1291,22 +1381,7 @@ const telegramStyles = StyleSheet.create({
     fontSize: 10,
     color: "rgba(255,255,255,0.35)",
   },
-  newBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  newBadgeInline: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    marginRight: "auto" as any,
-  },
-  newBadgeText: {
-    fontSize: 10,
-    color: "#FF5722",
-    letterSpacing: 0.8,
-  },
+  // newBadge styles movidos para newBadgeStyles (componente NewBadge)
   lockedBubble: {
     width: width - 32,
     alignSelf: "center",
@@ -1520,5 +1595,22 @@ const telegramStyles = StyleSheet.create({
     color: "#FFF",
     fontSize: 15,
     letterSpacing: 0.5,
+  },
+  // Estado vazio com live ativo
+  emptyLiveActiveWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  emptyLiveActiveText: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.65)",
   },
 });
