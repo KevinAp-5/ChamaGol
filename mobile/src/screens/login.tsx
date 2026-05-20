@@ -14,7 +14,8 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-  Pressable
+  Pressable,
+  DeviceEventEmitter,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -23,8 +24,9 @@ import Footer from "../components/footer";
 import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
-import { CustomAlertProvider, useCustomAlert } from '../components/CustomAlert';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -37,7 +39,7 @@ function LoginContent({ navigation }: Props) {
   const [password, setPassword] = useState("");
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -54,7 +56,7 @@ function LoginContent({ navigation }: Props) {
         await Promise.all([
           AsyncStorage.setItem("subscriptionFlag", "0"),
           AsyncStorage.setItem("termFlag", "0"),
-          AsyncStorage.setItem("subscriptionAlertFlag", "0")
+          AsyncStorage.setItem("subscriptionAlertFlag", "0"),
         ]);
         console.log("Flags resetadas no login");
       } catch (error) {
@@ -62,31 +64,31 @@ function LoginContent({ navigation }: Props) {
       }
     };
     resetFlags();
-    
+
     // Animações de entrada sequenciais para melhor UX
     Animated.sequence([
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 600,
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(logoScale, {
           toValue: 1,
           duration: 800,
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
           duration: 600,
-          useNativeDriver: true
-        })
+          useNativeDriver: true,
+        }),
       ]),
       Animated.timing(formSlideAnim, {
         toValue: 0,
         duration: 400,
-        useNativeDriver: true
-      })
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -97,8 +99,8 @@ function LoginContent({ navigation }: Props) {
         Animated.timing(loadingRotation, {
           toValue: 1,
           duration: 1000,
-          useNativeDriver: true
-        })
+          useNativeDriver: true,
+        }),
       ).start();
     } else {
       loadingRotation.setValue(0);
@@ -109,15 +111,15 @@ function LoginContent({ navigation }: Props) {
     Animated.timing(buttonScale, {
       toValue: 0.95,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
-  
+
   const handlePressOut = () => {
     Animated.timing(buttonScale, {
       toValue: 1,
       duration: 100,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
@@ -125,7 +127,7 @@ function LoginContent({ navigation }: Props) {
     Animated.timing(inputFocusAnim, {
       toValue: 1,
       duration: 200,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
@@ -133,7 +135,7 @@ function LoginContent({ navigation }: Props) {
     Animated.timing(inputFocusAnim, {
       toValue: 0,
       duration: 200,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
@@ -142,40 +144,42 @@ function LoginContent({ navigation }: Props) {
     if (!email || !password) {
       showAlert("Por favor, preencha seu e-mail e senha.", {
         title: "Campos obrigatórios",
-        confirmText: "OK"
+        confirmText: "OK",
       });
       return;
     }
-    
+
     if (!validateEmail(email)) {
       showAlert("Por favor, insira um e-mail válido.", {
         title: "E-mail inválido",
-        confirmText: "OK"
+        confirmText: "OK",
       });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await api.post(
-        "auth/login",
-        { login: email, password }
-      );
-      
-      if (response.status === 200 && (response.data?.token || response.data?.accessToken)) {
+      const response = await api.post("auth/login", { login: email, password });
+
+      if (
+        response.status === 200 &&
+        (response.data?.token || response.data?.accessToken)
+      ) {
         const accessToken = response.data.token || response.data.accessToken;
         const refreshToken = response.data.refreshToken;
         console.log("accessToken: " + accessToken);
 
         try {
           // sempre atualiza o accessToken (sobrescreve)
-          await SecureStore.setItemAsync('accessToken', accessToken);
-          console.log("guardado: " + await SecureStore.getItemAsync("accessToken"))
+          await SecureStore.setItemAsync("accessToken", accessToken);
+          console.log(
+            "guardado: " + (await SecureStore.getItemAsync("accessToken")),
+          );
           // atualiza ou remove o refreshToken conforme resposta
           if (refreshToken) {
-            await SecureStore.setItemAsync('refreshToken', refreshToken);
+            await SecureStore.setItemAsync("refreshToken", refreshToken);
           } else {
-            await SecureStore.deleteItemAsync('refreshToken');
+            await SecureStore.deleteItemAsync("refreshToken");
           }
         } catch (storageErr) {
           console.warn("Erro ao salvar tokens no SecureStore:", storageErr);
@@ -184,11 +188,13 @@ function LoginContent({ navigation }: Props) {
         // salva flags locais
         await Promise.all([
           AsyncStorage.setItem("subscriptionFlag", "0"),
-          AsyncStorage.setItem("termFlag", "0")
+          AsyncStorage.setItem("termFlag", "0"),
         ]);
 
         // Agora que os tokens foram gravados, busca info do usuário com token atualizado
         await getUserInfo();
+        // Fazer o post no backend do ExpoNotificationToken e o OS do aparelho
+        await registerDevice();
 
         setTimeout(() => {
           navigation.navigate("Home");
@@ -196,48 +202,79 @@ function LoginContent({ navigation }: Props) {
       } else {
         showAlert("E-mail ou senha inválidos.", {
           title: "Erro",
-          confirmText: "OK"
+          confirmText: "OK",
         });
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || "Ocorreu um erro ao fazer login. Tente novamente.";
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Ocorreu um erro ao fazer login. Tente novamente.";
       showAlert(errorMessage, {
         title: "Atenção",
-        confirmText: "OK"
+        confirmText: "OK",
       });
     } finally {
       setLoading(false);
     }
   };
-  
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
-  
-  const getUserInfo = async() => {
+
+  const registerDevice = async () => {
+    try {
+      const permission = await Notifications.requestPermissionsAsync();
+
+      if (!permission.granted) {
+        console.log("Permissão de notificação negada");
+        return;
+      }
+
+      const expoPushToken = (await Notifications.getExpoPushTokenAsync()).data;
+
+      console.log("Push token:", expoPushToken);
+
+      await api.post("/devices/register", {
+        token: expoPushToken,
+        platform: Platform.OS.toUpperCase(),
+      });
+
+      console.log("Device registrado com sucesso.");
+    } catch (error: any) {
+      console.log(
+        "Erro ao registrar device:",
+        error?.response?.data || error.message,
+      );
+    }
+  };
+
+  const getUserInfo = async () => {
     try {
       const response = await api.get("/auth/user/info");
       if (response.status == 200 && response.data) {
-          await AsyncStorage.setItem("username", response.data.username);
-          await AsyncStorage.setItem("lastLogin", response.data.lastLogin);
-          console.log("informações salvas.")
+        await AsyncStorage.setItem("username", response.data.username);
+        await AsyncStorage.setItem("lastLogin", response.data.lastLogin);
+        console.log("informações salvas.");
       }
     } catch (error: any) {
-      console.log("erro ao recuperar user login info" + error?.response?.data?.message);
+      console.log(
+        "erro ao recuperar user login info" + error?.response?.data?.message,
+      );
     }
-  }
+  };
 
   const rotateInterpolate = loadingRotation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
+    outputRange: ["0deg", "360deg"],
   });
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <LinearGradient
-        colors={['#000000', '#B71C1C']}
+        colors={["#000000", "#B71C1C"]}
         style={styles.gradientBackground}
       >
         <KeyboardAvoidingView
@@ -245,65 +282,58 @@ function LoginContent({ navigation }: Props) {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
             {/* Logo Section com animação melhorada */}
-            <Animated.View 
+            <Animated.View
               style={[
-                styles.logoContainer, 
-                { 
+                styles.logoContainer,
+                {
                   opacity: fadeAnim,
-                  transform: [
-                    { translateY: slideAnim },
-                    { scale: logoScale }
-                  ]
-                }
+                  transform: [{ translateY: slideAnim }, { scale: logoScale }],
+                },
               ]}
             >
               <View style={styles.logoWrapper}>
                 <Logo source={require("../assets/logo_white_label.png")} />
               </View>
-              <Text style={styles.appTitle}>
-                CHAMAGOL
-              </Text>
-              <Text style={styles.tagline}>
-                Seu universo esportivo
-              </Text>
+              <Text style={styles.appTitle}>CHAMAGOL</Text>
+              <Text style={styles.tagline}>Seu universo esportivo</Text>
             </Animated.View>
-            
+
             {/* Form Section com design melhorado */}
-            <Animated.View 
+            <Animated.View
               style={[
-                styles.formContainer, 
-                { 
+                styles.formContainer,
+                {
                   opacity: fadeAnim,
-                  transform: [{ translateY: formSlideAnim }]
-                }
+                  transform: [{ translateY: formSlideAnim }],
+                },
               ]}
             >
               <View style={styles.welcomeSection}>
-                <Text style={styles.welcomeTitle}>
-                  Bem-vindo de volta!
-                </Text>
+                <Text style={styles.welcomeTitle}>Bem-vindo de volta!</Text>
                 <Text style={styles.welcomeSubtitle}>
                   Faça login para continuar
                 </Text>
               </View>
-              
+
               <View style={styles.inputGroup}>
                 {/* Input Email melhorado */}
-                <View style={[
-                  styles.inputContainer,
-                  isEmailFocused && styles.inputContainerFocused
-                ]}>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    isEmailFocused && styles.inputContainerFocused,
+                  ]}
+                >
                   <View style={styles.inputIconContainer}>
-                    <MaterialCommunityIcons 
-                      name="email-outline" 
-                      size={20} 
-                      color={isEmailFocused ? "#E53935" : "#757575"} 
+                    <MaterialCommunityIcons
+                      name="email-outline"
+                      size={20}
+                      color={isEmailFocused ? "#E53935" : "#757575"}
                     />
                   </View>
                   <TextInput
@@ -324,17 +354,19 @@ function LoginContent({ navigation }: Props) {
                     style={styles.input}
                   />
                 </View>
-                
+
                 {/* Input Password melhorado */}
-                <View style={[
-                  styles.inputContainer,
-                  isPasswordFocused && styles.inputContainerFocused
-                ]}>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    isPasswordFocused && styles.inputContainerFocused,
+                  ]}
+                >
                   <View style={styles.inputIconContainer}>
-                    <MaterialCommunityIcons 
-                      name="lock-outline" 
-                      size={20} 
-                      color={isPasswordFocused ? "#E53935" : "#757575"} 
+                    <MaterialCommunityIcons
+                      name="lock-outline"
+                      size={20}
+                      color={isPasswordFocused ? "#E53935" : "#757575"}
                     />
                   </View>
                   <TextInput
@@ -366,7 +398,7 @@ function LoginContent({ navigation }: Props) {
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               {/* Forgot Password */}
               <TouchableOpacity
                 onPress={() => navigation.navigate("RequestPassword")}
@@ -376,12 +408,17 @@ function LoginContent({ navigation }: Props) {
                   Esqueceu sua senha?
                 </Text>
               </TouchableOpacity>
-              
+
               {/* Action Buttons */}
               <View style={styles.actionButtons}>
-                <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
+                <Animated.View
+                  style={{ transform: [{ scale: buttonScale }], width: "100%" }}
+                >
                   <TouchableOpacity
-                    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                    style={[
+                      styles.loginButton,
+                      loading && styles.loginButtonDisabled,
+                    ]}
                     onPress={handleLogin}
                     disabled={loading}
                     onPressIn={handlePressIn}
@@ -393,46 +430,40 @@ function LoginContent({ navigation }: Props) {
                         <Animated.View
                           style={[
                             styles.loadingIndicator,
-                            { transform: [{ rotate: rotateInterpolate }] }
+                            { transform: [{ rotate: rotateInterpolate }] },
                           ]}
                         >
-                          <MaterialCommunityIcons 
-                            name="loading" 
-                            size={20} 
-                            color="#FFFFFF" 
+                          <MaterialCommunityIcons
+                            name="loading"
+                            size={20}
+                            color="#FFFFFF"
                           />
                         </Animated.View>
-                        <Text style={styles.loadingText}>
-                          Entrando...
-                        </Text>
+                        <Text style={styles.loadingText}>Entrando...</Text>
                       </View>
                     ) : (
                       <View style={styles.buttonContent}>
-                        <Text style={styles.buttonText}>
-                          ENTRAR
-                        </Text>
-                        <MaterialCommunityIcons 
-                          name="arrow-right" 
-                          size={20} 
-                          color="#FFFFFF" 
+                        <Text style={styles.buttonText}>ENTRAR</Text>
+                        <MaterialCommunityIcons
+                          name="arrow-right"
+                          size={20}
+                          color="#FFFFFF"
                           style={styles.buttonIcon}
                         />
                       </View>
                     )}
                   </TouchableOpacity>
                 </Animated.View>
-                
+
                 {/* Divider melhorado */}
                 <View style={styles.divider}>
                   <View style={styles.dividerLine} />
                   <View style={styles.dividerTextContainer}>
-                    <Text style={styles.dividerText}>
-                      ou
-                    </Text>
+                    <Text style={styles.dividerText}>ou</Text>
                   </View>
                   <View style={styles.dividerLine} />
                 </View>
-                
+
                 {/* Register Button melhorado */}
                 <TouchableOpacity
                   style={styles.registerButton}
@@ -440,15 +471,13 @@ function LoginContent({ navigation }: Props) {
                   activeOpacity={0.8}
                 >
                   <View style={styles.registerButtonContent}>
-                    <MaterialCommunityIcons 
-                      name="account-plus" 
-                      size={20} 
-                      color="#E53935" 
+                    <MaterialCommunityIcons
+                      name="account-plus"
+                      size={20}
+                      color="#E53935"
                       style={styles.registerButtonIcon}
                     />
-                    <Text style={styles.registerButtonText}>
-                      CRIAR CONTA
-                    </Text>
+                    <Text style={styles.registerButtonText}>CRIAR CONTA</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -469,7 +498,7 @@ export default function LoginScreen(props: Props) {
   );
 }
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   gradientBackground: {
@@ -503,7 +532,7 @@ const styles = StyleSheet.create({
     color: "#E53935",
     marginTop: 16,
     letterSpacing: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
