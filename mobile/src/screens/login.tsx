@@ -26,7 +26,7 @@ import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
 import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
+import { registerDevice } from "../utils/registerDevice";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -221,33 +221,6 @@ function LoginContent({ navigation }: Props) {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
-
-  const registerDevice = async () => {
-    try {
-      const permission = await Notifications.requestPermissionsAsync();
-
-      if (!permission.granted) {
-        console.log("Permissão de notificação negada");
-        return;
-      }
-
-      const expoPushToken = (await Notifications.getExpoPushTokenAsync()).data;
-
-      console.log("Push token:", expoPushToken);
-
-      await api.post("/devices/register", {
-        token: expoPushToken,
-        platform: Platform.OS.toUpperCase(),
-      });
-
-      console.log("Device registrado com sucesso.");
-    } catch (error: any) {
-      console.log(
-        "Erro ao registrar device:",
-        error?.response?.data || error.message,
-      );
-    }
   };
 
   const getUserInfo = async () => {
