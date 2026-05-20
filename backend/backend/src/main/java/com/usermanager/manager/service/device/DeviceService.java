@@ -31,6 +31,7 @@ public class DeviceService {
 
     @Transactional
     public void registerDevice(@NotNull @Positive Long userId, @Valid RegisterDeviceRequest request) {
+        log.info("Registrando device para userId={} | token={} | plataforma={}", userId, request.token(), request.platform());
 
         User user = userService.findById(userId);
 
@@ -38,6 +39,7 @@ public class DeviceService {
 
         if (existingDevice.isPresent()) {
             Device device = existingDevice.get();
+            log.info("Device já existe para token={}, atualizando usuário e data de uso", request.token());
             device.setUser(user);
             device.setActive(true);
             device.setLastUsedAt(LocalDateTime.now());
@@ -51,13 +53,16 @@ public class DeviceService {
         device.setActive(true);
 
         deviceRepository.save(device);
+        log.info("Novo device registrado para userId={} | token={}", userId, request.token());
     }
 
     public List<Device> findAllByActiveTrue() {
+        log.debug("Buscando todos os devices ativos");
         return deviceRepository.findAllByActiveTrue();
     }
 
     public List<Device> findAllByUserIdIn(List<Long> usersIds) {
+        log.debug("Buscando devices para os usuários: {}", usersIds);
         return deviceRepository.findAllByUserIdIn(usersIds);
     }
 }

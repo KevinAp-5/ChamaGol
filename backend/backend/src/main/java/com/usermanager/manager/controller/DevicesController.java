@@ -24,6 +24,7 @@ public class DevicesController {
 
     @PostMapping("register")
     public ResponseEntity<Void> registerDevice(@AuthenticationPrincipal User user, @RequestBody RegisterDeviceRequest request) {
+        log.info("Authenticated user: {}, Request: {}", user, request);
         deviceService.registerDevice(user.getId(), request);
         return ResponseEntity.ok().build();
     }
