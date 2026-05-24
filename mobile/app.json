@@ -36,6 +36,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.kevenap5.ChamaGol",
+      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -85,7 +86,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-notifications"
     ],
     "owner": "kevenap-5"
   }
