@@ -28,7 +28,7 @@ public class PushNotificationService {
         log.info("users received do send notification: {}, notification body: {}", usersIds, body);
         List<Device> devices = deviceService.findAllByUserIdIn(usersIds);
 
-        log.info("devices found to send notification: {}", devices);
+        log.info("devices found to send notification: {}", devices.toString());
         for (Device device: devices) {
             String devicePushToken = device.getPushToken();
             log.info("device push Token: {}", devicePushToken);
@@ -42,7 +42,7 @@ public class PushNotificationService {
             try {
                 var response = restClient.post()
                     .uri("/--/api/v2/push/send")
-                    .body(payload)
+                    .body(List.of(payload))
                     .retrieve()
                     .toBodilessEntity();
                 log.info("Expo notification send response: {}", response);
