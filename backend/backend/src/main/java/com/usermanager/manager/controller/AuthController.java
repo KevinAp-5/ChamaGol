@@ -206,6 +206,10 @@ public class AuthController {
     @GetMapping("user/info")
     @ResponseBody
     public ResponseEntity<UserLoginInfo> getUserLoginInfo(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return null;
+        }
+
         String username = capitalize(user.getName().split(" ")[0]);
         return ResponseEntity.ok(new UserLoginInfo(username, user.getLastLogin()));
     }
