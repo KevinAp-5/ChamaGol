@@ -13,22 +13,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NotificationService {
 
-    public void sendNotificationToAllUsers(String title, String payload) {
+    public void send(String token, String title, String body) {
         Message message = Message.builder()
-                .setNotification(Notification.builder()
-                        .setTitle(title)
-                        .setBody(payload)
-                        .build())
-                .setTopic("all_users")
-                .putData("screen", "login")
-                .build();
+            .setToken(token)
+            .setNotification(
+                Notification.builder()
+                    .setTitle(title)
+                    .setBody(body)
+                    .build()
+            )
+            .build();
 
-        String response;
         try {
-            response = FirebaseMessaging.getInstance().send(message);
-            log.info("notificação enviada: " + response);
+            String response = FirebaseMessaging.getInstance().send(message);
+            log.info("Mensagem enviada para token: {}. Response: {}", token, response);
         } catch (FirebaseMessagingException e) {
-            log.info("Erro ao enviar notificação:" + e.getMessage());
+            log.error("Erro ao enviar mensagem para token: {}. Erro: {}", token, e);
         }
     }
 }
