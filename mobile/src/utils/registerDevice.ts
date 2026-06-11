@@ -1,6 +1,7 @@
 // src/utils/registerDevice.ts
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { api } from "../config/Api";
 
 export const registerDevice = async () => {
@@ -13,12 +14,31 @@ export const registerDevice = async () => {
     const expoPushToken = (await Notifications.getExpoPushTokenAsync()).data;
     console.log("Push token:", expoPushToken);
 
-    await api.post("/devices/register", {
-      token: expoPushToken,
-      platform: Platform.OS.toUpperCase(),
-    });
+    // Ensure we send Bearer token explicitly
+    const accessToken = await SecureStore.getItemAsync("accessToken");
+    if (!accessToken) {
+      console.warn(
+        "registerDevice: nenhum access token disponível. Abortando registro do device.",
+      );
+      return;
+    }
 
-    console.log("Device registrado com sucesso.");
+    console.log("Enviando token para backend com Authorization Bearer");
+
+    const response = await api.post(
+      "/devices/register",
+      {
+        token: expoPushToken,
+        platform: Platform.OS.toUpperCase(),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    console.log("Device registrado com sucesso.", response.status, response.data);
   } catch (error: any) {
     console.log(
       "Erro ao registrar device:",
