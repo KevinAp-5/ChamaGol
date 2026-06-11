@@ -193,7 +193,10 @@ public class AuthController {
     @GetMapping("me")
     @ResponseBody
     public ResponseEntity<ProfileDTO> getUserInfo(@AuthenticationPrincipal User user) {
-        log.info("User: {}", user);
+        if (user == null) {
+            return null;
+        }
+
         ZonedDateTime expirationDate = authService.getExpirationDate(user);
         return ResponseEntity.ok(new ProfileDTO(
                 user.getName(),
