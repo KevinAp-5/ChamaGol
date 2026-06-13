@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850101182190",
+    "project_id": "chamagol-171a8",
+    "storage_bucket": "chamagol-171a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850101182190:android:d6f2a4e2e41bb1b0c75dff",
+        "android_client_info": {
+          "package_name": "com.kevenap5.ChamaGol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFpUCv-_KXe8TqgFrKYzWO4X2ahUOPyls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
