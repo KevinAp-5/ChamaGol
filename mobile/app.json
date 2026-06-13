@@ -36,7 +36,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.kevenap5.ChamaGol",
-      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",

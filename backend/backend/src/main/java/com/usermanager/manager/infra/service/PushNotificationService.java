@@ -20,55 +20,54 @@ public class PushNotificationService {
 
     private final RestClient restClient =
         RestClient.builder()
-            .baseUrl("https://exp.host")
+            .baseUrl("https://exp.host/--/api/v2/push/send")
+            .defaultHeader("Content-Type", "application/json")
             .build();
 
-
     public void sendToUsers(List<Long> usersIds, String title, String body) {
-        log.info("users received do send notification: {}, notification body: {}", usersIds, body);
+        log.info("Users received to send notification: {}, notification body: {}", usersIds, body);
         List<Device> devices = deviceService.findAllByUserIdIn(usersIds);
 
-        log.info("devices found to send notification: {}", devices.toString());
-        for (Device device: devices) {
+        log.info("Devices found to send notification: {}", devices.size());
+        
+        for (Device device : devices) {
             String devicePushToken = device.getPushToken();
-            log.info("device push Token: {}", devicePushToken);
-            Map<String, Object> payload = Map.of(
-                "to", devicePushToken,
-                "title", title,
-                "body", body,
-                "sound", "default"
-            );
-
-            try {
-                var response = restClient.post()
-                    .uri("/--/api/v2/push/send")
-                    .body(List.of(payload))
-                    .retrieve()
-                    .toBodilessEntity();
-                log.info("Expo notification send response: {}", response);
-            } catch (Exception e) {
-                log.info("Erro ao enviar push: {}", e.getMessage());
+            if (devicePushToken == null || devicePushToken.isEmpty()) {
+                log.warn("Push token nulo ou vazio para device ID: {}", device.getId());
+                continue;
             }
+            
+            log.info("Sending push to token: {}", devicePushToken);
+            send(devicePushToken, title, body);
         }
     }
 
-    public void sentToAll(String title, String body) {
+    public void sendToAll(String title, String body) {
         List<Device> devices = deviceService.findAllByActiveTrue();
-
-        devices.forEach(device -> send(device.getPushToken(), title, body));
+        log.info("Sending to all active devices: {}", devices.size());
+        
+        devices.forEach(device -> 
+            send(device.getPushToken(), title, body)
+        );
     }
 
     private void send(String token, String title, String body) {
         Map<String, Object> payload = Map.of(
-                "to", token,
-                "title", title,
-                "body", body,
-                "sound", "default");
+            "to", token,
+            "title", title,
+            "body", body,
+            "sound", "default"
+        );
 
-        restClient.post()
-                .uri("/--/api/v2/push/send")
+        try {
+            var response = restClient.post()
                 .body(payload)
                 .retrieve()
-                .toBodilessEntity();
+                .body(String.class);
+            
+            log.info("Expo notification sent successfully: {}", response);
+        } catch (Exception e) {
+            log.error("Erro ao enviar push para token {}: {}", token, e.getMessage(), e);
+        }
     }
 }
