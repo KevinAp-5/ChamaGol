@@ -1,4 +1,6 @@
 spring:
+  flyway:
+    clean-disabled: false
   application:
     name: login
   datasource:
@@ -15,7 +17,7 @@ spring:
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
   mail:
     host: smtp.gmail.com
     port: 587
