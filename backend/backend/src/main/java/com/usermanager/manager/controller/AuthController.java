@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/auth/")
 @Slf4j
 public class AuthController {
+    // TODO: criar o metodo de testar notificação no AuthController para que seja possivel enviar uma notificação customizada através do painel adm
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
     private final AuthService authService;
 

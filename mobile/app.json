@@ -1,5 +1,9 @@
 {
   "expo": {
+    "notification": {
+      "icon": "./src/assets/logo_notification.png",
+      "color": "#E53935"
+    },
     "expo.doctor": {
       "reactNativeDirectoryCheck": {
         "listUnknownPackages": false

@@ -56,7 +56,10 @@ public class PushNotificationService {
             "to", token,
             "title", title,
             "body", body,
-            "sound", "default"
+            "sound", "default",
+            "data", Map.of(
+                "screen", "Timeline"
+            )
         );
 
         try {
