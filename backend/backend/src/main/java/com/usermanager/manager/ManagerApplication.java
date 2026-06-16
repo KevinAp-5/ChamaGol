@@ -15,7 +15,6 @@ public class ManagerApplication {
 		// TODO: inserir um default term of uso assim que a aplicação rodar, caso
 		// estiver ausente no banco de dados
 
-		// TODO: imeplemntar autologin na tela( fazer uso do refreshTOken)
 
 		// TODO: implementar OAUTH do google
 
