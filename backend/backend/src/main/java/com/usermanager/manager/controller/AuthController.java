@@ -56,11 +56,11 @@ public class AuthController {
         return ResponseEntity.ok(new ResponseMessage("ok"));
     }
 
-    @PostMapping("notification")
-    public ResponseEntity<ResponseMessage> sendNotification() {
-        authService.getNotificationService().sendNotificationToAllUsers("Teste", "Olá");
-        return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
-    }
+    // @PostMapping("notification")
+    // public ResponseEntity<ResponseMessage> sendNotification() {
+    //     authService.getNotificationService().sendNotificationToAllUsers("Teste", "Olá");
+    //     return ResponseEntity.ok(new ResponseMessage("notificação enviada"));
+    // }
 
     // --- Cadastro e confirmação ---
     @PostMapping("register")
