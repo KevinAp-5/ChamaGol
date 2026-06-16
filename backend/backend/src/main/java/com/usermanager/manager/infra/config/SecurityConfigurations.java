@@ -63,6 +63,7 @@ public class SecurityConfigurations {
                         .requestMatchers("/api/acceptance/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/sale/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/notification").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated() 
 
