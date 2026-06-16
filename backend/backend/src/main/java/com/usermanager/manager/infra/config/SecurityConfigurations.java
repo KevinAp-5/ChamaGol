@@ -57,7 +57,6 @@ public class SecurityConfigurations {
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/css/**").permitAll()
                         .requestMatchers("/api/payment/**").permitAll()
-                        .requestMatchers("/api/signals/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/terms/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/terms/**").permitAll()
                         .requestMatchers("/api/acceptance/**").permitAll()
