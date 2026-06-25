@@ -1,10 +1,8 @@
-import {
-  DefaultTheme,
-  NavigationContainer,
-  Theme,
-} from "@react-navigation/native";
+import { DefaultTheme, NavigationContainer, Theme } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, Platform, PermissionsAndroid } from "react-native";
+import * as Notifications from "expo-notifications";
 
 import { CustomAlertProvider } from "./src/components/CustomAlert";
 import DeepLinkListener from "./src/components/DeepLinkListener";
@@ -20,16 +18,12 @@ import PaymentFailureScreen from "./src/screens/payment/failure";
 import PaymentPendingScreen from "./src/screens/payment/pending";
 import PaymentSuccessScreen from "./src/screens/payment/success";
 import ProfileScreen from "./src/screens/profile";
+import ProSubscriptionScreen from "./src/screens/subscription";
 import RegisterScreen from "./src/screens/register";
 import RequestPasswordReset from "./src/screens/requestPasswordReset";
 import SplashScreen from "./src/screens/splash";
-import ProSubscriptionScreen from "./src/screens/subscription";
 import TimelineScreen from "./src/screens/timeline";
-
 import { navigationRef } from "./src/utils/navigationRef";
-
-import * as Notifications from "expo-notifications";
-import { PermissionsAndroid, Platform } from "react-native";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -43,19 +37,20 @@ export type RootStackParamList = {
   PasswordResetEmailConfirmed: undefined;
   RequestPassword: undefined;
   ProSubscription: undefined;
-  EmailVerification: Object;
+  EmailVerification: object;
   PaymentSuccess: undefined;
   PaymentFailure: undefined;
   PaymentPending: undefined;
-  EmailConfirmationSuccessScreen: undefined;
+  EmailConfirmationSuccess: undefined;
 };
 
-// 🔧 Tema escuro global do app
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
 const DarkTheme: Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "#000000", // fundo preto
+    background: "#000000",
     card: "#000000",
     text: "#ffffff",
     border: "#222222",
@@ -63,7 +58,6 @@ const DarkTheme: Theme = {
   },
 };
 
-// 🔧 Cria notification channel (OBRIGATÓRIO para Android)
 async function setupNotificationChannel() {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
@@ -75,52 +69,54 @@ async function setupNotificationChannel() {
   }
 }
 
-// 🔧 Solicita permissão (OBRIGATÓRIO para Android 13+)
 async function requestNotificationPermission() {
   if (Platform.OS === "android") {
-    const { granted } = await PermissionsAndroid.requestPermission(
-      "android.permission.POST_NOTIFICATIONS",
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as any
     );
-    console.log("[PERMISSION] POST_NOTIFICATIONS:", granted);
+    console.log(
+      "[PERMISSION] POST_NOTIFICATIONS:",
+      result === PermissionsAndroid.RESULTS.GRANTED
+    );
   } else if (Platform.OS === "ios") {
-    const { granted } = await Notifications.requestPermissionsAsync();
-    console.log("[PERMISSION] iOS:", granted);
+    const status = await Notifications.requestPermissionsAsync();
+    console.log("[PERMISSION] iOS:", status.granted);
   }
 }
+
 export default function App() {
   useEffect(() => {
-    // 1️⃣ Setup channel + permissão
     setupNotificationChannel();
     requestNotificationPermission();
 
-    // 2️⃣ Get push token
     Notifications.getDevicePushTokenAsync().then((token) => {
       console.log("[PUSH TOKEN]", token.data);
     });
 
-    // 🔥 TESTE LOCAL AQUI
     Notifications.scheduleNotificationAsync({
       content: {
         title: "Teste Local",
         body: "Se notificação aparecer, o problema é FCM/Expo push",
       },
-      trigger: { type: "timeInterval", seconds: 2 },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 2,
+      },
     });
 
-    // 3️⃣ Resto dos listeners...
     const subscription = Notifications.addNotificationReceivedListener(
       (notification) => {
         console.log("[NOTIFICATION RECEIVED]", JSON.stringify(notification));
-      },
+      }
     );
 
     const clickSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data;
+        const data = response.notification.request.content.data as any;
         console.log("[NOTIFICATION CLICK]", JSON.stringify(data));
 
         if (data?.screen === "Timeline" && navigationRef.isReady()) {
-          navigationRef.navigate("Timeline");
+          navigationRef.navigate("Timeline" as never);
         }
       });
 
@@ -129,6 +125,7 @@ export default function App() {
       clickSubscription.remove();
     };
   }, []);
+
   const linking = {
     prefixes: ["chamagol://", "https://chamagol.com", "exp://"],
     config: {
@@ -156,18 +153,14 @@ export default function App() {
   return (
     <CustomAlertProvider>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <NavigationContainer
-        ref={navigationRef}
-        linking={linking}
-        theme={DarkTheme}
-      >
+      <NavigationContainer ref={navigationRef} linking={linking} theme={DarkTheme}>
         <NotificationProvider>
           <DeepLinkListener />
           <Stack.Navigator
             initialRouteName="Splash"
             screenOptions={{
               headerShown: false,
-              cardStyle: { backgroundColor: "#000000" },
+              contentStyle: { backgroundColor: "#000000" },
             }}
           >
             <Stack.Screen name="Splash" component={SplashScreen} />
@@ -181,42 +174,18 @@ export default function App() {
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen
-              name="ForgotPassword"
-              component={ForgotPasswordScreen}
-            />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen
               name="PasswordResetEmailConfirmed"
               component={PasswordResetEmailConfirmed}
             />
-            <Stack.Screen
-              name="RequestPassword"
-              component={RequestPasswordReset}
-            />
-            <Stack.Screen
-              name="ProSubscription"
-              component={ProSubscriptionScreen}
-            />
-            <Stack.Screen
-              name="EmailVerification"
-              component={EmailVerificationScreen}
-            />
-            <Stack.Screen
-              name="EmailConfirmationSuccess"
-              component={EmailConfirmationSuccessScreen}
-            />
-            <Stack.Screen
-              name="PaymentSuccess"
-              component={PaymentSuccessScreen}
-            />
-            <Stack.Screen
-              name="PaymentFailure"
-              component={PaymentFailureScreen}
-            />
-            <Stack.Screen
-              name="PaymentPending"
-              component={PaymentPendingScreen}
-            />
+            <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
+            <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
+            <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
+            <Stack.Screen name="EmailConfirmationSuccess" component={EmailConfirmationSuccessScreen} />
+            <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
+            <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
+            <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
           </Stack.Navigator>
         </NotificationProvider>
       </NavigationContainer>
