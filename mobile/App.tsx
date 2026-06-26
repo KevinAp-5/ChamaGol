@@ -71,38 +71,58 @@ async function setupNotificationChannel() {
 
 async function requestNotificationPermission() {
   if (Platform.OS === "android") {
-    const result = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as any
-    );
-    console.log(
-      "[PERMISSION] POST_NOTIFICATIONS:",
-      result === PermissionsAndroid.RESULTS.GRANTED
-    );
+    try {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as any
+      );
+
+      console.log(
+        "[PERMISSION] POST_NOTIFICATIONS:",
+        result === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } catch (error) {
+      console.log("[PERMISSION ERROR]", error);
+    }
   } else if (Platform.OS === "ios") {
-    const status = await Notifications.requestPermissionsAsync();
-    console.log("[PERMISSION] iOS:", status.granted);
+    try {
+      const status = await Notifications.requestPermissionsAsync();
+      console.log("[PERMISSION] iOS:", status.granted);
+    } catch (error) {
+      console.log("[PERMISSION ERROR]", error);
+    }
   }
 }
 
 export default function App() {
   useEffect(() => {
-    setupNotificationChannel();
-    requestNotificationPermission();
+    let isMounted = true;
 
-    Notifications.getDevicePushTokenAsync().then((token) => {
-      console.log("[PUSH TOKEN]", token.data);
-    });
+    async function init() {
+      try {
+        await setupNotificationChannel();
+        await requestNotificationPermission();
 
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Teste Local",
-        body: "Se notificação aparecer, o problema é FCM/Expo push",
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 2,
-      },
-    });
+        const token = await Notifications.getDevicePushTokenAsync();
+        if (isMounted) {
+          console.log("[PUSH TOKEN]", token.data);
+        }
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Teste Local",
+            body: "Se notificação aparecer, o problema é FCM/Expo push",
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 2,
+          },
+        });
+      } catch (error) {
+        console.log("[NOTIFICATION INIT ERROR]", error);
+      }
+    }
+
+    init();
 
     const subscription = Notifications.addNotificationReceivedListener(
       (notification) => {
@@ -115,12 +135,31 @@ export default function App() {
         const data = response.notification.request.content.data as any;
         console.log("[NOTIFICATION CLICK]", JSON.stringify(data));
 
-        if (data?.screen === "Timeline" && navigationRef.isReady()) {
+        const targetScreen = data?.screen;
+
+        if (targetScreen === "Timeline" && navigationRef.isReady()) {
           navigationRef.navigate("Timeline" as never);
+        }
+
+        if (targetScreen === "Home" && navigationRef.isReady()) {
+          navigationRef.navigate("Home" as never);
+        }
+
+        if (targetScreen === "PaymentSuccess" && navigationRef.isReady()) {
+          navigationRef.navigate("PaymentSuccess" as never);
+        }
+
+        if (targetScreen === "PaymentFailure" && navigationRef.isReady()) {
+          navigationRef.navigate("PaymentFailure" as never);
+        }
+
+        if (targetScreen === "PaymentPending" && navigationRef.isReady()) {
+          navigationRef.navigate("PaymentPending" as never);
         }
       });
 
     return () => {
+      isMounted = false;
       subscription.remove();
       clickSubscription.remove();
     };
@@ -174,18 +213,42 @@ export default function App() {
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+            />
             <Stack.Screen
               name="PasswordResetEmailConfirmed"
               component={PasswordResetEmailConfirmed}
             />
-            <Stack.Screen name="RequestPassword" component={RequestPasswordReset} />
-            <Stack.Screen name="ProSubscription" component={ProSubscriptionScreen} />
-            <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
-            <Stack.Screen name="EmailConfirmationSuccess" component={EmailConfirmationSuccessScreen} />
-            <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
-            <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
-            <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
+            <Stack.Screen
+              name="RequestPassword"
+              component={RequestPasswordReset}
+            />
+            <Stack.Screen
+              name="ProSubscription"
+              component={ProSubscriptionScreen}
+            />
+            <Stack.Screen
+              name="EmailVerification"
+              component={EmailVerificationScreen}
+            />
+            <Stack.Screen
+              name="EmailConfirmationSuccess"
+              component={EmailConfirmationSuccessScreen}
+            />
+            <Stack.Screen
+              name="PaymentSuccess"
+              component={PaymentSuccessScreen}
+            />
+            <Stack.Screen
+              name="PaymentFailure"
+              component={PaymentFailureScreen}
+            />
+            <Stack.Screen
+              name="PaymentPending"
+              component={PaymentPendingScreen}
+            />
           </Stack.Navigator>
         </NotificationProvider>
       </NavigationContainer>

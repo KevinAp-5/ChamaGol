@@ -35,6 +35,7 @@
       }
     },
     "android": {
+      "googleServicesFile": "./googleServicesFile.json",
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/splash.png",
