@@ -107,16 +107,16 @@ export default function App() {
           console.log("[PUSH TOKEN]", token.data);
         }
 
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Teste Local",
-            body: "Se notificação aparecer, o problema é FCM/Expo push",
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds: 2,
-          },
-        });
+        // await Notifications.scheduleNotificationAsync({
+        //   content: {
+        //     title: "Teste Local",
+        //     body: "Se notificação aparecer, o problema é FCM/Expo push",
+        //   },
+        //   trigger: {
+        //     type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        //     seconds: 2,
+        //   },
+        // });
       } catch (error) {
         console.log("[NOTIFICATION INIT ERROR]", error);
       }
