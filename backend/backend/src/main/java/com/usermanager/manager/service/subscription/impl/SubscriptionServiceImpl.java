@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.usermanager.manager.enums.Subscription;
 import com.usermanager.manager.model.subscription.SubscriptionControl;
@@ -20,6 +21,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @Service
+@Validated
 public class SubscriptionServiceImpl implements SubscriptionService {
     private UserService userService;
     private SubscriptionRepository subscriptionRepository;

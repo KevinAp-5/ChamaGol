@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.usermanager.manager.dto.authentication.AuthenticationDTO;
 import com.usermanager.manager.dto.authentication.CreateUserDTO;
@@ -45,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@Validated
 public class AuthService implements UserDetailsService {
 
     private final UserService userService;

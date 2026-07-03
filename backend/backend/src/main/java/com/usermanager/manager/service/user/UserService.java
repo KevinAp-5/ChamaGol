@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.usermanager.manager.dto.user.DeleteByLoginDTO;
 import com.usermanager.manager.dto.user.UserDTO;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Validated
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
