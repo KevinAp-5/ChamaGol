@@ -36,6 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 @EnableScheduling
 @Slf4j
 public class WebhookService {
+    // TODO adicionar um método para processamento dos pagamentos que tiveram um erro
+    // dessa forma o erro já é tentado tratar no backend. e somente em ultima instancia
+    // é enviado ao usuário tentar dnv
     private static final int MAX_RETRY_COUNT = 5;
     private static final String STATUS_APPROVED = "approved";
 

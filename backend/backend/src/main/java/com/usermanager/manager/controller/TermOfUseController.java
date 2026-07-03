@@ -13,16 +13,9 @@ import com.usermanager.manager.dto.term.TermDTO;
 import com.usermanager.manager.model.term.TermOfUse;
 import com.usermanager.manager.service.term.TermOfUseService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
-@Tag(name = "Termos de Uso", description = "Endpoints para gerenciamento dos termos de uso")
 @RestController
 @Slf4j
 @RequestMapping("/api/terms")
@@ -34,16 +27,12 @@ public class TermOfUseController {
         this.termOfUseService = termOfUseService;
     }
 
-    @Operation(summary = "Buscar termo de uso mais recente")
-    @ApiResponse(responseCode = "200", description = "Termo de uso mais recente")
     @GetMapping("/latest")
     public ResponseEntity<TermDTO> getLatestTerm() {
         return ResponseEntity.ok()
                 .body(new TermDTO(termOfUseService.findLatest()));
     }
 
-    @Operation(summary = "Listar todos os termos de uso")
-    @ApiResponse(responseCode = "200", description = "Lista de termos de uso")
     @GetMapping
     public ResponseEntity<List<TermDTO>> getAllTerms() {
         return ResponseEntity.ok(termOfUseService.findAll().stream()
@@ -51,15 +40,8 @@ public class TermOfUseController {
             .toList());
     }
 
-    @Operation(summary = "Criar novo termo de uso")
-    @ApiResponse(responseCode = "200", description = "Termo criado")
     @PostMapping
     public ResponseEntity<TermDTO> createTerm(
-        @RequestBody(
-            description = "Dados para criação do termo",
-            required = true,
-            content = @Content(schema = @Schema(implementation = CreateTermRequest.class))
-        )
         @org.springframework.web.bind.annotation.RequestBody @Valid CreateTermRequest request
     ) {
         log.info("term attempt: {}", request);

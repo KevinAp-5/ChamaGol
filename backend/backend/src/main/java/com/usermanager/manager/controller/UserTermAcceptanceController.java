@@ -16,16 +16,8 @@ import com.usermanager.manager.model.user.User;
 import com.usermanager.manager.service.term.TermOfUseService;
 import com.usermanager.manager.service.term.UserTermAcceptanceService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
-@Tag(name = "Aceite de Termos", description = "Endpoints para aceite dos termos de uso")
 @RestController
 @RequestMapping("/api/acceptance")
 @Slf4j
@@ -40,16 +32,9 @@ public class UserTermAcceptanceController {
         this.termOfUseService = termOfUseService;
     }
 
-    @Operation(summary = "Aceitar o termo de uso mais recente")
-    @ApiResponse(responseCode = "200", description = "Termo aceito")
     @PostMapping("/accept-latest")
     public ResponseEntity<TermAcceptedResponse> acceptLatestTerm(
-        @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user,
-        @RequestBody(
-            description = "Dados de aceite do termo",
-            required = true,
-            content = @Content(schema = @Schema(implementation = AcceptanceRequest.class))
-        )
+        @AuthenticationPrincipal User user,
         AcceptanceRequest request
     ) {
         TermOfUse latestTerm = termOfUseService.findLatest();
@@ -63,11 +48,9 @@ public class UserTermAcceptanceController {
         return ResponseEntity.ok(new TermAcceptedResponse(acceptance.getTermOfUse(), acceptance.getIsAdult(), acceptance.getAcceptedAt(), acceptance.getUser().getLogin()));
     }
 
-    @Operation(summary = "Verificar se usuário aceitou o termo mais recente")
-    @ApiResponse(responseCode = "200", description = "Retorna true se aceitou, false caso contrário")
     @GetMapping("/has-accepted-latest")
     public ResponseEntity<Boolean> hasAcceptedLatest(
-        @Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user
+        @AuthenticationPrincipal User user
     ) {
         if (user == null) {
             throw new UserNotFoundException("");

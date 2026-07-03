@@ -40,16 +40,8 @@ import com.usermanager.manager.model.webhook.enums.EventStatus;
 import com.usermanager.manager.service.sale.SaleService;
 import com.usermanager.manager.service.user.UserService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
-@Tag(name = "Pagamentos", description = "Endpoints de pagamentos, webhooks e callbacks MercadoPago")
 @RestController
 @RequestMapping("/api/payment")
 @Slf4j
@@ -70,10 +62,8 @@ public class PaymentController {
         this.preferenceClient = preferenceClient;
     }
 
-    @Operation(summary = "Consultar status da assinatura do usuário autenticado")
-    @ApiResponse(responseCode = "200", description = "Status da assinatura retornado")
     @GetMapping("/status")
-    public ResponseEntity<ResponseMessage> getUserSubscriptionStatus(@Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) {
+    public ResponseEntity<ResponseMessage> getUserSubscriptionStatus(@AuthenticationPrincipal User user) {
         var userResponse = userService.findById(user.getId());
         Subscription userSubscription = userResponse.getSubscription();
 
@@ -84,22 +74,12 @@ public class PaymentController {
         return ResponseEntity.ok(new ResponseMessage(userSubscription.getValue()));
     }
 
-    @Operation(summary = "Receber Webhook do MercadoPago", description = "Endpoint para receber notificações de pagamento do MercadoPago.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Webhook recebido com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Requisição inválida"),
-            @ApiResponse(responseCode = "401", description = "Assinatura inválida")
-    })
-
     @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
-        @Parameter(description = "Assinatura do MercadoPago") @RequestHeader(value = "x-signature", required = false) String xSignature,
-        @Parameter(description = "ID da requisição") @RequestHeader(value = "x-request-id", required = false) String xRequestId,
-        @Parameter(description = "Query params") @RequestParam Map<String, String> queryParams,
-        @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Payload do webhook", 
-            required = true, 
-            content = @Content(schema = @Schema(implementation = Map.class))) @RequestBody Map<String, Object> payload) 
+        @RequestHeader(value = "x-signature", required = false) String xSignature,
+        @RequestHeader(value = "x-request-id", required = false) String xRequestId,
+        @RequestParam Map<String, String> queryParams,
+        @RequestBody Map<String, Object> payload) 
         {
 
         log.info("Webhook recebido - RequestId: {}, Signature: {}", xRequestId, xSignature);
@@ -168,13 +148,8 @@ public class PaymentController {
         }
     }
 
-    @Operation(summary = "Criar pagamento MercadoPago", description = "Cria uma preferência de pagamento MercadoPago para o usuário autenticado.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "ID da preferência de pagamento retornado"),
-            @ApiResponse(responseCode = "401", description = "Usuário não autenticado")
-    })
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@Parameter(description = "Usuário autenticado") @AuthenticationPrincipal User user) throws MPException {
+    public ResponseEntity<String> createPayment(@AuthenticationPrincipal User user) throws MPException {
         if (user == null) {
             return ResponseEntity.status(401).body("unauthorized");
         }
@@ -192,8 +167,6 @@ public class PaymentController {
         return createClientPaymentPreference(client, request);
     }
 
-    @Operation(summary = "Callback de sucesso do pagamento", description = "Callback HTML para sucesso do pagamento MercadoPago.")
-    @ApiResponse(responseCode = "200", description = "Página de sucesso")
     @GetMapping("/success")
     public String success(Model model) {
         log.info("Payment success callback received");
@@ -204,8 +177,6 @@ public class PaymentController {
         return "payment-result";
     }
 
-    @Operation(summary = "Callback de falha do pagamento", description = "Callback HTML para falha do pagamento MercadoPago.")
-    @ApiResponse(responseCode = "200", description = "Página de falha")
     @GetMapping("/failure")
     public String failure(Model model) {
         log.info("Payment failure callback received");
@@ -216,8 +187,6 @@ public class PaymentController {
         return "payment-result";
     }
 
-    @Operation(summary = "Callback de pagamento pendente", description = "Callback HTML para pagamento pendente MercadoPago.")
-    @ApiResponse(responseCode = "200", description = "Página de pendência")
     @GetMapping("/pending")
     public String pending(Model model) {
         log.info("Payment pending callback received");
