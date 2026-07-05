@@ -1,15 +1,9 @@
 package com.usermanager.manager.controller;
 
-import java.math.BigDecimal;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,133 +13,45 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
-import com.mercadopago.client.preference.PreferenceClient;
-import com.mercadopago.client.preference.PreferenceItemRequest;
-import com.mercadopago.client.preference.PreferencePaymentMethodsRequest;
-import com.mercadopago.client.preference.PreferencePaymentTypeRequest;
-import com.mercadopago.client.preference.PreferenceRequest;
-import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
-import com.mercadopago.resources.preference.Preference;
-import com.usermanager.manager.dto.common.ResponseMessage;
-import com.usermanager.manager.enums.Subscription;
-import com.usermanager.manager.infra.service.WebhookService;
-import com.usermanager.manager.model.sale.Sale;
+import com.usermanager.manager.dto.payment.PreferenceResponse;
+import com.usermanager.manager.dto.payment.UserSubscriptionResponse;
+import com.usermanager.manager.dto.payment.WebhookRequest;
+import com.usermanager.manager.dto.payment.WebhookResponse;
 import com.usermanager.manager.model.user.User;
-import com.usermanager.manager.model.webhook.WebhookEvent;
-import com.usermanager.manager.model.webhook.enums.EventStatus;
-import com.usermanager.manager.service.sale.SaleService;
-import com.usermanager.manager.service.user.UserService;
+import com.usermanager.manager.service.payment.PaymentService;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/payment")
 @Slf4j
+@AllArgsConstructor
 public class PaymentController {
-    @Value("${mercadopago.webhook.secret.token}")
-    private String mercadoPagoSecret;
 
-    private final WebhookService webhookService;
-    private final UserService userService;
-    private final SaleService saleService;
-    private PreferenceClient preferenceClient;
-
-    public PaymentController(WebhookService webhookService, UserService userService,
-            PreferenceClient preferenceClient, SaleService saleService) {
-        this.webhookService = webhookService;
-        this.userService = userService;
-        this.saleService = saleService;
-        this.preferenceClient = preferenceClient;
-    }
+    private final PaymentService paymentService;
 
     @GetMapping("/status")
-    public ResponseEntity<ResponseMessage> getUserSubscriptionStatus(@AuthenticationPrincipal User user) {
-        var userResponse = userService.findById(user.getId());
-        Subscription userSubscription = userResponse.getSubscription();
-
-        if (userSubscription == Subscription.VIP) {
-            return ResponseEntity.ok(new ResponseMessage("VIP"));
+    public ResponseEntity<String> getUserSubscriptionStatus(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(401).body("unathorized");
         }
 
-        return ResponseEntity.ok(new ResponseMessage(userSubscription.getValue()));
+        UserSubscriptionResponse response = paymentService.getUserSubscription(user.getId());
+
+        return ResponseEntity.status(200).body(response.subscription().toString());
     }
 
     @PostMapping("/webhook")
     public ResponseEntity<String> receiveWebhook(
-        @RequestHeader(value = "x-signature", required = false) String xSignature,
-        @RequestHeader(value = "x-request-id", required = false) String xRequestId,
-        @RequestParam Map<String, String> queryParams,
-        @RequestBody Map<String, Object> payload) 
-        {
-
-        log.info("Webhook recebido - RequestId: {}, Signature: {}", xRequestId, xSignature);
-        log.info("Query params: {}", queryParams);
-        log.info("Payload: {}", payload);
-        log.debug("Secret configurado: {}", mercadoPagoSecret.substring(0, 3) + "..." +
-                (mercadoPagoSecret.length() > 6 ? mercadoPagoSecret.substring(mercadoPagoSecret.length() - 3) : ""));
-
-        try {
-            // 1. Extrair o data.id dos query params conforme a documentação
-            String dataId = queryParams.get("data.id");
-
-            // Caso não esteja nos query params, tentar extrair do body como fallback
-            if (dataId == null && payload.containsKey("data")) {
-                Object dataObj = payload.get("data");
-                if (dataObj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> data = (Map<String, Object>) dataObj;
-                    if (data.containsKey("id")) {
-                        dataId = String.valueOf(data.get("id"));
-                    } else {
-                        log.error("data.id não encontrado na requisição. RequestId: {}", xRequestId);
-                        return ResponseEntity.badRequest().body("data.id obrigatório");
-                    }
-                }
-            }
-            log.info("Processando webhook para dataId: {}", dataId);
-
-            // 2. Validar a assinatura conforme documentação oficial (se a assinatura
-            // estiver presente)
-
-            if (xSignature == null || xSignature.trim().isEmpty()) {
-                log.error("assinatura em branco, rejeitando. {}", xRequestId);
-                return ResponseEntity.status(401).body("Assinatura em branco, rejeitando");
-            }
-
-            if (!webhookService.validateSignature(xSignature, xRequestId, dataId, mercadoPagoSecret)) {
-                log.error("Assinatura inválida para request ID: {}", xRequestId);
-                return ResponseEntity.status(401).body("Assinatura inválida");
-            }
-
-            // 3. Salvar o evento
-            WebhookEvent webhookEvent = createWebhookEvent(payload);
-            log.info("Evento de webhook salvo: {}", webhookEvent);
-
-            // 4. Retornar 200 para evitar múltiplas tentativas de reenvio pelo Mercado Pago
-            return ResponseEntity.ok("Notificação recebida com sucesso");
-
-        } catch (Exception e) {
-            log.error("Erro ao processar webhook", e);
-            return ResponseEntity.status(500).body("Erro no processamento");
-        }
-    }
-
-    private ResponseEntity<String> createClientPaymentPreference(PreferenceClient client, PreferenceRequest request) {
-        try {
-            Preference preference = client.create(request);
-            log.info("Payment preference created successfully. ID: {}", preference.getId());
-            return ResponseEntity.ok(preference.getInitPoint());
-        } catch (MPApiException apiEx) {
-            log.error("MercadoPago API error: {}", apiEx.getApiResponse().getContent(), apiEx);
-            return ResponseEntity.status(500).body("Erro no gateway de pagamento");
-        } catch (MPException ex) {
-            log.error("MercadoPago general error", ex);
-            return ResponseEntity.status(500).body("Erro no processamento do pagamento");
-        }
+            @RequestHeader(value = "x-signature", required = false) String xSignature,
+            @RequestHeader(value = "x-request-id", required = false) String xRequestId,
+            @RequestParam Map<String, String> queryParams,
+            @RequestBody Map<String, Object> payload) {
+        WebhookRequest request = new WebhookRequest(xSignature, xRequestId, queryParams, payload);
+        WebhookResponse response = paymentService.createPaymentProcessing(request);
+        return ResponseEntity.status(response.httpStatus()).body(response.bodyMessage());
     }
 
     @PostMapping("/create")
@@ -155,16 +61,8 @@ public class PaymentController {
         }
 
         log.info("Initiating payment creation");
-        PreferenceClient client = this.preferenceClient;
-
-        List<PreferenceItemRequest> items = createPaymentItem(user);
-
-        List<PreferencePaymentTypeRequest> excludedPaymentTypes = createExcludedPaymentItems();
-        PreferencePaymentMethodsRequest paymentMethods = createPaymentMethods(excludedPaymentTypes);
-
-        PreferenceRequest request = createPreferenceRequest(items, paymentMethods, user);
-
-        return createClientPaymentPreference(client, request);
+        PreferenceResponse paymentLink = paymentService.createPayment(user.getId());
+        return ResponseEntity.ok(paymentLink.paymentLink());
     }
 
     @GetMapping("/success")
@@ -195,83 +93,5 @@ public class PaymentController {
         model.addAttribute("message", "Seu pagamento está pendente. Assim que for confirmado, você será notificado.");
         model.addAttribute("cssClass", "pending");
         return "payment-result";
-    }
-
-    @Transactional
-    private WebhookEvent createWebhookEvent(Object payload) {
-        ObjectMapper mapper = new ObjectMapper();
-        String payloadJson = "";
-        try {
-            payloadJson = mapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            log.warn("Erro ao converter payload para JSON", e);
-        }
-
-        WebhookEvent event = WebhookEvent.builder()
-                .payloadJson(payloadJson)
-                .status(EventStatus.PENDING)
-                .receivedAt(ZonedDateTime.now())
-                .retryCount(0)
-                .build();
-
-        return webhookService.saveWebhookEvent(event);
-    }
-
-
-    private List<PreferenceItemRequest> createPaymentItem(User user) {
-        Sale sale = saleService.getActiveSale().orElse(null);
-        log.info("sale: {}", sale);
-        BigDecimal unitPrice = (sale != null) ? sale.getSalePrice() : new BigDecimal("29.00");
-        log.info("SALE PRICE: {}", unitPrice);
-        List<PreferenceItemRequest> items = new ArrayList<>();
-        items.add(PreferenceItemRequest.builder()
-                .id("subscriptionVIP-" + user.getId())
-                .pictureUrl("https://freeimage.host/i/34hk2ku")
-                .title("ChamaGol")
-                .description("ChamaGol VIP")
-                .quantity(1)
-                .unitPrice(unitPrice)
-                .currencyId("BRL")
-                .build());
-        log.debug("Payment items configured: {}", items);
-        return items;
-    }
-
-    private List<PreferencePaymentTypeRequest> createExcludedPaymentItems() {
-        List<PreferencePaymentTypeRequest> excludedPaymentTypes = new ArrayList<>();
-        excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("atm").build());
-        return excludedPaymentTypes;
-    }
-
-    private PreferencePaymentMethodsRequest createPaymentMethods(List<PreferencePaymentTypeRequest> excludedPayments) {
-        var paymentMethods = PreferencePaymentMethodsRequest.builder()
-                .excludedPaymentTypes(excludedPayments)
-                .installments(1)
-                .build();
-        log.debug("Payment methods configured: {}", paymentMethods);
-        return paymentMethods;
-    }
-
-    private PreferenceRequest createPreferenceRequest(List<PreferenceItemRequest> items,
-            PreferencePaymentMethodsRequest paymentMethods, User user) {
-        PreferenceRequest request = PreferenceRequest.builder()
-                .items(items)
-                .paymentMethods(paymentMethods)
-                .statementDescriptor("Chamagol")
-                // .payer(PreferencePayerRequest.builder()
-                // .email(user.getLogin())
-                // .name(user.getName())
-                // .build())
-                .externalReference(String.valueOf(user.getId()))
-                .backUrls(PreferenceBackUrlsRequest.builder()
-                        .success("chamagol://payment/success")
-                        .failure("chamagol://payment/failure")
-                        .pending("chamagol://payment/pending")
-                        .build())
-                .notificationUrl("https://chamagol.com/api/payment/webhook")
-                .autoReturn("approved")
-                .build();
-        log.debug("Preference request configured: {}", request);
-        return request;
     }
 }
