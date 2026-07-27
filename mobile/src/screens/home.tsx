@@ -1,30 +1,27 @@
-import React, { useEffect, useState, useRef } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
   Animated,
   Dimensions,
-  StatusBar,
+  Image,
   RefreshControl,
-  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { useTheme } from "../theme/theme";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Footer from "../components/footer";
-import * as SecureStore from "expo-secure-store";
-import { api } from "../config/Api";
-import { TermModal } from "../components/term";
+import { RootStackParamList } from "../../App";
 import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { TermModal } from "../components/term";
+import { api } from "../config/Api";
+import { useTheme } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 type SubscriptionType = "FREE" | "PRO" | "VIP" | null;
@@ -121,6 +118,13 @@ function HomeContent({ navigation }: Props) {
       ).start();
     });
   }, []);
+
+  // useEffect(() => {
+  //   const registerDevicesOnHome = async () => {
+  //     await registerDevice();
+  //   };
+  //   registerDevicesOnHome();
+  // }, []);
 
   // ─── Data fetching ────────────────────────────────────────────────────────
   useEffect(() => {

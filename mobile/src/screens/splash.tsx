@@ -1,10 +1,12 @@
+import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/theme';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ThreeDots from '../components/loading';
 import Logo from '../components/logo';
 import { api } from '../config/Api';
+import { useTheme } from '../theme/theme';
 import { registerDevice } from '../utils/registerDevice';
 
 const SplashScreen = ({ navigation }: any) => {
@@ -14,11 +16,37 @@ const SplashScreen = ({ navigation }: any) => {
     const checkAuth = async () => {
       try {
         // Tenta buscar info do usuário (usa accessToken salvo)
-        await api.get("/auth/user/info");
-        await registerDevice(); // <-- registra o device aqui também!
+
+        const accessToken = await SecureStore.getItemAsync("accessToken");
+        if (!accessToken) {
+          console.log("nenhum token encontrado para login");
+          navigation.replace("Login");
+          return;
+        }
+
+        const notificationResponse = await Notifications.getLastNotificationResponseAsync();
+        const targetScreen = (notificationResponse?.notification?.request?.content?.data as any)?.screen;
+        if (targetScreen === "Timeline") {
+          console.log("Abrindo Timeline a partir da notificação inicial");
+          navigation.replace("Timeline");
+          return;
+        }
+
+        const data = await api.get(
+          "/auth/user/info",
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+
+        if (data?.status == 401 || !data.data) {
+          navigation.replace("Login");
+          return;
+        }
+
+        await registerDevice();
         navigation.replace('Home');
       } catch (err) {
-        // Se falhar (ex: token inválido/expirado), vai para Login
         navigation.replace('Login');
       }
     };

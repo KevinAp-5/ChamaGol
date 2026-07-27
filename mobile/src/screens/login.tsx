@@ -1,31 +1,29 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from "expo-secure-store";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Animated,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  Dimensions,
-  ScrollView,
-  Pressable,
-  DeviceEventEmitter,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { RootStackParamList } from "../../App";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 import Footer from "../components/footer";
 import Logo from "../components/logo";
 import { api } from "../config/Api";
 import { useTheme } from "../theme/theme";
-import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { registerDevice } from "../utils/registerDevice";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;

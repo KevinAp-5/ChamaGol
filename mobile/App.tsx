@@ -1,8 +1,8 @@
 import { DefaultTheme, NavigationContainer, Theme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
-import { StatusBar, Platform, PermissionsAndroid } from "react-native";
 import * as Notifications from "expo-notifications";
+import React, { useEffect } from "react";
+import { PermissionsAndroid, Platform, StatusBar } from "react-native";
 
 import { CustomAlertProvider } from "./src/components/CustomAlert";
 import DeepLinkListener from "./src/components/DeepLinkListener";
@@ -18,10 +18,10 @@ import PaymentFailureScreen from "./src/screens/payment/failure";
 import PaymentPendingScreen from "./src/screens/payment/pending";
 import PaymentSuccessScreen from "./src/screens/payment/success";
 import ProfileScreen from "./src/screens/profile";
-import ProSubscriptionScreen from "./src/screens/subscription";
 import RegisterScreen from "./src/screens/register";
 import RequestPasswordReset from "./src/screens/requestPasswordReset";
 import SplashScreen from "./src/screens/splash";
+import ProSubscriptionScreen from "./src/screens/subscription";
 import TimelineScreen from "./src/screens/timeline";
 import { navigationRef } from "./src/utils/navigationRef";
 
@@ -136,6 +136,8 @@ export default function App() {
         console.log("[NOTIFICATION CLICK]", JSON.stringify(data));
 
         const targetScreen = data?.screen;
+        console.log(data);
+        console.log("data screen: " + data?.screen);
 
         if (targetScreen === "Timeline" && navigationRef.isReady()) {
           navigationRef.navigate("Timeline" as never);
