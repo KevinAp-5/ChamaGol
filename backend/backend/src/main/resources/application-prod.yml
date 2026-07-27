@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${PG_HOST}:${PG_PORT}/${PG_DATABASE}
     username: ${PG_USER}
-    password: ${PG_DATABASE}
+    password: ${PG_PASSWORD}
     hikari:
       maximum-pool-size: 32        # Até 2x núcleos, para 4 vCPU
       minimum-idle: 8              # 1/4 do máximo
