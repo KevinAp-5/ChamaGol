@@ -2,9 +2,9 @@ spring:
   application:
     name: login
   datasource:
-    url: jdbc:postgresql://localhost:5432/chamagol
-    username: ${db_user}
-    password: ${db_password}
+    url: $(DB_URL)
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 32        # Até 2x núcleos, para 4 vCPU
       minimum-idle: 8              # 1/4 do máximo
